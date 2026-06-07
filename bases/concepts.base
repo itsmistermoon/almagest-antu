@@ -1,0 +1,27 @@
+filters:
+  and:
+    - file.inFolder("wiki/concepts")
+    - 'file.name != "_index"'
+
+properties:
+  tags:
+    displayName: Tags
+  updated:
+    displayName: Actualizado
+
+views:
+  - type: table
+    name: Todos
+    order:
+      - file.name
+      - tags
+      - updated
+
+  - type: cards
+    name: Por dominio
+    groupBy:
+      property: tags
+      direction: ASC
+    order:
+      - file.name
+      - updated
