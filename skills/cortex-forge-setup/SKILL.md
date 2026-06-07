@@ -1,6 +1,6 @@
 ---
 name: cortex-forge-setup
-description: One-time setup for the Cortex Forge protocol. Configures the vault path and installs global skills into ~/.agents/skills/, with Claude Code symlinks if applicable.
+description: One-time setup for the Cortex Forge protocol. Configures the vault path, installs global skills, and optionally configures lifecycle hooks for automatic session memory.
 argument-hint: "Vault path (optional, prompted if omitted)"
 ---
 
@@ -28,21 +28,53 @@ Initial setup for Cortex Forge. Run once after cloning the repo or when the vaul
 
 5. **Claude Code symlinks** — if `~/.claude/` exists (Claude Code is installed):
    - Create `~/.claude/skills/` if it doesn't exist
-   - Create symlinks pointing to the installed skills:
+   - Create symlinks (not copies) pointing to the installed skills:
      - `~/.claude/skills/cortex-crystallize` → `~/.agents/skills/cortex-crystallize`
      - `~/.claude/skills/cortex-forge-setup` → `~/.agents/skills/cortex-forge-setup`
    - If a symlink already exists and points to the right target, skip silently
    - If a symlink exists but points elsewhere, overwrite it
 
-6. **Confirm result**:
+6. **Configure lifecycle hooks** — ask: "Set up automatic session memory hooks? (recommended)"
+   If yes:
+   - **Claude Code** (`~/.claude/` exists):
+     - Copy hook scripts from `{vault}/bin/hooks/` to `~/.claude/hooks/` (create dir if needed)
+     - Read `~/.claude/settings.json` (or create it if missing)
+     - Add the following hooks if not already present:
+       ```json
+       "SessionStart": [{ "type": "command", "command": "~/.claude/hooks/load-hot-cache.sh" }]
+       "PreCompact":   [{ "type": "command", "command": "~/.claude/hooks/update-hot-cache.sh" }]
+       ```
+     - Merge carefully — do not overwrite existing hooks, only append to the arrays
+   - **Other agents** — display manual instructions:
+     ```
+     Codex (~/.codex/hooks.json):
+       SessionStart → bash {vault}/bin/hooks/load-hot-cache.sh
+       Stop         → bash {vault}/bin/hooks/update-hot-cache.sh
+
+     Antigravity (~/.agents/hooks.json):
+       PreInvocation (invocationNum == 0) → bash {vault}/bin/hooks/load-hot-cache.sh
+       Stop (fullyIdle == true)           → bash {vault}/bin/hooks/update-hot-cache.sh
+     ```
+
+7. **Confirm result**:
    - Vault configured at: `{path}`
-   - Skills installed in `~/.agents/skills/`: `cortex-crystallize`, `cortex-forge-setup`
-   - Claude Code symlinks: created / already up to date / skipped (Claude Code not detected)
+   - Skills installed: `cortex-crystallize`, `cortex-forge-setup`
+   - Claude Code symlinks: created / up to date / skipped
+   - Hooks: configured / skipped / manual instructions shown
    - Next step: invoke `/cortex-crystallize` at the end of any project session
+
+## Hook behavior
+
+The hooks provide automatic (no-invoke) session memory:
+- **SessionStart** (`load-hot-cache.sh`) — reads `.hot/{project}.md` and injects it as context
+- **PreCompact / Stop** (`update-hot-cache.sh`) — appends a snapshot to `.hot/{project}.md`
+
+The hook writes a minimal snapshot (files touched, external actions). For a full snapshot with Current state updated, invoke `/cortex-crystallize` manually — hooks and manual invocation are compatible and complementary.
 
 ## Rules
 
 - Do not modify any vault files during setup — read only for validation
 - Create `~/.agents/skills/` if it doesn't exist
 - If config already exists, show it and ask before overwriting
-- Symlinks, not copies, in `~/.claude/skills/` — so updates to `~/.agents/skills/` propagate automatically
+- Symlinks in `~/.claude/skills/`, not copies — updates propagate automatically
+- When merging into `settings.json`, preserve all existing hooks

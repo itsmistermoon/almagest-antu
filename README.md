@@ -55,9 +55,38 @@ Detects orphan pages, dead links, contradictory claims, stale information. Forge
 
 Each page follows: YAML frontmatter + compiled truth + chronological changelog.
 
-## Protocol Specs
+## Hot Cache Protocol
 
-- **[Hot Cache Protocol](docs/hot-cache-protocol.md)** — Session memory and multi-agent coordination: how `.hot/{project}.md` works, hook compatibility table (Claude Code, Codex, Antigravity), and graceful degradation across agents.
+Every AI session starts cold. Without external memory, an agent that worked on your vault yesterday has no idea what it did — it will re-derive context, re-ask questions, and potentially contradict decisions already made.
+
+The Hot Cache Protocol solves this with a single file per project: `.hot/{project}.md`. It lives next to `.git/`, is gitignored (local agent artifact, not versioned content), and has two zones:
+
+```
+## Current state     ← mutable — always small, always fresh
+  Pending items (max 5)
+  Active decisions (max 3)
+
+## History           ← append-only — never modified, just extended
+  Session snapshots: what was done, what was discarded, fragile context
+```
+
+At session start, the agent reads the file and resumes with full context. At session end, it updates current state and appends a snapshot. The size limits on current state are intentional — a zone that grows without bound degrades into noise.
+
+**Agent-agnostic.** The protocol works with any LLM that can read markdown. Claude Code, Codex, Gemini, Cursor — if the agent reads `AGENTS.md`, it knows to read `.hot/{project}.md`. Manual mode requires no configuration beyond that.
+
+**Cross-project.** `cortex-crystallize` works from any repo, not just the vault. When invoked from a linked project (e.g., a product codebase), it snapshots that project's session and optionally updates the vault's project page with knowledge applied and recurring issues detected.
+
+**Three levels of automation**, each compatible with the others:
+
+| Level | Mechanism | Configuration |
+|-------|-----------|---------------|
+| Manual | User invokes `/cortex-crystallize` | None — just read `AGENTS.md` |
+| Semi-auto | `AGENTS.md` instructions | None — agent follows protocol |
+| Automatic | Lifecycle hooks | Required — run `/cortex-forge-setup` |
+
+Automatic mode uses two scripts from `bin/hooks/`: `load-hot-cache.sh` (reads `.hot/` on session start) and `update-hot-cache.sh` (appends a snapshot on session end). `/cortex-forge-setup` installs and wires them for Claude Code and shows instructions for other agents.
+
+See [Hot Cache Protocol spec](docs/hot-cache-protocol.md) for hook compatibility (Claude Code, Codex, Antigravity) and implementation details.
 
 ## Usage
 
