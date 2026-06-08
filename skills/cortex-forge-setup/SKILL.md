@@ -24,6 +24,7 @@ Initial setup for Cortex Forge. Run once after cloning the repo or when the vaul
 4. **Install global skills** — copy to the agent's skill directory:
    - `{vault}/skills/cortex-crystallize/` → `~/.agents/skills/cortex-crystallize/`
    - `{vault}/skills/cortex-forge-setup/` → `~/.agents/skills/cortex-forge-setup/`
+   - `{vault}/skills/cortex-recall/` → `~/.agents/skills/cortex-recall/`
    - Overwrite if they already exist (update in place)
 
 5. **Claude Code symlinks** — if `~/.claude/` exists (Claude Code is installed):
@@ -31,6 +32,7 @@ Initial setup for Cortex Forge. Run once after cloning the repo or when the vaul
    - Create symlinks (not copies) pointing to the installed skills:
      - `~/.claude/skills/cortex-crystallize` → `~/.agents/skills/cortex-crystallize`
      - `~/.claude/skills/cortex-forge-setup` → `~/.agents/skills/cortex-forge-setup`
+     - `~/.claude/skills/cortex-recall` → `~/.agents/skills/cortex-recall`
    - If a symlink already exists and points to the right target, skip silently
    - If a symlink exists but points elsewhere, overwrite it
 
@@ -58,7 +60,7 @@ Initial setup for Cortex Forge. Run once after cloning the repo or when the vaul
 
 7. **Confirm result**:
    - Vault configured at: `{path}`
-   - Skills installed: `cortex-crystallize`, `cortex-forge-setup`
+   - Skills installed: `cortex-crystallize`, `cortex-forge-setup`, `cortex-recall`
    - Claude Code symlinks: created / up to date / skipped
    - Hooks: configured / skipped / manual instructions shown
    - Next step: invoke `/cortex-crystallize` at the end of any project session
