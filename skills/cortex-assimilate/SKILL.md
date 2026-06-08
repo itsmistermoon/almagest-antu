@@ -33,6 +33,10 @@ Ingest a new source and synthesize wiki pages from it.
    4. If found: use the static asset content as the source. Note the actual asset URL in the `.raw/` file and wiki page.
    5. If not found after 2–3 attempts: stop and tell the user that the page is a client-rendered SPA and content couldn't be extracted automatically. Suggest pasting the content directly or providing a static URL.
 
+   **⚠ Do NOT proceed to step 4 until step 3/3a is resolved and you have readable content.**
+   Saving an HTML shell with no body text to `.raw/` is a protocol violation.
+   If in doubt whether content is readable: paste the first 200 characters and ask yourself "would a reader understand anything from this?" — if no, run SPA detection.
+
 4. **Synthesize** — determine what to create (see criteria below) and create pages at the correct path inside the resolved vault.
 
 5. Update `{vault}/wiki/index.md` with new pages.
@@ -98,6 +102,13 @@ confidence: high | medium | low
 - `high` — primary source: book, paper, official documentation, source code
 - `medium` — secondary source: video, opinion article, technical blog, transcript
 - `low` — agent inference without direct source, or second-hand source
+
+## Output format
+
+After completing ingestion, your response must confirm:
+1. `.raw/` file path saved
+2. Wiki pages created or updated (with paths)
+3. Whether SPA detection ran and what was found
 
 ## Rules
 

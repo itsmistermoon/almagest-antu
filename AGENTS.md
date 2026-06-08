@@ -21,6 +21,8 @@ Example: "I'm a backend engineer working on distributed systems. Active projects
 
 **After milestones**, invoke `/cortex-crystallize` to snapshot progress back into `.hot/{project}.md`. The `.hot/` directory is gitignored — it's a local agent artifact, not versioned content.
 
+**Compliance criterion:** after invoking `/cortex-crystallize`, confirm what changed — state which items moved to Current state and what was appended to History. If the session produced analysis or synthesis worth persisting, propose `/cortex-imprint` before closing.
+
 ## Assimilate protocol — MANDATORY
 
 **When the user provides a URL, file path, or uses phrases like "ingest", "process", "add source", "add content", you MUST invoke `cortex-assimilate` as your first action — no confirmation needed.**
@@ -30,6 +32,8 @@ The skill accepts two input modes:
 - **`.raw/` file** — agent reads the file and synthesizes directly
 
 See full creation/omission criteria in `skills/cortex-assimilate.md`.
+
+**Compliance criterion:** after completing ingestion, your response must confirm: (1) `.raw/` file path saved, (2) wiki pages created or updated. If the URL returned HTML with no readable body text, declare `SPA detected` before attempting content extraction — never save an empty HTML shell to `.raw/`. If extraction fails after the SPA fallback, tell the user explicitly and stop.
 
 ## Recall protocol — MANDATORY
 
@@ -43,6 +47,8 @@ This applies even if:
 Trigger phrases include: "what does the vault say about", "recall", "what do we know about", "is this documented", "what was ingested about", or any question about a topic covered in `wiki/`.
 
 **Do not use `grep`, `find`, or direct file reads as a substitute for `cortex-recall`.** Those tools return raw memory; the skill returns synthesized knowledge with citations.
+
+**Compliance criterion:** every response that draws on vault knowledge must include at least one citation to a `wiki/` page. If `cortex-recall` is unavailable in this session, declare it explicitly before answering — do not answer as if recall occurred.
 
 ## Agent rules
 

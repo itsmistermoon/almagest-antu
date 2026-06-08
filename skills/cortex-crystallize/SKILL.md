@@ -101,6 +101,13 @@ Append at the end, never modify previous entries.
 - {exact numbers, commands, paths, URLs, conventions a new agent can't infer from code}
 ```
 
+## Output format
+
+After completing the snapshot, confirm:
+1. What changed in `### Pending` (items added, removed, or kept)
+2. What was appended to `## History` (one-line summary of the new entry)
+3. If cross-vault mode ran: which vault page was updated
+
 ## Rules
 
 - Language: match the vault's language (check `AGENTS.md`).
