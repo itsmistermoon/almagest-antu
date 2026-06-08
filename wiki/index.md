@@ -38,6 +38,7 @@
 - [[wiki/sources/antigravity-cli-best-practices]] — Best practices: minimal permissions, AGENTS.md, checkpoints, subagents
 - [[wiki/sources/antigravity-cli-troubleshooting]] — Troubleshooting: auth, sandbox, permissions, MCP, performance
 - [[wiki/sources/antigravity-cli-reference]] — Full reference: slash commands, keybindings, settings.json keys
+- [[wiki/sources/antigravity-cli-hands-on-codelab]] — Codelab step 5: installation, CLI flags (`-p` non-interactive mode), config, models
 - [[wiki/sources/commandcode-taste-blog]] — Introduction to TASTE: three-layer stack, learning loop, empirical results
 - [[wiki/sources/commandcode-taste-docs]] — Official TASTE documentation: taste.md format, scopes, management
 - [[wiki/sources/commandcode-taste-manage]] — TASTE profile management: push/pull, Studio, lint, scopes

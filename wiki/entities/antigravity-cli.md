@@ -23,6 +23,7 @@ The lightweight, fast, terminal-first surface to work with Antigravity agents. R
 ## Identity
 
 - **Binary**: `agy` (installed to `~/.local/bin/` Unix, `C:\Program Files\Google\antigravity-cli` Windows)
+- **Non-interactive mode**: `agy -p "prompt"` — headless, prints response and exits (equivalent to `claude -p`)
 - **Config root**: `~/.gemini/antigravity-cli/`
   - `settings.json` — preferences (sparse, only non-defaults written)
   - `keybindings.json` — hotkey maps
