@@ -17,10 +17,12 @@ Behavior depends on where the skill is invoked:
 
 1. Detect active repo: find nearest `.git` from CWD. If none, ask.
 2. Read `~/.cortex-forge/config.yml` to get vault path. If missing, prompt to run `/cortex-forge-setup` first.
-3. Compare active repo with vault path to determine mode.
+3. Determine mode:
+   - If active repo contains `wiki/`, `AGENTS.md`, and `skills/` → **it IS a vault** → use standard mode, regardless of what config says.
+   - Otherwise, compare active repo path with vault path from config: if they match → standard mode; if not → cross-vault mode.
 4. Create `.hot/` if it doesn't exist. Add `.hot/` to `.gitignore` if not already there.
 5. Read `.hot/{project}.md` in full if it exists.
-6. **Update current state** (see limits below).
+6. **Update current state** (see limits below). Update `agent:` and `updated:` in the file frontmatter to reflect the current agent and date.
 7. **Append snapshot to history** using the template.
 8. If cross-vault mode: **run cross-vault update** (see section below).
 
@@ -49,6 +51,13 @@ Update on every `/cortex-crystallize`. Hard limits: **max 5 pending items, max 3
 When adding a new item, evaluate whether an existing one has become obsolete and remove it. The size constraint is what makes this zone reliable — if it grows unbounded, it degrades.
 
 ```markdown
+---
+agent: {agent-id}
+updated: {YYYY-MM-DD}
+---
+
+# {project} — hot cache
+
 ## Current state
 ### Pending
 - [ ] {concise description with enough context to resume} — {file or path if applicable}
@@ -58,6 +67,8 @@ _(none)_ if empty
 - {decision and rationale — to avoid re-litigating it}
 _(none)_ if empty
 ```
+
+`agent:` identifies who last wrote Current state — the mutable zone. When multiple agents operate the same vault across sessions, this field makes it immediately clear whose snapshot is active without reading git history. Update it on every `/cortex-crystallize` invocation.
 
 ## Zone 2 — History (APPEND-ONLY)
 

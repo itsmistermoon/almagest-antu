@@ -2,12 +2,67 @@
 
 ## About this vault
 
-Replace this section with context about yourself and your active projects. Agents use it to understand who they're working with and what knowledge domains matter.
+Replace this section with 2–3 lines describing your vault: who you are, what domain this vault covers, and what active projects matter. Agents use this to make better decisions about relevance, taxonomy, and what's worth persisting.
 
-Example:
-```
-I'm a [role] working on [domain]. Active projects: [project-a], [project-b].
-```
+Example: "I'm a backend engineer working on distributed systems. Active projects: payments-api, infra-migration. Knowledge domains: Go, Kafka, PostgreSQL."
+
+## Crystallize protocol — MANDATORY
+
+`.hot/{project}.md` exists in this vault. It contains `## Pending` tasks and `## Fragile context` that must inform every session.
+
+**Before your first response to the user, in any session that starts in this vault, you MUST:**
+
+1. Detect the project name = `basename` of your current working directory.
+2. Read `.hot/{project}.md` in full.
+3. Treat the loaded content as required context — not optional background.
+4. If the file contains `### Pending` items, acknowledge them in your first message or surface them before starting new work.
+
+**Failure to load hot cache before first response is a protocol violation**, equivalent to ignoring `CLAUDE.md` in Claude Code.
+
+**After milestones**, invoke `/cortex-crystallize` to snapshot progress back into `.hot/{project}.md`. The `.hot/` directory is gitignored — it's a local agent artifact, not versioned content.
+
+## Assimilate protocol — MANDATORY
+
+**When the user provides a URL, file path, or uses phrases like "ingest", "process", "add source", "add content", you MUST invoke `cortex-assimilate` as your first action — no confirmation needed.**
+
+The skill accepts two input modes:
+- **URL** — agent downloads content, saves to `.raw/`, synthesizes
+- **`.raw/` file** — agent reads the file and synthesizes directly
+
+See full creation/omission criteria in `skills/cortex-assimilate.md`.
+
+## Recall protocol — MANDATORY
+
+**When the user asks about any topic that may exist in the vault — concepts, sources, agents, tools, past analysis, or anything previously ingested — you MUST invoke `cortex-recall` as your first action.**
+
+This applies even if:
+- The content was ingested earlier in this same session (do not answer from active context).
+- You could find the answer with `grep` or `find` (manual search is a protocol violation).
+- You believe you already know the answer (the vault may have synthesized additional detail).
+
+Trigger phrases include: "what does the vault say about", "recall", "what do we know about", "is this documented", "what was ingested about", or any question about a topic covered in `wiki/`.
+
+**Do not use `grep`, `find`, or direct file reads as a substitute for `cortex-recall`.** Those tools return raw memory; the skill returns synthesized knowledge with citations.
+
+## Agent rules
+
+- **Propose creating/updating pages** in `wiki/` when something warrants persistence beyond the session.
+- **Detect contradictions** between pages and report them.
+- **Never modify files in `.raw/`**.
+- **Never read or modify `.env` or credential files.**
+- **Ask before creating new directories** if uncertain.
+
+## Available skills
+
+**Vault** (`skills/` — operate inside the vault):
+- `cortex-assimilate` — Ingest a source: `.raw/` → synthesized wiki page
+- `cortex-recall` — Query the vault: search → synthesize answer with citations
+- `cortex-imprint` — Archive a valuable session synthesis as a permanent wiki page
+- `cortex-prune` — Health check: detect orphans, dead links, stale claims, missing provenance
+
+**Global** (`skills/{name}/SKILL.md` — installed to `~/.agents/skills/` via `/cortex-forge-setup`):
+- `/cortex-crystallize` — Snapshot session context into `.hot/{project}.md`, works from any repo
+- `/cortex-forge-setup` — Initial setup: configure vault path and install global skills
 
 ## Vault architecture
 
@@ -31,40 +86,6 @@ Five layers, each with a distinct role:
 | **Page** | `wiki/pages/` | Active projects with repo and status | `templates/project.md` |
 
 Each page follows: YAML frontmatter + compiled truth + chronological changelog.
-
-## Ingest protocol
-
-When the user provides new content (URL, file, or text), invoke `cortex-assimilate` without waiting for confirmation. Activation phrases: "new ingest", "process", "add source", "add content", or when a URL or file path is provided directly.
-
-The skill accepts two input modes:
-- **URL** — agent downloads content, saves to `.raw/`, synthesizes
-- **`.raw/` file** — agent reads the file and synthesizes directly
-
-See full creation/omission criteria in `skills/cortex-assimilate.md`.
-
-## Hot Cache protocol
-
-`.hot/{project}.md` stores session context per project for multi-agent coordination. Read it on session start. Invoke `/cortex-crystallize` after milestones. The `.hot/` directory is gitignored — it's a local agent artifact, not versioned content.
-
-## Agent rules
-
-- **Propose creating/updating pages** in `wiki/` when something warrants persistence beyond the session.
-- **Detect contradictions** between pages and report them.
-- **Never modify files in `.raw/`**.
-- **Never read or modify `.env` or credential files.**
-- **Ask before creating new directories** if uncertain.
-
-## Available skills
-
-**Vault** (`skills/` — operate inside the vault):
-- `cortex-assimilate` — Ingest a source: `.raw/` → synthesized wiki page
-- `cortex-recall` — Query the vault: search → synthesize answer with citations
-- `cortex-imprint` — Archive a valuable session synthesis as a permanent wiki page
-- `cortex-prune` — Health check: detect orphans, dead links, stale claims, missing provenance
-
-**Global** (`skills/{name}/SKILL.md` — installed to `~/.agents/skills/` via `/cortex-forge-setup`):
-- `/cortex-crystallize` — Snapshot session context into `.hot/{project}.md`, works from any repo
-- `/cortex-forge-setup` — Initial setup: configure vault path and install global skills
 
 ## On session close
 

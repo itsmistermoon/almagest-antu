@@ -1,3 +1,8 @@
+---
+name: cortex-recall
+description: Answer a question using the vault's synthesized wiki content as the source of truth. Returns citations to specific pages.
+---
+
 # cortex-recall
 
 Answer a question using the vault's wiki content as the source.

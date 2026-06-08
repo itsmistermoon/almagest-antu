@@ -1,0 +1,5 @@
+.hot/
+.DS_Store
+.commandcode/taste/
+.raw/*.vtt
+.raw/*.html
