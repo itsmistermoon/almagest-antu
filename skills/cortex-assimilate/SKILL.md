@@ -1,6 +1,7 @@
 ---
 name: cortex-assimilate
 description: Ingest a URL or file into the vault — saves to .raw/, synthesizes wiki pages, updates index.
+argument-hint: "[vault-name] <url-or-file>"
 ---
 
 # cortex-assimilate
@@ -10,7 +11,8 @@ Ingest a new source and synthesize wiki pages from it.
 ## Steps
 
 1. **Resolve vault** — read `~/.cortex-forge/config.yml`:
-   - Check if CWD is inside any registered vault → use that vault.
+   - If the first argument matches a registered vault name (e.g., `/cortex-assimilate second-brain <url>`) → use that vault; treat the remaining argument as the URL or file path.
+   - Otherwise: check if CWD is inside any registered vault → use that vault.
    - If not, use the `default` vault.
    - If no default and multiple vaults → ask the user to pick one.
    - If no vaults registered → stop and prompt to run `/cortex-forge-setup`.

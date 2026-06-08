@@ -1,7 +1,7 @@
 ---
 name: cortex-crystallize
 description: Snapshot session context into .hot/{project}.md. Works from any repo — inside the vault or from a linked project.
-argument-hint: "Project name (optional, inferred from CWD if omitted)"
+argument-hint: "[vault-name] [project-name]"
 ---
 
 Save a session snapshot to `.hot/{project}.md` in the active repo (the nearest `.git`), so any agent can resume without losing context.
@@ -20,7 +20,8 @@ Behavior depends on where the skill is invoked:
    - Config supports two formats — handle both:
      - New: `vaults: {name: path, ...}` + `default: name`
      - Legacy: `vault: path` (treat as single vault named after its `basename`)
-   - Check if CWD is inside any registered vault (CWD starts with a vault path) → use that vault.
+   - If the first argument matches a registered vault name (e.g., `/cortex-crystallize second-brain`) → use that vault; treat the second argument (if any) as the project name override.
+   - Otherwise: check if CWD is inside any registered vault (CWD starts with a vault path) → use that vault.
    - If not, use the `default` vault.
    - If no default and multiple vaults → ask the user to pick one.
 3. Determine mode:

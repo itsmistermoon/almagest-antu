@@ -1,6 +1,7 @@
 ---
 name: cortex-recall
 description: Answer a question using the vault's synthesized wiki content as the source of truth. Returns citations to specific pages.
+argument-hint: "[vault-name] <query>"
 ---
 
 # cortex-recall
@@ -10,7 +11,8 @@ Answer a question using the vault's wiki content as the source.
 ## Steps
 
 1. **Resolve vault** — read `~/.cortex-forge/config.yml`:
-   - Check if CWD is inside any registered vault (CWD starts with a `vaults:` path) → use that vault.
+   - If the first argument matches a registered vault name (e.g., `/cortex-recall second-brain <query>`) → use that vault; treat the remaining text as the query.
+   - Otherwise: check if CWD is inside any registered vault (CWD starts with a `vaults:` path) → use that vault.
    - If not, use the `default` vault.
    - If no default and multiple vaults are registered → ask the user to pick one.
    - If no vaults registered → stop and prompt to run `/cortex-forge-setup`.
