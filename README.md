@@ -65,36 +65,7 @@ Three behaviors are mandatory for any agent operating the vault, defined in `AGE
 
 **Recall** — when the user asks about any topic that may exist in the vault, invoke `/cortex-recall` as the first action. Do not answer from active context or use `grep` as a substitute — the skill returns synthesized knowledge with citations.
 
-## Hot Cache Protocol
-
-Every AI session starts cold. Without external memory, an agent that worked on your vault yesterday has no idea what it did — it will re-derive context, re-ask questions, and potentially contradict decisions already made.
-
-The Hot Cache Protocol solves this with a single file per project: `.hot/{project}.md`. It lives next to `.git/`, is gitignored (local agent artifact, not versioned content), and has two zones:
-
-```
-## Current state     ← mutable — always small, always fresh
-  Pending items (max 5)
-  Active decisions (max 3)
-
-## History           ← append-only — never modified, just extended
-  Session snapshots: what was done, what was discarded, fragile context
-```
-
-At session start, the agent reads the file and resumes with full context. At session end, it updates current state and appends a snapshot. The size limits on current state are intentional — a zone that grows without bound degrades into noise.
-
-**Agent-agnostic.** The protocol works with any LLM that can read markdown. Claude Code, Codex, Antigravity, CommandCode — if the agent reads `AGENTS.md`, it knows to read `.hot/{project}.md`. Manual mode requires no configuration beyond that.
-
-**Cross-project.** `/cortex-crystallize` works from any repo, not just the vault. When invoked from a linked project (e.g., a product codebase), it snapshots that project's session and optionally updates the vault's project page with knowledge applied and recurring issues detected.
-
-**Three levels of automation**, each compatible with the others:
-
-| Level | Mechanism | Configuration |
-|-------|-----------|---------------|
-| Manual | User invokes `/cortex-crystallize` | None — just read `AGENTS.md` |
-| Semi-auto | `AGENTS.md` instructions | None — agent follows protocol |
-| Automatic | Lifecycle hooks | Required — run `/cortex-forge-setup` |
-
-Automatic mode uses two scripts from `bin/hooks/`: `load-hot-cache.sh` (reads `.hot/` on session start) and `update-hot-cache.sh` (appends a snapshot on session end). `/cortex-forge-setup` installs and wires them for Claude Code and shows manual instructions for Codex, Antigravity, and CommandCode.
+**Crystallize** — before responding in any session, read `.hot/{project}.md` to resume with full context. After milestones, invoke `/cortex-crystallize` to snapshot current state and append a history entry. The file has two zones: a mutable `Current state` (max 5 pending items, max 3 active decisions) and an append-only `History`. Works from any repo — when invoked outside the vault, it snapshots that project and optionally updates the linked vault page. Three automation levels are available: manual invocation, `AGENTS.md` instructions, or lifecycle hooks configured via `/cortex-forge-setup`.
 
 ## Agent compatibility
 
