@@ -1,5 +1,7 @@
 # cortex-forge
 
+![cortex-forge](cortex-forge-promo.png)
+
 A protocol for agent-operated knowledge vaults — six skills, one session layer, any LLM.
 
 ## What it is
