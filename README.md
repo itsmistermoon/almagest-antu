@@ -30,7 +30,7 @@ Sources land in `.raw/`: articles, PDFs, transcripts, URLs. The agent processes 
 
 ### `/cortex-crystallize` — Session context
 
-Working memory lasts seconds. `.hot/{project}.md` extends it indefinitely: current state, active decisions, open threads. The agent reads it on session start; you invoke it at the end. Without it, every conversation starts from zero. Works from any repo, not just the vault.
+Working memory lasts seconds. `.hot/MEMORY.md` extends it indefinitely: current state, active decisions, open threads. The agent reads it on session start; you invoke it at the end. Without it, every conversation starts from zero. Works from any repo, not just the vault.
 
 ### `/cortex-imprint` — Permanent archive
 
@@ -59,13 +59,13 @@ Each page follows: YAML frontmatter + compiled truth + chronological changelog.
 
 Three behaviors are mandatory for any agent operating the vault, defined in `AGENTS.md`:
 
-**Crystallize** — before responding to the user, read `.hot/{project}.md`. After milestones, invoke `/cortex-crystallize` to snapshot progress.
+**Crystallize** — before responding to the user, read `.hot/MEMORY.md`. After milestones, invoke `/cortex-crystallize` to snapshot progress.
 
 **Assimilate** — when the user provides a URL, file, or uses words like "ingest" or "process", invoke `/cortex-assimilate` as the first action, no confirmation needed.
 
 **Recall** — when the user asks about any topic that may exist in the vault, invoke `/cortex-recall` as the first action. Do not answer from active context or use `grep` as a substitute — the skill returns synthesized knowledge with citations.
 
-**Crystallize** — before responding in any session, read `.hot/{project}.md` to resume with full context. After milestones, invoke `/cortex-crystallize` to snapshot current state and append a history entry. The file has two zones: a mutable `Current state` (max 5 pending items, max 3 active decisions) and an append-only `History`. Works from any repo — when invoked outside the vault, it snapshots that project and optionally updates the linked vault page. Three automation levels are available: manual invocation, `AGENTS.md` instructions, or lifecycle hooks configured via `/cortex-forge-setup`.
+**Crystallize** — before responding in any session, read `.hot/MEMORY.md` to resume with full context. After milestones, invoke `/cortex-crystallize` to snapshot current state and append a history entry. The file has two zones: a mutable `Current state` (max 5 pending items, max 3 active decisions) and an append-only `History`. Works from any repo — when invoked outside the vault, it snapshots that project and optionally updates the linked vault page. Three automation levels are available: manual invocation, `AGENTS.md` instructions, or lifecycle hooks configured via `/cortex-forge-setup`.
 
 ## Agent compatibility
 

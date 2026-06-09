@@ -20,7 +20,7 @@ find_git_root_dir() {
 }
 
 GIT_ROOT=$(find_git_root_dir)
-HOT="$GIT_ROOT/.hot/$(basename "$GIT_ROOT").md"
+HOT="$GIT_ROOT/.hot/MEMORY.md"
 
 [ ! -s "$HOT" ] && echo '{"injectSteps":[]}' && exit 0
 

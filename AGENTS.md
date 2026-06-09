@@ -6,19 +6,18 @@ See `CODEX.md` for vault context: mission, owner, domains, vocabulary, and out-o
 
 ## Crystallize protocol — MANDATORY
 
-`.hot/{project}.md` exists in this vault. It has two zones: a mutable `Current state` (`### Pending` items and `### Active decisions`) and an append-only `History` of session snapshots. Both must inform every session.
+`.hot/MEMORY.md` exists in this vault. It has two zones: a mutable `Current state` (`### Pending` items and `### Active decisions`) and an append-only `History` of session snapshots. Both must inform every session.
 
 **Before your first response to the user, in any session that starts in this vault, you MUST:**
 
-1. Detect the project name = `basename` of your current working directory.
-2. Read `.hot/{project}.md` in full.
-3. If `CODEX.md` exists at the vault root, read it — it provides context that grounds relevance, vocabulary, and tone decisions throughout the session.
-4. Treat the loaded content as required context — not optional background.
-5. If the file contains `### Pending` items, acknowledge them in your first message or surface them before starting new work.
+1. Read `.hot/MEMORY.md` in full.
+2. If `CODEX.md` exists at the vault root, read it — it provides context that grounds relevance, vocabulary, and tone decisions throughout the session.
+3. Treat both as required context — not optional background.
+4. If `MEMORY.md` contains `### Pending` items, acknowledge them in your first message or surface them before starting new work.
 
 **Failure to load hot cache before first response is a protocol violation**, equivalent to ignoring `CLAUDE.md` in Claude Code.
 
-**After milestones**, invoke `/cortex-crystallize` to snapshot progress back into `.hot/{project}.md`. The `.hot/` directory is gitignored — it's a local agent artifact, not versioned content.
+**After milestones**, invoke `/cortex-crystallize` to snapshot progress back into `.hot/MEMORY.md`. The `.hot/` directory is gitignored — it's a local agent artifact, not versioned content.
 
 **Compliance criterion:** after invoking `/cortex-crystallize`, confirm what changed — state which items moved to Current state and what was appended to History. If the session produced analysis or synthesis worth persisting, propose `/cortex-imprint` before closing.
 
@@ -66,7 +65,7 @@ Trigger phrases include: "what does the vault say about", "recall", "what do we 
 - `cortex-prune` — Health check: detect orphans, dead links, stale claims, missing provenance
 
 **Global** (`skills/{name}/SKILL.md` — installed to `~/.agents/skills/` via `/cortex-forge-setup`):
-- `/cortex-crystallize` — Snapshot session context into `.hot/{project}.md`, works from any repo
+- `/cortex-crystallize` — Snapshot session context into `.hot/MEMORY.md`, works from any repo
 - `/cortex-forge-setup` — Initial setup: configure vault path and install global skills
 
 ## Vault architecture

@@ -20,7 +20,6 @@ find_git_root_dir() {
 }
 
 GIT_ROOT=$(find_git_root_dir)
-PROJECT=$(basename "$GIT_ROOT")
 
 if [ -z "$TRANSCRIPT_PATH" ] || [ ! -f "$TRANSCRIPT_PATH" ]; then
   TRANSCRIPT_PATH=$(ls -t "$HOME/.claude/projects/"*/*.jsonl 2>/dev/null | head -1)
@@ -35,7 +34,7 @@ if ! grep -qF '.hot/' "$GIT_ROOT/.gitignore" 2>/dev/null; then
 fi
 
 NOW=$(date '+%Y-%m-%d %H:%M %Z')
-HOT_FILE="$GIT_ROOT/.hot/$PROJECT.md"
+HOT_FILE="$GIT_ROOT/.hot/MEMORY.md"
 TMP=$(mktemp -t hot-cache.XXXXXX) || exit 0
 trap 'rm -f "$TMP"' EXIT
 

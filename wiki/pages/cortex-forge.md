@@ -21,7 +21,7 @@ confidence: high
 
 ## Goal
 
-Vault with a hot cache protocol that synchronizes context across multiple agents (Claude Code, Codex, Antigravity, CommandCode) without token bloat at session start. Synthesized knowledge lives in `wiki/`; ephemeral per-project context lives in `.hot/{project}.md`; originals in `.raw/`.
+Vault with a hot cache protocol that synchronizes context across multiple agents (Claude Code, Codex, Antigravity, CommandCode) without token bloat at session start. Synthesized knowledge lives in `wiki/`; ephemeral per-project context lives in `.hot/MEMORY.md`; originals in `.raw/`.
 
 ## Stack / Technologies
 - 5 layers: `.raw/`, `wiki/`, `.hot/`, `wiki/meta/`, `skills/`
@@ -58,7 +58,7 @@ Vault with a hot cache protocol that synchronizes context across multiple agents
 ## Recurring issues
 
 - `cortex-recall` fails in all agents tested during session — they fall back to manual search despite MANDATORY in `AGENTS.md`. Root cause pending diagnosis.
-- Codex hooks point to `~/.claude/hooks/` by pending convention; functional but not idiomatic.
+- Codex hooks should use a stable global directory such as `~/.codex/hooks/`, with scripts that resolve the active vault at runtime. Pointing Codex at a single vault-local path breaks the multi-vault and off-vault setup.
 - Antigravity Layer 2 installed but not verified in a real session.
 
 ## Sources

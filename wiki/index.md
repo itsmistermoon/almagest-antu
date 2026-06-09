@@ -31,11 +31,14 @@
 - [[wiki/sources/understand-anything]] — README from github.com/Lum1104/Understand-Anything (ingested 2026-06-08)
 - [[wiki/sources/antigravity-cli-permissions]] — Permissions per action (`read_file`, `write_file`, `command`, etc.) and preset modes
 - [[wiki/sources/antigravity-cli-sandbox]] — OS-level sandbox: nsjail/sandbox-exec/AppContainer, configuration, and controlled escape
+- [[wiki/sources/antigravity-cli-features]] — CLI features: plugins, sandbox, subagents, approvals
 - [[wiki/sources/antigravity-cli-settings]] — All `settings.json` keys with types, defaults, and descriptions
 - [[wiki/sources/antigravity-cli-plugins]] — Plugin system: bundle structure, `agy plugin *` subcommands, skills and MCP per plugin
 - [[wiki/sources/antigravity-cli-statusline]] — Status line: JSON payload, configuration in `settings.json`, reference script
+- [[wiki/sources/antigravity-cli-tutorial]] — Onboarding flow: launch, review artifacts, and verify output
 - [[wiki/sources/antigravity-cli-title]] — Terminal title: same payload as statusline, ANSI stripping, `/title` toggle
 - [[wiki/sources/antigravity-cli-best-practices]] — Best practices: minimal permissions, AGENTS.md, checkpoints, subagents
+- [[wiki/sources/antigravity-cli-using]] — Daily usage: settings, slash commands, keybindings, and session control
 - [[wiki/sources/antigravity-cli-troubleshooting]] — Troubleshooting: auth, sandbox, permissions, MCP, performance
 - [[wiki/sources/antigravity-cli-reference]] — Full reference: slash commands, keybindings, settings.json keys
 - [[wiki/sources/antigravity-cli-hands-on-codelab]] — Codelab step 5: installation, CLI flags (`-p` non-interactive mode), config, models

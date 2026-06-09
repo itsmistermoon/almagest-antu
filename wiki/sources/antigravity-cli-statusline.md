@@ -12,11 +12,11 @@ raw: .raw/antigravity-cli/cli-statusline.md
 
 # Status line customization
 
-Bottom-of-TUI status indicator showing active agent cycles, workspace, context window usage, and background tasks. Toggle built-in metrics or pipe live state to a custom script.
+Bottom-of-TUI status indicator showing active agent cycles, workspace, context-window usage, and background tasks. Users can toggle built-in metrics or pipe live state to a custom script.
 
 ## Interactive toggling
 
-`/statusline` → **Status Picker Panel** overlay. `↑`/`↓` to toggle metrics (model, task counters, context %), `Enter` to commit, `Esc` to cancel.
+`/statusline` opens the **Status Picker Panel** overlay. Use `↑`/`↓` to toggle metrics, `Enter` to commit, and `Esc` to cancel.
 
 ## Custom status line scripting
 
@@ -31,7 +31,7 @@ Add to `~/.gemini/antigravity-cli/settings.json`:
 }
 ```
 
-State JSON piped to `stdin`, formatted string read from `stdout`, rendered in prompt's status line. Full ANSI colors supported.
+The CLI pipes JSON state to `stdin`, reads a formatted string from `stdout`, and renders it in the prompt status line. Full ANSI colors are supported.
 
 ## JSON payload fields
 
@@ -105,3 +105,7 @@ chmod +x ~/.gemini/antigravity-cli/statusline.sh
 - [Terminal Title Customization](./antigravity-cli-title.md) — same JSON, window header target
 - [Settings](./antigravity-cli-settings.md) — keybindings + buffers
 - [Permissions & Sandbox](./antigravity-cli-permissions.md)
+
+---
+
+- 2026-06-08 [Claude Code]: Re-synthesized from the official status-line page after SPA fallback handling

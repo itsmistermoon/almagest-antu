@@ -14,6 +14,49 @@ Operations: `ingest`, `imprint`, `prune`, `query`
 
 <!-- entries below -->
 
+## [2026-06-08] ingest | Antigravity CLI docs: full re-assimilation
+
+Rebuilt the Antigravity CLI tutorial, plugins, statusline, using, and features pages from the official documentation routes using the SPA fallback flow required by `cortex-assimilate`.
+
+Updated:
+- `wiki/sources/antigravity-cli-tutorial.md`
+- `wiki/sources/antigravity-cli-using.md`
+- `wiki/sources/antigravity-cli-features.md`
+- `wiki/sources/antigravity-cli-plugins.md`
+- `wiki/sources/antigravity-cli-statusline.md`
+- `wiki/index.md`
+
+Project linking: skipped; these sources describe the Antigravity CLI docs surface, not an active user project.
+
+Agent: Claude Code
+
+## [2026-06-08] ingest | Antigravity CLI docs: tutorial, using, features
+
+Sources checked:
+- `https://antigravity.google/docs/cli-plugins` already existed as `wiki/sources/antigravity-cli-plugins.md`
+- `https://antigravity.google/docs/cli-statusline` already existed as `wiki/sources/antigravity-cli-statusline.md`
+
+Created:
+- `wiki/sources/antigravity-cli-tutorial.md`
+- `wiki/sources/antigravity-cli-using.md`
+- `wiki/sources/antigravity-cli-features.md`
+
+Updated:
+- `wiki/index.md` (Sources)
+
+Project linking: skipped; these pages document the Antigravity CLI surface, not an active user project.
+
+Agent: Claude Code
+
+## [2026-06-08] query | Codex hook placement clarified
+
+Updated `wiki/concepts/agent-hook-compatibility.md` and the `cortex-forge-setup` skill to reflect the multi-vault Codex setup:
+- Codex hooks live in a stable global folder: `~/.codex/hooks/`
+- The hook scripts are vault-aware at runtime and resolve the active vault dynamically
+- Codex should not point directly at a single vault path
+
+This preserves multi-vault compatibility and keeps the same Codex configuration usable from non-vault projects.
+
 ## [2026-06-08] ingest | CommandCode TASTE — 4 official sources
 
 Sources: `.raw/commandcode-taste-blog.md`, `.raw/commandcode-taste-docs.md`, `.raw/commandcode-taste-manage.md`, `.raw/commandcode-taste-commands.md`

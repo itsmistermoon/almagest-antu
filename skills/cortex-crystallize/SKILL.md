@@ -1,12 +1,12 @@
 ---
 name: cortex-crystallize
-description: Snapshot session context into .hot/{project}.md. Works from any repo — inside the vault or from a linked project.
+description: Snapshot session context into .hot/MEMORY.md. Works from any repo — inside the vault or from a linked project.
 argument-hint: "[vault-name] [project-name]"
 ---
 
 Begin your response by outputting exactly: `Crystallizing memory...`
 
-Save a session snapshot to `.hot/{project}.md` in the active repo (the nearest `.git`), so any agent can resume without losing context.
+Save a session snapshot to `.hot/MEMORY.md` in the active repo (the nearest `.git`), so any agent can resume without losing context.
 
 ## Modes
 
@@ -30,9 +30,9 @@ Behavior depends on where the skill is invoked:
    - If active repo contains `wiki/`, `AGENTS.md`, and `skills/` → **it IS a vault** → standard mode.
    - Otherwise → cross-vault mode (snapshot project repo + update linked vault page).
 4. Create `.hot/` if it doesn't exist. Add `.hot/` to `.gitignore` if not already there.
-5. Read `.hot/{project}.md` in full if it exists.
+5. Read `.hot/MEMORY.md` in full if it exists.
 6. **Update current state** (see limits below). Update `agent:` and `updated:` in the file frontmatter to reflect the current agent and date.
-7. **Append snapshot to history** using the template.
+7. **Append snapshot to history** using the format in `MEMORY-FORMAT.md` (co-located with this skill).
 8. If cross-vault mode: **run cross-vault update** (see section below).
 
 Do not include tokens, API keys, or sensitive information.

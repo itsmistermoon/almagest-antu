@@ -58,20 +58,21 @@ Scripts must live in `~/.gemini/config/hooks/`, not in `~/.claude/hooks/`.
 Configure in `~/.codex/hooks.json`:
 ```json
 {
-  "SessionStart": [{ "command": "bash {vault}/bin/hooks/load-hot-cache.sh" }],
-  "Stop":         [{ "command": "bash {vault}/bin/hooks/update-hot-cache.sh" }]
+  "SessionStart": [{ "command": "bash ~/.codex/hooks/cortex-reactivate.sh" }],
+  "Stop":         [{ "command": "bash ~/.codex/hooks/cortex-crystallize.sh" }]
 }
 ```
 
 **Findings validated in session (2026-06-08):**
-- Wire format identical to Claude Code — the `load-hot-cache.sh` script is compatible without modifications.
+- Use a stable global hook directory (`~/.codex/hooks/`) rather than a vault-local path. The scripts must be vault-aware at runtime so the same Codex setup works across multiple vaults and from non-vault projects.
+- Wire format identical to Claude Code — the `cortex-reactivate.sh` script is compatible without modifications.
 - `SessionStart` may fire more than once per session: it has a `source` field with values `startup`, `resume`, `clear`. Filter by `source` in the matcher if you want to limit to the real start.
 - The `hook context:` is visible in chat by design in the Codex UI. There is no mechanism to suppress it today (`suppressOutput` is reserved for future use). The context reaches the model correctly — the noise is visual only.
 - **Context cost**: `additionalContext` consumes tokens from the session context window like any message. For a hot cache of a few KB it is negligible with 200k+ token windows, but it is a real cost shared with Claude Code and every Layer 2 implementation.
 - First run requires manual hook approval (`Trust: New hook - review required`).
 
 ### CommandCode
-Has no SessionStart hook. Context is injected via `AGENTS.md`: the global rule to read `.hot/{project}.md` on startup is fulfilled by the agent if it reads the instructions file. Closing is automatic via the `Stop` hook.
+Has no SessionStart hook. Context is injected via `AGENTS.md`: the global rule to read `.hot/MEMORY.md` on startup is fulfilled by the agent if it reads the instructions file. Closing is automatic via the `Stop` hook.
 
 Configure under the `hooks` key in `settings.json`:
 - **User scope**: `~/.commandcode/settings.json` (not committed; applies to all of the user's projects)
@@ -136,7 +137,7 @@ Patterns extracted from official CommandCode examples; the output mechanism vari
 
 ## Universal fallback rule
 
-If an agent has no startup hook, `AGENTS.md` acts as a fallback: the explicit instruction to read `.hot/{project}.md` is interpreted by any agent that processes the instructions file before operating. It is less reliable than a hook (depends on the agent respecting AGENTS.md), but covers the gap.
+If an agent has no startup hook, `AGENTS.md` acts as a fallback: the explicit instruction to read `.hot/MEMORY.md` is interpreted by any agent that processes the instructions file before operating. It is less reliable than a hook (depends on the agent respecting AGENTS.md), but covers the gap.
 
 ---
 

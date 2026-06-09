@@ -100,51 +100,38 @@ Always end with the relevant subset of step 9 (confirmation).
    - Ask: "Where should the rule live?"
      - **Per-project** (`.commandcode/taste/` inside this vault) — applies only when working in this vault directory.
      - **Global** (`~/.commandcode/taste/`) — applies in every project on this machine.
+   - Read the content from `TASTE-FORMAT.md` (co-located with this skill) and use the matching variant (per-project or global).
    - Create or append to the target file:
      - Per-project → `.commandcode/taste/taste.md`
      - Global → `~/.commandcode/taste/taste.md`
-   - **Per-project content** (includes `cortex-prune`, which is vault-local):
-     ```markdown
-     ## Cortex Forge Skills
-     - When answering questions about project decisions, architecture, or history, invoke /cortex-recall first. Confidence: 0.85
-     - When referencing vault knowledge (wiki pages, concepts, entities), use /cortex-recall to retrieve accurate, cited content. Confidence: 0.85
-     - When the user provides a URL or file to add to the vault, use /cortex-assimilate. Confidence: 0.85
-     - When a valuable insight, decision, or synthesis emerges from a session, archive it with /cortex-imprint. Confidence: 0.85
-     - At the end of a working session, snapshot context to the hot cache with /cortex-crystallize. Confidence: 0.85
-     - When the vault accumulates stale or redundant pages, use /cortex-prune to clean up. Confidence: 0.85
-     ```
-   - **Global content** (includes `cortex-prune` scoped to vault directories):
-     ```markdown
-     ## Cortex Forge Skills
-     - When answering questions about project decisions, architecture, or history, invoke /cortex-recall first. Confidence: 0.85
-     - When referencing vault knowledge (wiki pages, concepts, entities), use /cortex-recall to retrieve accurate, cited content. Confidence: 0.85
-     - When the user provides a URL or file to add to the vault, use /cortex-assimilate. Confidence: 0.85
-     - When a valuable insight, decision, or synthesis emerges from a session, archive it with /cortex-imprint. Confidence: 0.85
-     - At the end of a working session, snapshot context to the hot cache with /cortex-crystallize. Confidence: 0.85
-     - When working inside a Cortex Forge vault and it accumulates stale or redundant pages, use /cortex-prune to clean up. Confidence: 0.85
-     ```
-     Note: TASTE confidence scores are normally auto-learned by `taste-1` from observed behavior. These are seed values — the system will adjust them over time based on actual usage.
    - Create the `taste/` directory if it doesn't exist.
-   - If the file already contains a `## Cortex Recall` section, skip — do not duplicate.
+   - If the file already contains a `## Cortex Forge Skills` section, skip — do not duplicate.
 
-8. **Set default vault** — if more than one vault is registered:
+8. **Create CODEX.md** — ask: "Create CODEX.md to configure vault context? (recommended)"
+   If yes:
+   - Copy `CODEX-FORMAT.md` (co-located with this skill) to `{vault}/CODEX.md`.
+   - Tell the user: "Edit CODEX.md to describe your vault's mission, domains, vocabulary, and out-of-scope rules."
+   - If `CODEX.md` already exists, skip — do not overwrite.
+
+9. **Set default vault** — if more than one vault is registered:
    - Ask: "Which vault should be the default? ({list of registered names})"
    - Update `default:` in the config with the chosen name.
    - If only one vault is registered, set it as default automatically without asking.
 
-9. **Confirm result**:
+10. **Confirm result**:
    - Registered vaults: list all entries in `vaults:` with their paths, marking the default
    - Skills installed: `cortex-crystallize`, `cortex-forge-setup`, `cortex-recall`, `cortex-assimilate`, `cortex-imprint`
    - Claude Code symlinks: created / up to date / skipped
    - Hooks: configured / skipped / manual instructions shown
    - TASTE rule: installed per-project / global / skipped — show exact path
-   - Next step: invoke `/cortex-crystallize` at the end of any project session
+   - CODEX.md: created / already existed / skipped
+   - Next step: edit `CODEX.md` if just created; invoke `/cortex-crystallize` at the end of any project session
 
 ## Hook behavior
 
 The hooks provide automatic (no-invoke) session memory:
-- **SessionStart** (`cortex-reactivate.sh`) — reads `.hot/{project}.md` and injects it as context
-- **PreCompact / Stop** (`cortex-crystallize.sh`) — appends a snapshot to `.hot/{project}.md`
+- **SessionStart** (`cortex-reactivate.sh`) — reads `.hot/MEMORY.md` and injects it as context
+- **PreCompact / Stop** (`cortex-crystallize.sh`) — appends a snapshot to `.hot/MEMORY.md`
 
 The hook writes a minimal snapshot (files touched, external actions). For a full snapshot with Current state updated, invoke `/cortex-crystallize` manually — hooks and manual invocation are compatible and complementary.
 

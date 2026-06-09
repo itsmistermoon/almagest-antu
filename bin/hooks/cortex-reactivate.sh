@@ -17,8 +17,7 @@ find_git_root_dir() {
 }
 
 GIT_ROOT=$(find_git_root_dir)
-PROJECT=$(basename "$GIT_ROOT")
-HOT="$GIT_ROOT/.hot/$PROJECT.md"
+HOT="$GIT_ROOT/.hot/MEMORY.md"
 
 [ ! -s "$HOT" ] && exit 0
 

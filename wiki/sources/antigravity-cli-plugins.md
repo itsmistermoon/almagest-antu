@@ -12,7 +12,7 @@ raw: .raw/antigravity-cli/cli-plugins.md
 
 # Plugins & skills
 
-Two customization layers: **Plugins** (namespaced bundles of skills + subagents + MCP + hooks) and **Skills** (declarative markdown blueprints that auto-convert into slash commands).
+Two customization layers are documented here: **Plugins** and **Skills**. Plugins bundle related capabilities, while skills are markdown definitions that surface as slash commands.
 
 ## Antigravity plugins
 
@@ -34,17 +34,17 @@ Two customization layers: **Plugins** (namespaced bundles of skills + subagents 
 |---|---|
 | `agy plugin list` | Show active packages and loaded components |
 | `agy plugin install /path` | Stage a local or remote package into the profile |
-| `agy plugin disable <name>` | Suspend a plugin's tools without deleting assets |
+| `agy plugin disable <name>` | Suspend a plugin without deleting its assets |
 | `agy plugin enable <name>` | Re-enable a suspended plugin |
 | `agy plugin uninstall <name>` | Purge the package directory and registries |
 
 ## Agent skills
 
-Declarative markdown files → slash commands inside the TUI (e.g., `/refactor-ui`).
+Declarative markdown files become slash commands inside the TUI (for example, `/refactor-ui`).
 
 ### Local workspace skills
 
-1. Create `.agents/skills/` at project root.
+1. Create `.agents/skills/` at the project root.
 2. Draft `<name>.md`:
    ```yaml
    ---
@@ -56,18 +56,18 @@ Declarative markdown files → slash commands inside the TUI (e.g., `/refactor-u
 
 ### Global skills
 
-Place `.md` files in `~/.gemini/antigravity-cli/skills/` — auto-imported as global slash commands on every `agy` launch.
+Place `.md` files in `~/.gemini/antigravity-cli/skills/` so they are auto-imported as global slash commands on every `agy` launch.
 
 ## Hooks
 
-Pre/post-execution interceptors. Use cases: pre-flight checks, post-format (`prettier` after writes).
+Pre- and post-execution interceptors. Use cases include pre-flight checks and post-format steps such as running `prettier` after writes.
 
 - Defined in a plugin's `hooks.json` or in primary `settings.json`.
 - Inspect active hooks via `/hooks` in the TUI.
 
 ## Model Context Protocol (MCP)
 
-Open standard for foundation models to interface with local APIs, parsers, custom tools. Supports local processes and remote hosts.
+Open standard for foundation models to interface with local APIs, parsers, and custom tools. Supports local processes and remote hosts.
 
 ### Accessing the MCP manager
 
@@ -97,5 +97,9 @@ Open standard for foundation models to interface with local APIs, parsers, custo
 ## See also
 
 - [Migration from Gemini CLI](./gcli-migration) — legacy extension conversion
-- [Troubleshooting](./antigravity-cli-troubleshooting.md) — hook/lockout/network errors
+- [Troubleshooting](./antigravity-cli-troubleshooting.md) — hook, lockout, and network errors
 - [Permissions & Sandbox](./antigravity-cli-permissions.md) — containment rings
+
+---
+
+- 2026-06-08 [Claude Code]: Re-synthesized from the official plugins page after SPA fallback handling

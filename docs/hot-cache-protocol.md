@@ -4,7 +4,7 @@ The Hot Cache Protocol is cortex-forge's mechanism for session memory and multi-
 
 ## The file
 
-Each project gets a single file: `.hot/{project}.md`
+Each project gets a single file: `.hot/MEMORY.md`
 
 - Lives in the working directory (next to `.git/`)
 - **Gitignored** — it's a local agent artifact, not versioned content
@@ -38,17 +38,17 @@ Each session appends a new snapshot. The file accumulates history across agents 
 
 ### Manual (universal)
 
-Any agent can write a snapshot via the `/cortex-crystallize` skill. No configuration required. The agent summarizes the session and appends it to `.hot/{project}.md`.
+Any agent can write a snapshot via the `/cortex-crystallize` skill. No configuration required. The agent summarizes the session and appends it to `.hot/MEMORY.md`.
 
 Activation: invoke `/cortex-crystallize` after completing a milestone, or ask the agent to "save context" / "update the hot cache".
 
-This mode works with **any** agent that can read markdown instructions: if `AGENTS.md` instructs the agent to read `.hot/{project}.md` on session start and write on significant milestones, the protocol operates — no hooks, no config.
+This mode works with **any** agent that can read markdown instructions: if `AGENTS.md` instructs the agent to read `.hot/MEMORY.md` on session start and write on significant milestones, the protocol operates — no hooks, no config.
 
 ### Automatic via hooks (optional, recommended)
 
 Agents that expose lifecycle hooks can automate hot cache read/write entirely. The pattern is:
 
-- **Session start**: read `.hot/{project}.md`, inject as context
+- **Session start**: read `.hot/MEMORY.md`, inject as context
 - **Session end**: extract work done from the transcript, write snapshot
 
 Reference implementations are in `bin/hooks/`:
@@ -82,10 +82,10 @@ Agent-specific configs:
 The protocol is agent-agnostic by design. Three properties make it work across agents:
 
 **1. Shared filesystem, no shared state in the repo**
-`.hot/` is gitignored. Any agent running on the same machine shares the same `.hot/{project}.md` and reads each other's session history. There's no sync protocol, no server, no API — just a file.
+`.hot/` is gitignored. Any agent running on the same machine shares the same `.hot/MEMORY.md` and reads each other's session history. There's no sync protocol, no server, no API — just a file.
 
 **2. Self-describing**
-An agent that has never seen the project before can read `AGENTS.md`, find the instruction to read `.hot/{project}.md`, and bootstrap itself from the accumulated history. No human coordination needed.
+An agent that has never seen the project before can read `AGENTS.md`, find the instruction to read `.hot/MEMORY.md`, and bootstrap itself from the accumulated history. No human coordination needed.
 
 **3. Graceful degradation**
 The protocol has three levels of automation:
@@ -103,7 +103,7 @@ All three levels produce compatible `.hot/` files. A session started manually an
 ## Setup
 
 1. Add `.hot/` to `.gitignore`
-2. Copy `AGENTS.md` to your vault root — it instructs agents to read `.hot/{project}.md` on session start
+2. Copy `AGENTS.md` to your vault root — it instructs agents to read `.hot/MEMORY.md` on session start
 3. Optionally configure hooks from `bin/hooks/` for your agent
 
 That's the full setup. The protocol starts working as soon as an agent reads `AGENTS.md`.
