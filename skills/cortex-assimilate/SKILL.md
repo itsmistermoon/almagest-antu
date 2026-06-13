@@ -46,6 +46,18 @@ Ingest a new source and synthesize wiki pages from it.
    Saving an HTML shell with no body text to `.raw/` is a protocol violation.
    If in doubt whether content is readable: paste the first 200 characters and ask yourself "would a reader understand anything from this?" — if no, run SPA detection.
 
+   **4a. Sanitization check** — before saving to `.raw/`, scan the content for injection and exfiltration vectors:
+
+   Run `bash {vault}/bin/cortex-sanitize.sh <temp-file>` and inspect the JSON output.
+
+   If `findings` is non-empty:
+   - List each finding to the user (type, label, count)
+   - Ask: "This content has [N] findings (see above). Proceed with ingestion?" Default is **yes** — findings don't block, they inform.
+   - If the user declines, stop and do not save to `.raw/`.
+   - If the user accepts, save to `.raw/` as normal and note the findings in the source page's changelog.
+
+   If `rg` is not available or the script errors: skip the check silently (fail-open).
+
 5. **Synthesize** — determine what to create (see criteria below) and create pages at the correct path inside the resolved vault.
 
 6. Update `{vault}/wiki/index.md` with new pages.

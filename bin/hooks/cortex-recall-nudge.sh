@@ -1,7 +1,13 @@
 #!/bin/bash
-# cortex-recall-nudge.sh — PreToolUse hook (Bash matcher only, v1: Claude Code only)
+# cortex-recall-nudge.sh — PreToolUse hook (Bash matcher, Claude Code + CommandCode)
 # Nudges toward /cortex-recall when a Bash search command targets vault content
 # (wiki/ or .raw/). Once per session. Every branch fails open (exit 0).
+#
+# I/O schema validated against CommandCode 0.35.0 official docs (2026-06-13):
+# - Input: payload.tool_input.command (same field path as Claude Code) ✅
+# - Output: hookSpecificOutput.hookEventName + additionalContext (same format) ✅
+# To install on CommandCode, add to .commandcode/settings.local.json with a
+# Bash matcher (see agent-hook-compatibility.md for the wire format).
 #
 # Scope note: covers the Bash-search bypass only. The no-tool-call parametric
 # bypass (agent answers from active context) remains covered solely by the

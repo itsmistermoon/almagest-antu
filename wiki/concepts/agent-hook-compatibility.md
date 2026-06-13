@@ -103,6 +103,26 @@ Example (project scope) for the hot cache:
 
 **Implication**: in CommandCode the hot cache is write-only in the first session. From the second session onward, the previous context is already in `.hot/` and `AGENTS.md` instructs the agent to read it — the cycle closes via instruction, not via hook.
 
+**Recall nudge port (experimental, gated):** `bin/hooks/cortex-recall-nudge.sh` is I/O-compatible with CommandCode without any script changes — both use `payload.tool_input.command` on input and `hookSpecificOutput.additionalContext` on output. To install on CommandCode, add to `.commandcode/settings.local.json`:
+```json
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "shell",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash {vault}/bin/hooks/cortex-recall-nudge.sh"
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+The port is gated on the recall nudge experiment result in AGENT-LOG — do not install until the kill criterion resolves.
+
 ### CommandCode Wire Format I/O
 
 Hooks receive JSON on `stdin` with session context, tool details, and environment info. They return JSON on `stdout` with optional fields:
