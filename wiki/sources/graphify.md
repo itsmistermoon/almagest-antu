@@ -53,13 +53,35 @@ Supports 20+ platforms with per-platform install commands (`graphify install --p
 
 2. **Trae explicitly noted as not supporting PreToolUse hooks** — AGENTS.md is the always-on mechanism. Validates cortex-forge's design of having AGENTS.md as universal fallback.
 
-3. **CodeBuddy** uses the same Agent tool and PreToolUse hook mechanism as Claude Code. Clone of the Claude Code approach.
+3. **CodeBuddy** uses the same Agent tool and PreToolUse hook mechanism as Claude Code. Clone of the Claude Code approach — cortex-forge could support it with minimal effort.
 
 4. **`graphify install`** is a CLI command that writes skill files, hook configs, and AGENTS.md per platform — same concept as `cortex-forge-setup` but more granular (per-platform commands vs one unified setup).
 
 5. **Token benchmark** (71.5x reduction) validates the value of pre-built knowledge structures vs raw file reads — similar value proposition to cortex-forge's wiki synthesis.
 
 6. **The "always-on" guarantee** uses the same insight as cortex-forge's "reliable consumption channel" — hooks for platforms that support them, persistent instructions for those that don't.
+
+## Explicit paths and hook configs per platform (actionable for cortex-forge)
+
+| Platform | Skill path | Hook config | Mechanism |
+|----------|-----------|-------------|-----------|
+| Claude Code | `~/.claude/skills/` or `.claude/skills/graphify/SKILL.md` | PreToolUse (`.claude/settings.local.json`) | Hooks before Bash search + Read/Glob |
+| CodeBuddy | `CODEBUDDY.md` | `.codebuddy/settings.json` | Same PreToolUse as Claude Code |
+| Codex | `AGENTS.md` | `.codex/hooks.json` | PreToolUse before every Bash call |
+| Kilo Code | `~/.config/kilo/skills/graphify/SKILL.md` | `.kilo/kilo.json` + `.kilo/plugins/graphify.js` | Native `tool.execute.before` plugin |
+| Cursor | `.cursor/rules/graphify.mdc` | none needed | `alwaysApply: true` |
+| Gemini CLI | `GEMINI.md` | BeforeTool hook | Hooks before search calls |
+| Antigravity | `.agents/rules` + `.agents/workflows` | BeforeTool hook | Same as Gemini CLI |
+| Trae | `AGENTS.md` | none (no PreToolUse support) | AGENTS.md fallback |
+| Kiro IDE/CLI | `.kiro/skills/` + `.kiro/steering/graphify.md` | `.kiro/` native config | Skill + steering |
+| Devin CLI | skill file + `.windsurf/rules/graphify.md` | none | Persistent rules |
+| Project-scoped | `.claude/skills/` or `.agents/skills/` under CWD | — | Universal path |
+
+**CommandCode is NOT in the supported list.** This is a gap cortex-forge fills.
+
+## API backends (for headless extraction)
+
+ANTHROPIC_API_KEY (Claude), GEMINI_API_KEY (Gemini), OPENAI_API_KEY (OpenAI), DEEPSEEK_API_KEY (DeepSeek), MOONSHOT_API_KEY (Kimi), OLLAMA_BASE_URL (Ollama local), AWS_* (Bedrock via IAM), AZURE_OPENAI_API_KEY + AZURE_OPENAI_ENDPOINT (Azure). claude CLI binary also supported (no API key, uses Claude Pro subscription).
 
 ## Connections
 - Related concepts: [[wiki/concepts/agent-hook-compatibility]], [[wiki/concepts/progressive-disclosure-hooks]]
