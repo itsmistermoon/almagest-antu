@@ -52,7 +52,18 @@ Health check del vault activo en dos capas: estructural (script) y semántica (a
 
    This file is the session-startup health signal read in `AGENTS.md`. It is gitignored — a local artifact, not versioned content. This schema is canonical: do not add fields that have no consumer in `AGENTS.md` or in this skill.
 
-5. **Ask** whether to proceed with corrections per the auto-correct / requires-confirmation rules below.
+5. **Consolidate findings** — spawn one subagent with all Layer 1 output + all Layer 2 verdicts collected so far:
+
+   > "You are synthesizing the results of a vault health check. Here is the Layer 1 structural report: {layer1_json}. Here are the Layer 2 semantic findings: {layer2_findings}. Produce a single grouped report with this structure:
+   > - HIGH findings (list each: path, problem, proposed action)
+   > - MEDIUM findings (same)
+   > - LOW findings (same)
+   > - Summary line: '{N} HIGH / {N} MEDIUM / {N} LOW findings'
+   > Be concise. Do not add explanation beyond what's needed to act on each finding."
+
+   The main agent presents this consolidated report verbatim — it does not re-process or summarize the subagent's output.
+
+6. **Ask** whether to proceed with corrections per the auto-correct / requires-confirmation rules below.
 
 ---
 
