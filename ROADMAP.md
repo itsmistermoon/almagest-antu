@@ -104,6 +104,37 @@ Optimización del sistema mismo: analiza transcripts donde fallaron skills de co
 
 **Referencia:** `wiki/concepts/skillopt-text-space-optimization.md`, `wiki/reference/skillopt-cli.md`
 
+## Fase 3.6 — Retrieval semántico (sqlite-vec)
+
+Diseño completo en `CORTEX_FORGE_PLAN.md`. Esta fase desbloquea Fase 4: sin vector retrieval, `cortex-recall` no puede escalar a vaults de >50 páginas.
+
+**Stack:** `sqlite-vec` + backend de embeddings seleccionado por plataforma. No requiere Ollama ni proceso externo.
+
+**Selección de backend (encapsulada en `.cortex/embeddings.py`):**
+- Apple Silicon (`Darwin` + `arm64`): `mlx-embeddings` con `mlx-community/nomic-embed-text-v1.5` — más rápido vía Neural Engine; fallback automático a `sentence-transformers` si mlx no está instalado.
+- Linux / Windows / Intel Mac: `sentence-transformers` con `nomic-ai/nomic-embed-text-v1.5`, `normalize_embeddings=True`. Fallback universal, sin prerequisitos.
+
+**Dependencias** (`pyproject.toml`): base `sentence-transformers>=2.7.0` + `sqlite-vec>=0.1.0`; opcional `apple-silicon`: `mlx>=0.5.0` + `mlx-embeddings>=0.0.8`.
+
+### Etapa 1 — Índice vectorial local
+
+- [ ] Crear `.cortex/embeddings.py` — módulo compartido que exporta `load_embedding_model()` y `embed()`; encapsula toda la lógica de detección de plataforma y selección de backend; el resto del sistema importa desde aquí, sin duplicar detección
+- [ ] Actualizar `cortex-forge-setup` (skill): detectar OS/arch → instalar dependencias base + opcionales Apple Silicon → descargar pesos (~270 MB) → reportar qué backend quedó activo
+- [ ] Crear `scripts/cortex-index.py` — indexador completo (`--full`) e incremental (`--file`); chunker por sección `##` (~300 tokens); usa `embed()` desde `.cortex/embeddings.py`; INSERT en `.cortex/vault.db`
+- [ ] Crear `.cortex/cortex-search.py` — retrieval vía `vec_distance_dot`, invocable por bash: `python .cortex/cortex-search.py "query" --top-k 5`
+- [ ] Hook post-commit: re-indexar solo archivos `wiki/` modificados en el commit
+- [ ] Modificar `cortex-recall/SKILL.md`: invocar `cortex-search.py` como primer paso; el agente recibe top-k paths y trabaja sobre ese conjunto acotado
+- [ ] Agregar `.cortex/vault.db` y `.cortex/__pycache__/` a `.gitignore`
+- [ ] Validar en second-brain: indexación inicial + query de prueba + indexación incremental tras `cortex-assimilate`; verificar que el backend reportado coincide con la plataforma
+
+### Etapa 2 — MCP server (gate: Etapa 1 validada + vault usado desde >1 cliente)
+
+No implementar antes. Ver diseño completo en `CORTEX_FORGE_PLAN.md` → sección "Etapa 2".
+
+- [ ] Crear `.cortex/server.py` con FastMCP — 5 tools: `vault_ingest`, `vault_query`, `vault_imprint`, `session_snapshot`, `vault_prune`
+- [ ] Registrar en `.claude/settings.json` del vault (stdio transport)
+- [ ] Verificar degradación limpia: vault sigue siendo funcional sin MCP leyendo `AGENTS.md` directamente
+
 ## Fase 4 — Inteligencia acumulada
 
 - [ ] `cortex-recall` con síntesis cross-página y detección de contradicciones

@@ -127,6 +127,22 @@ default: personal
 
 Skills resolve the vault automatically: CWD inside a registered vault → that vault; otherwise → `default`. Register a vault by running `/cortex-forge-setup` from inside it.
 
+Some skills also accept an explicit vault name as the first argument, letting you target a specific vault regardless of CWD:
+
+```
+/cortex-assimilate personal <url>
+/cortex-recall work <query>
+/cortex-crystallize personal
+```
+
+| Skill | Explicit vault arg |
+|---|---|
+| `/cortex-assimilate` | ✅ `/cortex-assimilate <vault-name> <url-or-file>` |
+| `/cortex-recall` | ✅ `/cortex-recall <vault-name> <query>` |
+| `/cortex-crystallize` | ✅ `/cortex-crystallize <vault-name> [project-name] [next: <focus>]` |
+| `/cortex-imprint` | — (uses CWD resolution) |
+| `/cortex-prune` | — (uses CWD resolution) |
+
 ## Setup
 
 Clone the repo, then run `/cortex-forge-setup` from inside it:
