@@ -11,7 +11,11 @@ Archive a valuable session synthesis as a permanent wiki page.
 
 ## Steps
 
+0. **Check for pending draft** — if `.hot/imprint-draft.md` exists in the active repo, read it. Use `candidate:` as the default synthesis description and `transcript:` as the source path to cite. Delete the file after reading so the nudge doesn't repeat next session.
+
 1. **Resolve vault** — read `~/.cortex-forge/config.yml`:
+   Also read `locale:` from the vault's entry — use it for all agent-generated content. Fallback if absent: `.hot/MEMORY.md` title line (`— locale: {lang}`) → `CODEX.md` Vocabulary (`**locale**:`) → default `en`.
+
    - Check if CWD is inside any registered vault → use that vault.
    - If not, use the `default` vault.
    - If no default and multiple vaults → ask the user to pick one.

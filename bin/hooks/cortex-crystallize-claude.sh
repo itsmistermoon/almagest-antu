@@ -79,6 +79,25 @@ extract_previous_history() {
 
 GIT_ROOT=$(find_git_root_dir)
 
+resolve_locale() {
+  local git_root="$1"
+  local config="$HOME/.cortex-forge/config.yml"
+  local locale=""
+  if [ -f "$config" ]; then
+    locale=$(awk -v root="$git_root" '
+      /^    path:/ { p = $2 }
+      /^    locale:/ && p == root { print $2; exit }
+    ' "$config" 2>/dev/null)
+  fi
+  if [ -z "$locale" ] && [ -f "$git_root/.hot/MEMORY.md" ]; then
+    locale=$(grep -m1 '— locale:' "$git_root/.hot/MEMORY.md" | sed 's/.*locale: *//' | tr -d ' \r\n' 2>/dev/null)
+  fi
+  if [ -z "$locale" ] && [ -f "$git_root/CODEX.md" ]; then
+    locale=$(grep -m1 '\*\*locale\*\*:' "$git_root/CODEX.md" | awk '{print $2}' 2>/dev/null)
+  fi
+  echo "${locale:-en}"
+}
+
 if [ -z "$TRANSCRIPT_PATH" ] || [ ! -f "$TRANSCRIPT_PATH" ]; then
   IFS=':' read -r -a FALLBACK_DIRS <<< "$TRANSCRIPT_FALLBACK_DIRS"
   for dir in "${FALLBACK_DIRS[@]}"; do
@@ -119,37 +138,54 @@ TOOL_CALLS=$(jq -r '
 
 LAST_REPLY=$(jq -r 'select(.type=="assistant") | .message.content[]? | select(.type=="text") | .text' "$TRANSCRIPT_PATH" 2>/dev/null | tail -3)
 
+LOCALE=$(resolve_locale "$GIT_ROOT")
+case "$LOCALE" in
+  es) LANG_LABEL="Spanish (Chilean)" ;;
+  fr) LANG_LABEL="French" ;;
+  *)  LANG_LABEL="English" ;;
+esac
+# The prompt instructions are always in English regardless of locale — English maximizes
+# instruction-following quality across models. Only the requested output language changes.
+
 if [ "$TRIGGER" = "PreCompact" ]; then
-  MODE_NOTE="NOTA: Snapshot de compactación mid-session (la sesión continúa después). Registra lo hecho hasta ahora, no lo que queda pendiente."
+  MODE_NOTE="NOTE: Mid-session compaction snapshot (session continues after). Record what has been done so far, not what remains pending."
+  [ "$LOCALE" = "es" ] && MODE_NOTE="NOTA: Snapshot de compactación mid-session (la sesión continúa después). Registra lo hecho hasta ahora, no lo que queda pendiente."
 else
-  MODE_NOTE="NOTA: Snapshot de fin de sesión — handoff definitivo (no return path). La sesión termina después de esto."
+  MODE_NOTE="NOTE: End-of-session snapshot — definitive handoff (no return path). The session ends after this."
+  [ "$LOCALE" = "es" ] && MODE_NOTE="NOTA: Snapshot de fin de sesión — handoff definitivo (no return path). La sesión termina después de esto."
 fi
 
-FULL_PROMPT="Analiza esta sesión de Claude Code y genera un resumen estructurado en español chileno.
+FULL_PROMPT="Analyze this Claude Code session and generate a structured summary in $LANG_LABEL.
 $MODE_NOTE
 
-== PETICIONES DEL USUARIO ==
+== USER REQUESTS ==
 $USER_MSGS
 
-== HERRAMIENTAS USADAS ==
+== TOOLS USED ==
 $TOOL_CALLS
 
-== ÚLTIMO MENSAJE DEL ASISTENTE ==
+== LAST ASSISTANT MESSAGE ==
 $LAST_REPLY
 
-Genera EXACTAMENTE este bloque markdown (sin texto adicional antes ni después).
-Omite completamente las secciones que no tengan contenido real — no uses _(none)_ ni placeholders vacíos.
+Generate EXACTLY this markdown block (no additional text before or after).
+Omit sections entirely if they have no real content — never write _(none)_ or empty placeholders.
 
 #### What was done
-[2-4 bullets con qué se hizo y por qué — contexto real, no solo nombres de archivo]
+[2-4 bullets with what was done and why — real context, not just file names]
 
 #### Discarded
-[solo si hubo algo descartado — omitir si no aplica]
+[only if something was discarded — omit if not applicable]
 
 #### Fragile context
-[solo si hay decisiones implícitas o contexto que se perdería entre sesiones — omitir si no aplica]"
+[only if there are implicit decisions or context that would be lost between sessions — omit if not applicable]
 
-SUMMARY=$(claude -p "$FULL_PROMPT" 2>/dev/null)
+#### Attempted and failed
+[only if an approach was tried and failed — omit if not applicable]
+
+#### Imprint candidate
+[only if the session produced a durable insight, design decision, or analysis worth a permanent wiki page — omit if not applicable. One line: what to imprint and suggested type (concept/entity/reference/page)]"
+
+SUMMARY=$(claude -p "$FULL_PROMPT" --model claude-haiku-4-5-20251001 2>/dev/null)
 case "$SUMMARY" in
   *"#### What was done"*) ;;
   *) exit 0 ;;
@@ -157,6 +193,53 @@ esac
 
 if ! printf '%s\n' "$SUMMARY" | grep -qE '^- '; then
   exit 0
+fi
+
+# Append transcript path to the imprint candidate bullet so SessionStart can locate it
+if printf '%s\n' "$SUMMARY" | grep -q "^#### Imprint candidate$" && [ -n "$TRANSCRIPT_PATH" ]; then
+  SUMMARY=$(printf '%s\n' "$SUMMARY" | awk -v tp="$TRANSCRIPT_PATH" '
+    /^#### Imprint candidate$/ { print; in_candidate=1; next }
+    in_candidate && /^- / { print $0 " — transcript: " tp; in_candidate=0; next }
+    in_candidate && /^####/ { in_candidate=0 }
+    { print }
+  ')
+fi
+
+# Archive history entries older than 30 days to CONSOLIDATED.md
+CONSOLIDATED="$GIT_ROOT/.hot/CONSOLIDATED.md"
+CUTOFF=$(date -v-30d '+%Y-%m-%d' 2>/dev/null || date -d '30 days ago' '+%Y-%m-%d' 2>/dev/null || echo "")
+
+RECENT_HISTORY="$PREV_HISTORY"
+if [ -n "$PREV_HISTORY" ] && [ -n "$CUTOFF" ]; then
+  RECENT_TMP=$(mktemp -t cortex-recent.XXXXXX)
+  ARCHIVE_TMP=$(mktemp -t cortex-archive.XXXXXX)
+  trap 'rm -f "$TMP" "$RECENT_TMP" "$ARCHIVE_TMP"' EXIT
+
+  printf '%s\n' "$PREV_HISTORY" | awk -v cutoff="$CUTOFF" -v recent="$RECENT_TMP" -v archive="$ARCHIVE_TMP" '
+    /^### [0-9]{4}-[0-9]{2}-[0-9]{2}/ {
+      if (buf != "") {
+        dest = (entry_date < cutoff) ? archive : recent
+        printf "%s", buf > dest
+      }
+      entry_date = $2
+      buf = $0 "\n"
+      next
+    }
+    { buf = buf $0 "\n" }
+    END {
+      if (buf != "") {
+        dest = (entry_date < cutoff) ? archive : recent
+        printf "%s", buf > dest
+      }
+    }
+  '
+
+  RECENT_HISTORY=$(cat "$RECENT_TMP" 2>/dev/null || true)
+  ARCHIVED=$(cat "$ARCHIVE_TMP" 2>/dev/null || true)
+
+  if [ -n "$ARCHIVED" ]; then
+    printf '%s\n' "$ARCHIVED" >> "$CONSOLIDATED"
+  fi
 fi
 
 {
@@ -169,9 +252,9 @@ fi
   echo "### $NOW — $AGENT_LABEL ($TRIGGER)"
   echo ""
   printf '%s\n' "$SUMMARY"
-  if [ -n "$PREV_HISTORY" ]; then
+  if [ -n "$RECENT_HISTORY" ]; then
     echo ""
-    printf '%s\n' "$PREV_HISTORY"
+    printf '%s\n' "$RECENT_HISTORY"
   fi
 } > "$TMP"
 
