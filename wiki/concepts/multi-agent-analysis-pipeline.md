@@ -12,7 +12,7 @@ confidence: high
 
 # Multi-agent analysis pipeline
 
-Orchestration pattern where a single command triggers **N specialized agents** that collaborate to analyze a corpus (code, wiki, documentation) and produce a structured artifact (graph, index, report). Implemented by Understand Anything in `/understand` with 5-7 agents.
+Orchestration pattern where a single command triggers **N specialized agents** that collaborate to analyze a corpus (code, wiki, documentation) and produce a structured artifact (graph, index, report). Implemented by [[wiki/entities/understand-anything]] in `/understand` with 5-7 agents. See also [[wiki/concepts/iterative-retrieval]] for the complementary loop pattern, and [[wiki/concepts/knowledge-graph-code-intelligence]] for the structural layer this pipeline produces.
 
 ## Typical structure
 

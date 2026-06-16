@@ -80,6 +80,10 @@ npx taste open                    # opens packages in editor
 
 "Skills increase capability. Taste increases alignment."
 
+## Relation to continuous learning
+
+TASTE is the closest productized equivalent of [[wiki/concepts/continuous-learning-loop]]: both extract non-trivial patterns from session feedback and make them reusable. The difference is scope — TASTE operates at the output-style level (code generation preferences), while the continuous learning loop targets skill behavior (what the agent does, not how it writes).
+
 ## Relevance for cortex-forge
 
 The pending [[wiki/pages/cortex-forge]] item about TASTE rule scope for `cortex-recall` is resolved by this ingestion:

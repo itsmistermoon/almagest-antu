@@ -10,6 +10,10 @@ sources:
   - wiki/sources/antigravity-cli-plugins.md
   - wiki/sources/antigravity-cli-statusline.md
   - wiki/sources/antigravity-cli-title.md
+  - wiki/sources/antigravity-cli-features.md
+  - wiki/sources/antigravity-cli-tutorial.md
+  - wiki/sources/antigravity-cli-using.md
+  - wiki/sources/antigravity-cli-hands-on-codelab.md
   - wiki/sources/antigravity-cli-best-practices.md
   - wiki/sources/antigravity-cli-troubleshooting.md
   - wiki/sources/antigravity-cli-reference.md

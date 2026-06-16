@@ -34,7 +34,7 @@ There is no hard boundary — degradation is gradual and depends on content dens
 
 ## Remedies
 
-- **Handoff / clearing** — end the session and start fresh with a loaded handoff artifact
+- **Handoff / clearing** — end the session and start fresh with a loaded [[wiki/concepts/handoff-artifact]] ([[wiki/concepts/memory-system]] provides the structure for this)
 - **Compaction / autocompact** — summarize history and seed a fresh session (lossy but automatic)
 - **Progressive disclosure** — load only what's needed now; defer the rest to avoid filling the context window prematurely
 

@@ -12,7 +12,7 @@ confidence: high
 
 # Karpathy-pattern LLM wiki
 
-Design pattern for wikis/knowledge bases optimized to be **read and queried by LLMs**, not just by humans. Informally formalized by Andrej Karpathy in [gist #442a6bf555914893e9891c11519de94f](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f).
+Design pattern for wikis/knowledge bases optimized to be **read and queried by LLMs**, not just by humans. Informally formalized by Andrej Karpathy in [gist #442a6bf555914893e9891c11519de94f](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f). Applied by [[wiki/entities/understand-anything]] in its `/understand-knowledge` pipeline for wiki analysis.
 
 ## Canonical structure
 

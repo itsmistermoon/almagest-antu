@@ -26,6 +26,9 @@
 - [[wiki/concepts/secondary-source]] — Account one step removed, lossy by construction; fails by loss or drift, remedied by context pointers — `wiki/` is the vault's instance
 - [[wiki/concepts/pi-extension-lifecycle]] — Pi's TypeScript-first extension framework: async factory pattern, event taxonomy, ExtensionContext, provider registration, context-overflow recovery
 - [[wiki/concepts/knowledge-graph-code-intelligence]] — Structural approach: codebase parsed into persistent property graph; agents query graph instead of reading files; 99%+ token reduction vs file-by-file
+- [[wiki/concepts/headless-agent-mode]] — Modo no-interactivo (`-p` / `--print`): flags por agente, permisos de escritura, persistencia de sesión; `--yolo` requerido en CommandCode para hooks de síntesis
+- [[wiki/concepts/tool-context-budget]] — Tool schemas consumen ~30K tokens antes del primer mensaje; cada MCP server suma 3–15K adicionales; ventana efectiva ≠ ventana nominal
+- [[wiki/concepts/agent-permission-model]] — Superficie de permisos cross-agent: CommandCode bloquea escrituras en headless por defecto (`--yolo` requerido); Antigravity usa per-action-type; MCP expande superficie independientemente
 
 ## Entities
 - [[wiki/entities/openbrain-nate-jones]] — Personal semantic memory system: Postgres + pgvector + MCP server; any agent connects with URL + key
@@ -35,6 +38,8 @@
 - [[wiki/entities/understand-anything]] — Lum1104's multi-platform plugin that builds knowledge graphs over codebases and wikis
 - [[wiki/entities/pi-cli]] — Terminal AI coding agent from `earendil-works/pi-mono`: TypeScript extensions, JSONL tree sessions, multi-provider (Anthropic, OpenAI, Google, Ollama, vLLM, custom)
 - [[wiki/entities/codebase-memory-mcp]] — High-performance MCP server: codebase → SQLite knowledge graph; 158 languages, 14 tools, zero dependencies, single static binary; 3,902 stars
+- [[wiki/entities/codex]] — Codex CLI (OpenAI): terminal coding agent con hook system compatible con Claude Code; `cortex-crystallize-codex.sh` validated
+- [[wiki/entities/graphify]] — Skill multi-agente que convierte cualquier folder en knowledge graph (`graph.html`); 66.3k stars, YC S26; no soporta CommandCode (brecha que cortex-forge cubre)
 
 ## Sources
 - [[wiki/sources/antigravity-hooks]] — Hook documentation for Google Antigravity (ingested 2026-06-07)

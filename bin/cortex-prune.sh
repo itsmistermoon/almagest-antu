@@ -42,9 +42,11 @@ json_dead_links_array() {  # $1: file with from<TAB>target per line → JSON arr
 }
 
 # ── HIGH: Dead wikilinks ──────────────────────────────────────────────────────
-grep -ro '\[\[wiki/[^]|]*' "$WIKI" 2>/dev/null \
+grep -ro '\[\[wiki/[^]|]*' "$WIKI" --include="*.md" 2>/dev/null \
   | sed 's/\[\[//' | sort -u \
   | while IFS=: read -r src link; do
+      # strip trailing .md if present — wikilinks may or may not include extension
+      link="${link%.md}"
       if [ ! -f "$VAULT/${link}.md" ]; then
         f HIGH "Dead link in ${src#$VAULT/}: [[${link}]]"
         printf '%s\t%s\n' "${src#$VAULT/}" "$link" >> "$DEAD_LINKS"

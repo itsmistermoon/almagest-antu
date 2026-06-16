@@ -12,7 +12,7 @@ confidence: high
 
 # Tree-sitter + LLM hybrid parsing
 
-Code analysis pattern that divides work between a **deterministic parser** (tree-sitter) and a **semantic LLM** based on what each does best. Applied by Understand Anything in its `/understand` pipeline.
+Code analysis pattern that divides work between a **deterministic parser** (tree-sitter) and a **semantic LLM** based on what each does best. Applied by [[wiki/entities/understand-anything]] in its `/understand` pipeline, and by [[wiki/entities/codebase-memory-mcp]] as its Hybrid LSP layer (syntactic AST + type-aware resolution).
 
 ## The split
 

@@ -50,7 +50,7 @@ Agents don't need to change their interface. A `PreToolUse` hook intercepts `Gre
 
 ## Relation to graphify
 
-[[graphify]] uses a similar team-shared artifact concept (`graphify-out/` directory), but targets a different scope. codebase-memory-mcp is the MCP-native, multi-language, zero-dependency alternative with 14 querying tools and a Cypher-like query language.
+[[wiki/entities/graphify]] uses a similar team-shared artifact concept (`graphify-out/` directory), but targets a different scope. [[wiki/entities/codebase-memory-mcp]] is the MCP-native, multi-language, zero-dependency alternative with 14 querying tools and a Cypher-like query language. The agent integration pattern (hook intercepts search calls, injects graph context) parallels [[wiki/concepts/multi-agent-analysis-pipeline]] at the single-agent level.
 
 ---
 
