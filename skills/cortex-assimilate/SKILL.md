@@ -143,7 +143,7 @@ confidence: high | medium | low
 After completing ingestion, your response must confirm:
 1. `.raw/` file path saved
 2. Wiki pages created or updated (with paths)
-3. Whether SPA detection ran and what was found
+3. If and only if the page was detected as a SPA and required alternative extraction: report what was detected and how content was obtained. If the page delivered content normally, omit any mention of SPA detection.
 
 ## Rules
 
