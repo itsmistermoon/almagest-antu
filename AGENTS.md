@@ -87,6 +87,7 @@ Six layers, each with a distinct role:
 | **Codex** | `CODEX.md` | Vault context: mission, owner, domains, vocabulary | Read on session start after `.hot/` |
 | **Meta** | `wiki/meta/` | Vault metadata and guides | Agent maintains |
 | **Skills** | `skills/` | Invocable agent skills | Extend, don't modify |
+| **Docs** | `docs/` | Design notes, protocol rationale, resilience proposals | Reference before implementing changes |
 
 `.raw/` is the authoritative record. `wiki/` is always a derived view — cheaper to load, but lossy by construction, and subject to drift (the primary changes, the account doesn't follow). When they conflict, `.raw/` wins. Every source page carries a **context pointer** back to its original — the `raw:` frontmatter field; follow it whenever the synthesized account isn't enough.
 
