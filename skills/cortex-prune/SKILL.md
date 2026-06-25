@@ -59,7 +59,7 @@ Health check del vault activo en dos capas: estructural (script) y semántica (a
    - MEDIUM findings (same)
    - LOW findings (same)
    - Summary line: '{N} HIGH / {N} MEDIUM / {N} LOW findings'
-   Be concise. Do not add explanation beyond what's needed to act on each finding."
+   For each finding, output exactly three fields: path, problem (one sentence), proposed action (one imperative sentence). No additional explanation, context, or justification."
 
    The main agent presents this consolidated report verbatim — it does not re-process or summarize the output.
 

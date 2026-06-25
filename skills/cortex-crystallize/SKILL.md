@@ -44,7 +44,7 @@ Behavior depends on where the skill is invoked:
 7. **Append snapshot to history** using the format in `MEMORY-FORMAT.md` (co-located with this skill).
 8. If cross-vault mode: **run cross-vault update** (see section below).
 
-Do not include tokens, API keys, or sensitive information.
+In `#### Fragile context` and any other section, omit tokens, API keys, and credentials (patterns: `sk-*`, `Bearer *`, `ghp_*`, `?token=*`, flags `--password`/`-u user:pass`). If fragile context requires a credential to reproduce, replace it with `<REDACTED>` and note where to obtain it (e.g. `export ANTHROPIC_API_KEY=<REDACTED>  # see .env.local`).
 
 ## Cross-vault update
 

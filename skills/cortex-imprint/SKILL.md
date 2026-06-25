@@ -76,8 +76,12 @@ confidence: high | medium | low
 
 ## Rules
 
-- The page must be durable — write it as if it will be read in 6 months without session context
+- The page must be self-contained for a reader with no session context. Verifiable criteria: (1) every acronym and proper name is expanded or defined on first use; (2) every decision includes its justification or the problem it solves; (3) no deictic references without an explicit antecedent ("this", "the previous discussion", "as agreed"); (4) any relevant prior state is described in the page itself, not assumed known. A reviewer must be able to read the page cold and understand it without accessing the session.
 - No references to the conversation ("as we discussed today") — content must stand on its own
-- Compiled truth: write in full, not in patches
+- If the page already exists, rewrite the body integrating the new information — do not append "Update" sections or addendum blocks. The result must read as a cohesive document with no visible edit seams.
 - If a page already exists on the topic, update it instead of duplicating
 - Include the agent in the changelog: `- YYYY-MM-DD [Claude Code]: description`
+
+## Changelog
+
+- 2026-06-24 [Claude Code]: Reformulated vague Rules into verifiable criteria (no-op audit — "durable page" → 4 testable conditions; "compiled truth" → explicit rewrite contract)

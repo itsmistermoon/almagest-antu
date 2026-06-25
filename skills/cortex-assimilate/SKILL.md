@@ -1,7 +1,7 @@
 ---
 name: cortex-assimilate
-description: Ingest a URL or file into the vault — saves to .raw/, synthesizes wiki pages, updates index.
-argument-hint: "[vault-name] <url-or-file>"
+description: Ingest a URL or file into the vault — saves to .raw/, synthesizes wiki pages, updates index. Use --research "<query>" to auto-discover and ingest sources from the web.
+argument-hint: "[vault-name] <url-or-file> | --research \"<query>\" [--rounds N]"
 ---
 
 # cortex-assimilate
@@ -9,6 +9,49 @@ argument-hint: "[vault-name] <url-or-file>"
 Begin your response by outputting exactly: `Assimilating source...`
 
 Ingest a new source and synthesize wiki pages from it.
+
+## --research mode
+
+If the argument starts with `--research`, enter research mode instead of the normal URL/file flow:
+
+```
+/cortex-assimilate --research "embeddings for second brains" [--rounds 3]
+```
+
+**Steps:**
+
+1. **Detect Firecrawl** — run `firecrawl --status 2>/dev/null`. If available and authenticated, use it for all search and scrape steps below. If not available, fall back to `WebSearch` + `WebFetch` natively — the skill works without Firecrawl, it just gets richer content with it. Never block on Firecrawl absence.
+
+2. **Round 1 — broad search**
+   - With Firecrawl: `firecrawl search "<query>"` — returns full page content, top 5–8 URLs.
+   - Without: `WebSearch "<query>"` — collect top 5–8 result URLs, then `WebFetch` each.
+   Show the user: "Found N sources (via firecrawl|websearch). Searching deeper..."
+
+3. **Round 2 — focused search** — identify 2–3 sub-topics or terms that appeared in round 1 results but weren't in the original query. Search for each. Add new URLs not already collected. Cap total at 12.
+
+4. **Optional round 3** — only if `--rounds 3` was specified, or if round 2 revealed a significant knowledge gap.
+
+5. **Scrape each URL**
+   - With Firecrawl: `firecrawl scrape <url> -o .firecrawl/<slug>.md`
+   - Without: `WebFetch <url>` — content goes directly to synthesis without saving locally.
+   Skip URLs that fail or return empty content.
+
+6. **Cross-reference for contradictions** — before synthesizing, read all scraped files and identify claims that directly conflict across sources. For each conflict, prepare a `[!contradiction]` callout:
+   ```
+   > [!contradiction]
+   > **Claim:** <the conflicting claim>
+   > **Source A** ([title](url)): <what it says>
+   > **Source B** ([title](url)): <what it says>
+   > **Notes:** <any contextual explanation if evident>
+   ```
+
+7. **Synthesize** — treat all scraped files as the input source and run the normal synthesis pipeline (steps 5–7 below). Each scraped URL gets its own `wiki/sources/` entry. Contradiction callouts are embedded in the relevant concept or synthesis page.
+
+8. **Report** — list all sources ingested, pages created/updated, and any contradictions found.
+
+**Budget defaults:** 2 rounds, max 12 URLs. User can override with `--rounds N`.
+
+---
 
 ## Steps
 
@@ -151,7 +194,11 @@ After completing ingestion, your response must confirm:
 - Always create a `wiki/sources/` page per processed source
 - Use templates as structural guides — don't compare with existing pages to decide what to write
 - If a page already exists for the topic, update it instead of creating a duplicate
-- Compiled truth is written in full, never accumulated in patches
+- When updating an existing page, rewrite the full body integrating new knowledge with the prior content. Do not append sections at the end without reviewing the existing text. The result must read as a coherent article written at once, not as an original page plus addenda. Violation signal: two blocks in the same page covering the same subtopic from different perspectives without resolving them.
 - Include `[[wikilinks]]` to existing vault pages
 - If there's a contradiction with existing content, mark it as `[!contradiction]`
 - Include the agent in every page changelog: `- YYYY-MM-DD [Claude Code]: description`
+
+## Changelog
+
+- 2026-06-24 [Claude Code]: Reformulated "compiled truth" rule into a verifiable rewrite contract with a concrete violation signal (no-op audit)
