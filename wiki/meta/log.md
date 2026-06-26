@@ -313,3 +313,11 @@ Agent: CommandCode (MiniMax M3)
 - Installed and validated the post-commit prune hook in the personal vault (`moon-multivac`), confirming background execution and logging.
 
 Agent: Antigravity (Gemini 3.5 Flash)
+
+## [2026-06-26] migrate | AGENT-LOG to wiki/meta/agent-diagnostics
+- Migrated `AGENT-LOG.md` from the root directory to `wiki/meta/agent-diagnostics.md`.
+- Updated `wiki/index.md` to register `[[wiki/meta/agent-diagnostics]]` in the master index.
+- Confirmed that the global hook configuration for Antigravity (Gemini 3.5 Flash) is fully aligned and functional.
+
+Agent: Antigravity (Gemini 3.5 Flash)
+
