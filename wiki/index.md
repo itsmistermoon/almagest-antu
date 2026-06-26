@@ -108,6 +108,7 @@
 
 ## Meta
 - [[wiki/meta/log]] — Append-only vault operation log
+- [[wiki/meta/agent-diagnostics]] — Bitácora de sesiones y diagnósticos de comportamiento de agentes
 - [[wiki/meta/_index|Vault meta]]
 - `templates/` — 5 page templates (concept, entity, source, project, reference)
 - `bin/setup-vault.sh` — setup script

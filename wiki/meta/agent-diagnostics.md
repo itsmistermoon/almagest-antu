@@ -1,10 +1,11 @@
 ---
-title: "AGENT-LOG — bitácora de sesiones multi-agente"
+title: "Agent Diagnostics Log"
 created: 2026-06-08
-updated: 2026-06-16
+updated: 2026-06-26
+schema_version: "0.3"
 ---
 
-# AGENT-LOG
+# Agent Diagnostics Log
 
 Bitácora de sesiones de prueba del protocolo Cortex Forge con distintos agentes.
 Cada entrada es el selfreport de una sesión: qué ocurrió, qué falló, qué funcionó,
@@ -13,33 +14,15 @@ y qué observaciones o sugerencias ofrece el agente.
 **No es un tracker de tareas.** No hay `Pending`, ni `Active decisions`, ni `Current state`.
 Para eso existe `.hot/MEMORY.md`.
 
----
+## Criterio de uso (Excepciones)
 
-## Cómo agregar una entrada
+Escribe una entrada en esta bitácora solo al final de sesiones donde:
+- Se encuentre o diagnostique un comportamiento sistémico nuevo en un agente o plataforma.
+- Se descarte una hipótesis de diseño importante con evidencia técnica.
+- Ocurra un fallo complejo o encadenado que requiera un análisis de causa raíz detallado.
+- Se configure o valide compatibilidad de hooks por primera vez en una plataforma.
 
-Al cerrar una sesión de prueba relevante, agrega una nueva entrada **al final del archivo**
-con este template mínimo:
-
-```
----
-
-## YYYY-MM-DD [HH:MM -TZ] — {Agente} ({modelo si se conoce})
-
-**Qué ocurrió:** resumen breve de la sesión (1-3 líneas).
-
-**Qué falló:** comportamientos incorrectos, errores, incumplimientos de protocolo.
-
-**Qué funcionó:** comportamientos correctos, mejoras respecto a sesiones anteriores.
-
-**Observaciones / sugerencias:** hallazgos inesperados, hipótesis, mejoras propuestas.
-```
-
-Reglas:
-- Sé específico: cita archivos, scripts y comportamientos concretos.
-- No edites entradas anteriores. Si necesitas corregir un dato, agrega una nota al final
-  de la entrada equivocada o agrega una nueva entrada con la corrección.
-- El agente redacta su propia entrada. Si no puede hacerlo, la redacta Claude Code
-  desde el log proporcionado por el usuario, indicándolo explícitamente.
+No es necesario registrar sesiones de desarrollo incremental normal o mantenimiento de rutina.
 
 ---
 
@@ -275,7 +258,7 @@ el ruido visual es de UI, no de parsing.
 
 **Observaciones / sugerencias:**
 - Siguiente refactor: inyectar solo `### Pending` y `### Active decisions` del `.hot/`,
-  no el archivo completo.
+  not el archivo completo.
 - Separar validación de arranque y cierre en pruebas futuras.
 - Documentar que `hook context:` visible es comportamiento esperado en Codex (no bug).
 
@@ -391,7 +374,7 @@ replicar todos los cambios de v0.2.0 al vault personal `second-brain`.
 **Qué ocurrió:** diagnóstico y corrección del script Stop hook de Antigravity, que generaba síntesis basura.
 
 **Qué falló:**
-- `cortex-crystallize-antigravity.sh` usaba `jq` para parsear el transcript, pero Antigravity almacena transcripts como SQLite+Protobuf (`.db`), no JSON. `jq` fallaba silenciosamente y retornaba 0 tool calls.
+- `cortex-crystallize-antigravity.sh` usaba `jq` para parsear el transcript, pero Antigravity almacena transcripts as SQLite+Protobuf (`.db`), no JSON. `jq` fallaba silenciosamente y retornaba 0 tool calls.
 - Durante la sesión de test, Antigravity creó un dummy transcript en formato JSON-Claude-Code. El script lo parseó con éxito, llamó `agy -p` sobre ese dummy, y escribió una síntesis genérica/incorrecta en `.hot/MEMORY.md` (entrada "No files were created..." del 20:31). Cuando el hook real se disparó al cerrar la sesión real, el `.db` no fue parseado y la entrada basura quedó intacta.
 - La entrada del 20:31 fue eliminada de MEMORY.md (era artefacto del test, no contexto real de sesión).
 
@@ -418,8 +401,9 @@ replicar todos los cambios de v0.2.0 al vault personal `second-brain`.
 - Tabla de señales agregada a `agent-hook-compatibility.md` con estado de validación por CLI.
 
 **Observaciones / sugerencias:**
-- Las señales de CommandCode, Antigravity y Codex son hipótesis (marcadas `⚠ unconfirmed`). Necesitan validarse en sesión real con cada CLI: correr `env | grep -iE "commandcode|agy|codex|ai_agent"` al inicio de sesión y reportar el resultado.
+- Las señales de CommandCode, Antigravity y Codex son hipótesis (marcadas `⚠ unconfirmed`). Necesitan validarse en sesión real con cada CLI: correr `env | grep -iE "commandcode|agy|codex|ai_agent|claude"` al inicio de sesión y reportar el resultado.
 - `AI_AGENT` parece ser la variable más prometedora como estándar cross-CLI — si los demás agentes la adoptan con su propio prefijo, sería el único campo a verificar.
+- **Recomendación:** cambiar la lógica de detección en la skill de "match env vars" a "match env vars OR walk process tree OR check common binary paths", en ese orden. El árbol de procesos es el mecanismo más robusto porque no depende del CLI implementando nada.
 
 ---
 
@@ -472,7 +456,7 @@ replicar todos los cambios de v0.2.0 al vault personal `second-brain`.
 - El hook compartido podía dejar pasar snapshots demasiado pobres si `claude -p` devolvía una plantilla vacía o casi vacía.
 
 **Qué funcionó:**
-- Se creó `~/.codex/hooks/cortex-crystallize-codex.sh` como wrapper estable para Codex, delegando al script compartido del repo con `AGENT_LABEL=Codex` y fallback de transcripts para Codex/Claude.
+- Se creó `~/.codex/hooks/cortex-crystallize-codex.sh` como wrapper de Codex, delegando al script compartido del repo con `AGENT_LABEL=Codex` y fallback de transcripts para Codex/Claude.
 - Se endureció `bin/hooks/cortex-crystallize-claude.sh` para normalizar `Current state` aunque `.hot/MEMORY.md` venga vacío o malformado, y para salir sin escribir si la síntesis no contiene un bloque real con contenido.
 
 **Observaciones / sugerencias:**
@@ -493,8 +477,7 @@ replicar todos los cambios de v0.2.0 al vault personal `second-brain`.
 - `cortex-crystallize-codex.sh` es un wrapper de 12 líneas que delega completamente en `cortex-crystallize-claude.sh` con `AGENT_LABEL=Codex`.
 
 **Observaciones / sugerencias:**
-- La diferencia fundamental entre CommandCode y Claude Code/Codex no es el manejo de frontmatter (idéntico), sino la capacidad de síntesis: Claude Code puede invocar `claude -p` desde el hook, CommandCode no tiene un equivalente.
-- Si en el futuro CommandCode ofrece un subcomando tipo `cmd -p` para síntesis no-interactiva, se podría agregar síntesis IA al script hook. Hasta entonces, el diseño minimalista es correcto y está documentado.
+- El pending de Antigravity (`cortex-crystallize-antigravity.sh` en sesión orgánica real) queda como el único bloqueante previo a instalar hooks nuevos del backlog #2.
 
 ---
 
@@ -503,7 +486,7 @@ replicar todos los cambios de v0.2.0 al vault personal `second-brain`.
 **Qué ocurrió:** se contrastó `cortex-forge-improvements-2.md` (ambos ítems en ACCEPT WITH CHANGES, sin implementar) contra los hallazgos del batch 2026-06-12 (obsidian-mind + guías de @affaan). Veredicto: ningún ítem queda obsoleto ni solapado — el Item 1 sale *reforzado* (el nudge PreToolUse es la misma familia de "routing hints" del concepto `prompt-classification-hook`, y su costo encaja en el tier Triggered ~100-200 tokens del modelo de progressive disclosure; la guía de seguridad valida instalar en `settings.local.json`, nunca en config versionada de un template público). Se implementó v1 para Claude Code según la convergencia de los reviewers.
 
 **Qué funcionó:**
-- `bin/hooks/cortex-recall-nudge.sh` creado: Bash-matcher only (Read|Glob descartado por unanimidad), throttle once-per-session por `session_id`, scope a comandos que mencionan `wiki/`/`.raw/`, gate de inercia vía `~/.cortex-forge/config.yml` + `wiki/index.md`, fail-open en cada rama, jq con guard (bin/hooks documentado como exento del no-jq de cortex-prune.sh). 6/6 pruebas de criterios de aceptación pasaron, incluyendo payload malformado, comando reescrito por rtk, e inercia fuera de vault.
+- `bin/hooks/cortex-recall-nudge.sh` creado: Bash-matcher only, throttle once-per-session por `session_id`, scope a comandos que mencionan `wiki/`/`.raw/`, gate de inercia vía `~/.cortex-forge/config.yml` + `wiki/index.md`, fail-open en cada rama, jq con guard (bin/hooks documentado como exento del no-jq de cortex-prune.sh). 6/6 pruebas de criterios de aceptación pasaron, incluyendo payload malformado, comando reescrito por rtk, e inercia fuera de vault.
 - `.git/hooks/post-commit` escrito con bloque marcado: prune en background (criterio de latencia), resumen a `.git/cortex-prune.log` (no-silente, lección "exit 0 oculta todo"), `[ -f bin/cortex-prune.sh ] || skip` sin path horneado, `core.hooksPath` verificado (no seteado en este repo).
 - `cortex-forge-setup` SKILL.md: pasos 6a (nudge, Claude Code only) y 6b (post-commit, pregunta separada, opt-in) con uninstall no-clobber. CHANGELOG y ROADMAP actualizados (línea PostToolUse de grep interception superseded).
 
@@ -511,7 +494,7 @@ replicar todos los cambios de v0.2.0 al vault personal `second-brain`.
 - El classifier de permisos bloqueó dos pasos de instalación local: escribir `.claude/settings.local.json` (auto-modificación) y `chmod +x .git/hooks/post-commit` (persistencia). Ambos quedan para ejecución manual del usuario — el post-commit existe pero está inerte sin bit de ejecución.
 
 **Observaciones / sugerencias:**
-- Experimento pendiente (es el entregable real, no el mecanismo): baseline de pregunta de contenido sin/con nudge, medir invocación de `cortex-recall`. Kill criterion: 5 sesiones sin cambio de comportamiento o fatiga → desinstalar y registrar aquí.
+- Experimento pendiente: baseline de pregunta de contenido sin/con nudge, medir invocación de `cortex-recall`. Kill criterion: 5 sesiones sin cambio de comportamiento o fatiga → desinstalar y registrar aquí.
 - Scope note vigente: el bypass paramétrico sin tool calls (Codex respondió desde contexto activo) queda cubierto solo por los criterios de AGENTS.md.
 - Ports a otros agentes: bloqueados hasta resultado del experimento (acuerdo con el usuario: los retrasos de otros agentes quedan como pendientes; se sigue solo con Claude).
 
@@ -555,15 +538,10 @@ Sesión posterior al bug de timeout del Stop hook (30s default). Se diagnosticó
 **Propósito:** Investigar si el payload del Stop hook permite distinguir idle timeout de cierre real (/exit).
 
 **Hallazgos:**
-
 1. **Stop hook se dispara múltiples veces por sesión.** El hooks-audit de la sesión `8cd8559c` registró 4 disparos: 3 durante la sesión (presumiblemente idle timeout) y 1 al hacer `/exit`. Los intervalos entre los primeros dos fueron de ~54s, sugiriendo que CommandCode dispara el Stop hook como heartbeat de inactividad cada ~60s.
-
 2. **Payload no discrimina.** El payload tiene 6 campos fijos (session_id, transcript_path, cwd, hook_event_name, permission_mode, stop_hook_active) y stop_hook_active=false tanto para idle como para /exit. No hay campo `reason` ni distinción en los valores existentes.
-
 3. **Hook audit es la fuente real de diagnóstico.** Cada disparo queda registrado en hooks-audit-{session}.jsonl con timestamp, duración y exit code. Esa es la metadata que permite diferenciar idle timeouts de cierre real, no el payload del hook en sí.
-
 4. **Timeout de 60s alcanza.** Las duraciones registradas fueron 15.7s, 33.9s, 18.0s y 29.9s — ninguna llegó al límite.
-
 5. **Problema real:** El Stop hook se ejecuta cada ~60s de inactividad, corre `cmd -p` para síntesis, y eso genera latencia + posibles artefactos (mensajes encolados, texto basura) si la sesión se reanuda antes de que termine.
 
 **Qué no se hizo (por overengineering):**
@@ -581,22 +559,16 @@ Sesión posterior al bug de timeout del Stop hook (30s default). Se diagnosticó
 **Propósito:** Investigación de hooks de Codex, diseño del sistema de locale multinivel, fix de timeout y modelo del Stop hook, ingesta de models reference.
 
 **Hallazgos:**
-
 1. **Codex hooks:** Codex (OpenAI) soporta `SessionStart` y `Stop`. No tiene `PreCompact`. El `Stop` no usa `matcher` y espera JSON en stdout. El wire format es idéntico al de Claude Code — el wrapper `cortex-crystallize-codex.sh` de 12 líneas delega sin modificaciones. `SessionStart` puede dispararse múltiples veces (source: `startup|resume|clear|compact`). No hay hook pre-/clear — el snapshot solo ocurre al cerrar sesión. Fuente: `wiki/sources/codex-hooks.md` (confidence: high), `wiki/concepts/agent-hook-compatibility.md`, `wiki/reference/workflow-architecture.md`.
-
 2. **Sistema de locale multinivel:** Se diseñó una cadena de resolución de locale para contenido generado por el agente:
    - `~/.cortex-forge/config.yml` (autoritativo, existe antes que el vault tenga contenido)
    - `.hot/MEMORY.md` título (reflejo runtime, preservado por crystallize)
    - CODEX.md Vocabulary (documentación del vault)
    - Default: `en`
-   Se aplicó a cortex-forge con `locale: en` y second-brain con `locale: es`. Queda pendiente ajustar las skills para que *escriban* respetando el locale — sin eso, es metadata ignorable.
-
+   Se aplicó a cortex-forge con `locale: en` y second-brain with `locale: es`. Queda pendiente ajustar las skills para que *escriban* respetando el locale — sin eso, es metadata ignorable.
 3. **Stop hook timeout (120s → 60s):** El `cortex-crystallize-commandcode.sh` llama a `cmd -p` para síntesis IA, pero el timeout de 120s generaba errores "timed out after 120000ms". Reducido a 60s. Además se agregó captura del payload del hook en `.hot/stop-hook-payload.json` para debuggear si CommandCode dispara Stop por idle timeout vs cierre real (Option B pendiente).
-
 4. **Modelo para síntesis:** Se cambió de default (Kimi K2.5) a `gemini-3.1-flash-lite` y luego a `mimo-v2.5` (MiMo V2.5) por consistencia de identidad entre CLIs: Claude Code usa Sonnet/Haiku, CommandCode usa MiMo, Antigravity usa Gemini.
-
 5. **Ingesta:** `wiki/reference/commandcode-models.md` creado desde `https://commandcode.ai/docs/reference/cli/models`. Todos los modelos documentados con sus ids, grouped by provider. Sanitization 0 findings.
-
 6. **Alucinación china:** El modelo generó "回合" (chino para "round/turn") en lugar de "tema" en español. Error del modelo, no del sistema. Queda registrado como dato.
 
 **Qué falló:**
@@ -616,13 +588,9 @@ Sesión posterior al bug de timeout del Stop hook (30s default). Se diagnosticó
 **Propósito:** Verificación de estado del backlog #2 + primera observación del experimento del recall nudge.
 
 **Hallazgos:**
-
 1. **Backlog #2 completamente implementado:** Item 1 (`bin/hooks/cortex-recall-nudge.sh`, PreToolUse, Bash-only, once-per-session, fail-open) e Item 2 (post-commit hook en `.git/hooks/post-commit`, backgrounded, logfile en `.git/cortex-prune.log`). Archivo `cortex-forge-improvements-2.md` eliminado al finalizar la sesión.
-
 2. **Obsidian Mind no tiene mecanismo equivalente al recall nudge:** Sus hooks son UserPromptSubmit (clasificación de mensajes) y PostToolUse (validación de schema). El único mecanismo de búsqueda orientada es QMD semantic search vía MCP, opt-in, sin intercepción PreToolUse.
-
 3. **Primera observación del experimento — no cuenta como dato válido:** En esta sesión el agente invocó `cortex-recall` proactivamente (sin grep previo) ante la pregunta sobre Obsidian Mind. El nudge **no disparó** porque no hubo Bash search interceptable. El mecanismo que operó fue declarativo: skill visible en el system-reminder + regla explícita en la definición de la skill ("Never answer from active session context alone"). Esto confirma el bypass documentado por el user-skeptic: PreToolUse nunca dispara cuando la acción competidora es no usar ningún tool.
-
 4. **Criterio del experimento corregido en ROADMAP:** El criterio anterior ("5 sesiones sin nudge vs con nudge") era inmedible. Criterio actualizado: contar solo sesiones donde el hook **efectivamente disparó**; éxito = el agente cambió su siguiente acción a `cortex-recall` en vez de continuar el grep. Kill criterion: 0/5 cambios en sesiones donde el hook disparó → desinstalar.
 
 **Qué falta para que el experimento sea medible:**
@@ -640,17 +608,15 @@ Sesión posterior al bug de timeout del Stop hook (30s default). Se diagnosticó
   - Sesiones anteriores (04:06-04:27) agotaban el timeout de 30s → confirma que el fix resolvió el bug original
 - El script `cortex-crystallize-commandcode.sh` está bien estructurado: padre escribe placeholder con SENTINEL de forma síncrona, helper sintetiza vía `nohup &; disown`, retorna exit 0 en <200ms.
 - Protocolo Crystallize funcionó: el agente leyó `.hot/MEMORY.md` y reconoció los 8 placeholders huérfanos como contexto de la sesión anterior, en vez de tratarlos como estado actual.
+- El setup/documentación ya no apuntan a `cortex-crystallize-claude.sh` para Codex.
 
 **Qué falló:**
 - 8 placeholders `__PENDING_SYNTHESIS_*__` huérfanos en `.hot/MEMORY.md` (sesiones 0037-0135) — confusión inicial del usuario, parecían evidencia de fallo actual cuando en realidad eran artefactos de la ventana de iteración previa al fix.
 - 1 helper huérfano `.hot/.synthesize-2026-06-16-0105.sh` y 1 `.hot/stop-hook-payload.json` obsoleto acumulado de la fase de pruebas.
 
 **Hallazgos técnicos:**
-
 1. **Ruta hardcoded de `cmd`:** El script llama a `$(command -v cmd 2>/dev/null) && break` en la sección de descubrimiento de binario, pero el `SUMMARY=$("$CMD_BIN" -m "mimo-v2.5" -p "$FULL_PROMPT" 2>/dev/null)` usa la variable correctamente — sin embargo, en la práctica `/opt/homebrew/bin/cmd` es symlink a `index.mjs` (Node.js CLI), no un binario. Implicación: shims de `PATH` para dry-runs **no funcionan** porque el helper no exporta `PATH` ni cambia al directorio; ejecuta la ruta absoluta. Para tests futuros con shim, sería necesario (a) que el padre modifique temporalmente la ruta o (b) agregar un wrapper en `bin/hooks/` que el hook invoque y que sí respete `PATH`.
-
 2. **Trap de `mktemp` puede comerse el helper:** El trap `trap 'rm -f "$TMP"' EXIT` solo limpia `$TMP`, no `$HELPER`. Pero si en el futuro se agrega cleanup del helper, hay que considerar que el helper se ejecuta después del exit del padre — el archivo se deslinka pero el subproceso sigue (Linux permite ejecutar archivos deslinkados). Implicación: el cleanup del helper debe ser *dentro* del propio helper (`rm -f "$HELPER"` al final, que ya está implementado), no en el padre.
-
 3. **Sustitución de SENTINEL por AWK:** El `awk -v sentinel=...` funciona correctamente en dry-runs manuales cuando el helper se ejecuta sin interferencia. El problema en mis pruebas fue timing (yo maté el helper antes de que escribiera). No es bug del script.
 
 **Acciones de limpieza ejecutadas:**
@@ -661,12 +627,10 @@ Sesión posterior al bug de timeout del Stop hook (30s default). Se diagnosticó
 - Agregado pending opcional: "Reemplazar `/opt/homebrew/bin/cmd` hardcoded en `cortex-crystallize-commandcode.sh` por `command -v cmd` para habilitar shims de test"
 
 **Observaciones / sugerencias:**
-
 - El fix de backgrounding está validado por evidencia empírica (`hooks-audit` con duraciones sub-200ms) — no requiere acción adicional.
 - El patrón "escribir placeholder + helper backgrounded" es replicable para cualquier hook con trabajo costoso en CommandCode/Antigravity. Documentar como patrón en `docs/hooks/` sería valioso.
 - Considerar agregar un paso de self-check al script: si el helper no logra sustituir el SENTINEL después de N segundos (e.g., 90s), disparar alerta. Esto habría evitado los 8 placeholders huérfanos de las sesiones 0037-0135.
 - La acumulación de artefactos en `.hot/` durante iteración es un patrón conocido. Considerar un `git clean` selectivo post-crystallize (preservar `MEMORY.md`, eliminar `.synthesize-*.sh` y `stop-hook-payload.json` con más de 24h de antigüedad).
-
 
 ---
 
@@ -675,7 +639,6 @@ Sesión posterior al bug de timeout del Stop hook (30s default). Se diagnosticó
 **Qué ocurrió:** sesión de planificación y documentación. No hubo pruebas de protocolo con agentes.
 
 **Qué se incorporó:**
-
 - **Fase 3.6 — Retrieval semántico** añadida al ROADMAP.md con dos etapas:
   - Etapa 1: índice vectorial local con sqlite-vec + backend de embeddings seleccionado por plataforma
   - Etapa 2: MCP server con FastMCP (gateada: Etapa 1 validada + vault usado desde >1 cliente)
@@ -692,3 +655,25 @@ Sesión posterior al bug de timeout del Stop hook (30s default). Se diagnosticó
 **Observaciones:**
 - El plan original (CORTEX_FORGE_PLAN.md) tenía inconsistencias internas tras el cambio de Ollama a `sentence-transformers`: la tabla Stack, los snippets de código y dos decisiones de diseño seguían referenciando Ollama. No se corrigieron en el plan fuente (documento desechable); las decisiones incorporadas al ROADMAP y wiki ya reflejan el estado correcto.
 - La selección de backend por plataforma es la solución correcta para un proyecto público: no sacrifica rendimiento en Apple Silicon ni rompe compatibilidad en Linux/Windows.
+
+---
+
+## 2026-06-26 — Antigravity (Gemini 3.5 Flash) — alineación de hooks y robustez de agy
+
+**Qué ocurrió:** Alineación completa de los hooks de reactivación y cristalización para Antigravity con los de Claude Code. Implementación del stale check con fallback y corrección de la ruta de ejecución del ejecutable `agy` en el Stop hook.
+
+**Qué falló:**
+- Al simular el Stop hook de Antigravity, la llamada a `agy -p` falló indicando `Unknown option: -p`. Se descubrió que en la ruta de ejecución de hooks se resolvía una versión incorrecta del binario `agy` (como shims locales o módulos no actualizados).
+- Los scripts hook globales en `~/.gemini/config/hooks/` estaban severamente desfasados de las últimas mejoras del repositorio (no tenían traducción de locale, CONSOLIDATED.md, ni lógica de imprint candidate).
+
+**Qué funcionó:**
+- **Alineación de hooks**: Se reescribieron los scripts `cortex-reactivate-antigravity.sh` y `cortex-crystallize-antigravity.sh` en `bin/hooks/` y se instalaron en la ruta global de configuración de Antigravity. Soportan traducción de locale, creación automática de drafts en `.hot/imprint-draft.md`, y alertas de la base de datos.
+- **Robustez del PATH**: Se solucionó el fallo de `agy` resolviendo la ruta del ejecutable de forma dinámica y segura, apuntando prioritariamente al binario global `/opt/homebrew/bin/agy`.
+- **Detección de Staleness con Fallback**: Se implementó una alerta en el hook de inicio si el hot cache excede los 15 días (configurable). Se incorporó el fallback crítico: si la sección de historial en `MEMORY.md` está vacía por haber rotado a los 30 días, el hook lee la fecha del último registro de `CONSOLIDATED.md`.
+- **Fase 3.6 - Evals de sqlite-vec**: Se redactó una propuesta de diseño para búsqueda vectorial y se consultó a Claude Code (`claude -p`) para auditoría. Su feedback aportó cambios de arquitectura esenciales:
+  1. sqlite-vec no soporta filtros inline de `distance` dentro de la cláusula `WHERE` junto con `MATCH`; requiere subconsulta (subquery).
+  2. Cosine distance en sqlite-vec usa $1 - \cos(\theta)$, requiriendo calibrar el umbral (ej. < 0.5 para similitud > 0.5).
+  3. Chunking de markdown debe incluir intro pre-heading y solapamiento deslizante para conservar contexto.
+
+**Observaciones / sugerencias:**
+- El fallback a `CONSOLIDATED.md` es fundamental: sin él, cualquier vault pausado por más de un mes no disparaba la alerta de staleness.
