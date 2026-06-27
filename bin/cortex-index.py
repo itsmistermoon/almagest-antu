@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 cortex-index: Incremental wiki indexer with semantic embeddings.
-Usage: python scripts/cortex-index.py [vault_path]
+Usage: python bin/cortex-index.py [vault_path]
 """
 import hashlib
 import json
@@ -22,7 +22,7 @@ def _resolve_forge_cortex() -> Path:
                 candidate = Path(line.split("path:", 1)[1].strip()) / ".cortex"
                 if (candidate / "embeddings.py").exists():
                     return candidate
-    # Fallback: this script lives in <forge>/scripts/, so .cortex is sibling
+    # Fallback: this script lives in <forge>/bin/, so .cortex is sibling
     fallback = Path(__file__).parent.parent / ".cortex"
     if (fallback / "embeddings.py").exists():
         return fallback

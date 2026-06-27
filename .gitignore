@@ -7,3 +7,7 @@
 wiki/meta/vault-report.json
 .serena/
 
+
+.cortex/vault.db
+.cortex/__pycache__/
+.cortex/config.json

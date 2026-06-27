@@ -141,70 +141,16 @@ Omit sections with no real content entirely — never use placeholders.
 #### Imprint candidate
 [only if the session produced a durable insight, design decision, or analysis worth a permanent wiki page — omit if not applicable. One line: what to imprint and suggested type (concept/entity/reference/page)]"
 
-AGY="agy"
-if [ -x "/opt/homebrew/bin/agy" ]; then
-  AGY="/opt/homebrew/bin/agy"
-fi
-SUMMARY=$("$AGY" --model "gemini-3.5-flash" -p "$FULL_PROMPT" 2>/dev/null)
-[ -z "$SUMMARY" ] && echo '{"decision":""}' && exit 0
+# ── Self-backgrounding fix (2026-06-27) ─────────────────────────────────────
+# El hook Stop en Antigravity se interrumpe abruptamente si el proceso padre CLI
+# termina por /exit. Refactor: el padre escribe un snapshot PLACEHOLDER inmediato
+# con un SENTINEL de forma síncrona, y lanza el proceso de síntesis en background
+# vía un script helper temporizador desacoplado (nohup &; disown).
 
-case "$SUMMARY" in
-  *"#### What was done"*) ;;
-  *) echo '{"decision":""}'; exit 0 ;;
-esac
+SENTINEL="__PENDING_SYNTHESIS_${NOW// /_}__"
+HELPER="$GIT_ROOT/.hot/.synthesize-${NOW// /_/}.sh"
 
-if ! printf '%s\n' "$SUMMARY" | grep -qE '^- '; then
-  echo '{"decision":""}'; exit 0
-fi
-
-# Append transcript path to the imprint candidate bullet so SessionStart can locate it
-if printf '%s\n' "$SUMMARY" | grep -q "^#### Imprint candidate$" && [ -n "$TRANSCRIPT" ]; then
-  SUMMARY=$(printf '%s\n' "$SUMMARY" | awk -v tp="$TRANSCRIPT" '
-    /^#### Imprint candidate$/ { print; in_candidate=1; next }
-    in_candidate && /^- / { print $0 " — transcript: " tp; in_candidate=0; next }
-    in_candidate && /^####/ { in_candidate=0 }
-    { print }
-  ')
-fi
-
-# Archive history entries older than 30 days to CONSOLIDATED.md
-CONSOLIDATED="$GIT_ROOT/.hot/CONSOLIDATED.md"
-CUTOFF=$(date -v-30d '+%Y-%m-%d' 2>/dev/null || date -d '30 days ago' '+%Y-%m-%d' 2>/dev/null || echo "")
-
-RECENT_HISTORY="$PREV_HISTORY"
-if [ -n "$PREV_HISTORY" ] && [ -n "$CUTOFF" ]; then
-  RECENT_TMP=$(mktemp -t cortex-recent.XXXXXX)
-  ARCHIVE_TMP=$(mktemp -t cortex-archive.XXXXXX)
-  trap 'rm -f "$TMP" "$RECENT_TMP" "$ARCHIVE_TMP"' EXIT
-
-  printf '%s\n' "$PREV_HISTORY" | awk -v cutoff="$CUTOFF" -v recent="$RECENT_TMP" -v archive="$ARCHIVE_TMP" '
-    /^### [0-9]{4}-[0-9]{2}-[0-9]{2}/ {
-      if (buf != "") {
-        dest = (entry_date < cutoff) ? archive : recent
-        printf "%s", buf > dest
-      }
-      entry_date = $2
-      buf = $0 "\n"
-      next
-    }
-    { buf = buf $0 "\n" }
-    END {
-      if (buf != "") {
-        dest = (entry_date < cutoff) ? archive : recent
-        printf "%s", buf > dest
-      }
-    }
-  '
-
-  RECENT_HISTORY=$(cat "$RECENT_TMP" 2>/dev/null || true)
-  ARCHIVED=$(cat "$ARCHIVE_TMP" 2>/dev/null || true)
-
-  if [ -n "$ARCHIVED" ]; then
-    printf '%s\n' "$ARCHIVED" >> "$CONSOLIDATED"
-  fi
-fi
-
-# ── Write hot file ────────────────────────────────────────────────────────────
+# Snapshot placeholder escrito de forma síncrona
 {
   printf '%s\n' "$CURRENT_STATE"
   echo ""
@@ -214,7 +160,7 @@ fi
   echo ""
   echo "### $NOW — Antigravity (Stop)"
   echo ""
-  printf '%s\n' "$SUMMARY"
+  echo "$SENTINEL"
   if [ -n "$RECENT_HISTORY" ]; then
     echo ""
     printf '%s\n' "$RECENT_HISTORY"
@@ -222,4 +168,62 @@ fi
 } > "$TMP"
 
 mv "$TMP" "$HOT_FILE"
+
+# Resolve agy binary path
+AGY="agy"
+if [ -x "/opt/homebrew/bin/agy" ]; then
+  AGY="/opt/homebrew/bin/agy"
+fi
+
+# Serializar variables para el script helper
+HOT_FILE_ESC=$(printf '%s' "$HOT_FILE" | sed "s/'/'\\''/g")
+SENTINEL_ESC=$(printf '%s' "$SENTINEL" | sed "s/'/'\\''/g")
+FULL_PROMPT_ESC=$(printf '%s' "$FULL_PROMPT" | sed "s/'/'\\''/g")
+AGY_ESC=$(printf '%s' "$AGY" | sed "s/'/'\\''/g")
+TRANSCRIPT_ESC=$(printf '%s' "${TRANSCRIPT:-}" | sed "s/'/'\\''/g")
+
+# Escribir el script helper
+cat > "$HELPER" <<HEREDOC
+#!/bin/bash
+# Auto-generado por cortex-crystallize-antigravity.sh
+HOT_FILE='$HOT_FILE_ESC'
+SENTINEL='$SENTINEL_ESC'
+FULL_PROMPT='$FULL_PROMPT_ESC'
+AGY='$AGY_ESC'
+TRANSCRIPT='$TRANSCRIPT_ESC'
+
+SUMMARY=\$( "\$AGY" --model "gemini-3.5-flash" -p "\$FULL_PROMPT" 2>/dev/null )
+case "\$SUMMARY" in
+  *"#### What was done"*) ;;
+  *) rm -f "$HELPER"; exit 0 ;;
+esac
+if ! printf '%s\n' "\$SUMMARY" | grep -qE '^- '; then
+  rm -f "$HELPER"; exit 0
+fi
+
+# Append transcript path to the imprint candidate bullet so SessionStart can locate it
+if printf '%s\n' "\$SUMMARY" | grep -q "^#### Imprint candidate$" && [ -n "\$TRANSCRIPT" ]; then
+  SUMMARY=\$(printf '%s\n' "\$SUMMARY" | awk -v tp="\$TRANSCRIPT" '
+    /^#### Imprint candidate$/ { print; in_candidate=1; next }
+    in_candidate && /^- / { print \$0 " — transcript: " tp; in_candidate=0; next }
+    in_candidate && /^####/ { in_candidate=0 }
+    { print }
+  ')
+fi
+
+if [ -f "\$HOT_FILE" ] && grep -qF "\$SENTINEL" "\$HOT_FILE"; then
+  TMP2=\$(mktemp -t hot-cache-bg.XXXXXX) || exit 0
+  awk -v sentinel="\$SENTINEL" -v summary="\$SUMMARY" '
+    { if (index(\$0, sentinel)) { printf "%s\n", summary; next } print }
+  ' "\$HOT_FILE" > "\$TMP2" && mv "\$TMP2" "\$HOT_FILE"
+fi
+rm -f "$HELPER"
+HEREDOC
+
+chmod +x "$HELPER"
+
+# Lanzar helper en background desacoplado
+nohup "$HELPER" </dev/null >/dev/null 2>&1 &
+disown 2>/dev/null || true
+
 echo '{"decision":""}'; exit 0

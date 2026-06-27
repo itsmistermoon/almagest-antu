@@ -49,6 +49,7 @@
 
 ## Sources
 - [[wiki/sources/antigravity-hooks]] — Hook documentation for Google Antigravity (ingested 2026-06-07)
+- [[wiki/sources/antigravity-hooks-reference]] — Antigravity 2.0 official hooks reference: full event table, PreInvocation injectSteps, PostInvocation terminationBehavior, wire format (2026-06-26)
 - [[wiki/sources/codex-hooks]] — Hook documentation for Codex (ingested 2026-06-08)
 - [[wiki/sources/commandcode-hooks-configuration]] — Hook configuration in Command Code: scopes, precedence, and order (ingested 2026-06-08)
 - [[wiki/sources/commandcode-hooks-reference]] — Technical reference: wire format I/O, exit codes, HookDefinition/HookEntry (ingested 2026-06-08)

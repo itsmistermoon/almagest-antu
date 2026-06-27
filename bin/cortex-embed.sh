@@ -27,7 +27,7 @@ if [[ -z "$FORGE_PATH" ]]; then
   exit 1
 fi
 
-INDEXER="$FORGE_PATH/scripts/cortex-index.py"
+INDEXER="$FORGE_PATH/bin/cortex-index.py"
 
 # Resolve target vault path
 resolve_vault() {

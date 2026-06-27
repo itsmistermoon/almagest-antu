@@ -16,6 +16,7 @@ When an argument is provided, always run step 1 (vault detection) first, then ju
 | `skills` | Steps 4–5 — install skills + create symlinks |
 | `sync` | Step 3b — sync infrastructure files from upstream repo |
 | `taste` | Step 7 — install TASTE rule |
+| `update` | Step 6u — re-copy hooks from vault to `~/.cortex-forge/bin/hooks/` (no settings.json changes) |
 | `vaults` | Steps 2–3 — register/update vault in config |
 
 Always end with the relevant subset of step 9 (confirmation).
@@ -139,39 +140,65 @@ Always end with the relevant subset of step 9 (confirmation).
     - If a symlink exists but points elsewhere, overwrite it.
 
 6. **Configure lifecycle hooks** — ask: "Set up automatic session memory hooks? (recommended)"
-   If yes:
-   - **Claude Code** (`~/.claude/` exists):
-     - Copy hook scripts from `{vault}/bin/hooks/` to `~/.claude/hooks/` (create dir if needed).
-     - Read `~/.claude/settings.json` (or create it if missing).
-     - Add the following hooks if not already present:
-       ```json
-       "SessionStart": [{ "type": "command", "command": "~/.claude/hooks/cortex-reactivate.sh" }]
-       "PreCompact":   [{ "type": "command", "command": "~/.claude/hooks/cortex-crystallize-claude.sh" }]
-       "SessionEnd":   [{ "type": "command", "command": "~/.claude/hooks/cortex-crystallize-claude.sh", "timeout": 60 }]
-       ```
-     - Merge carefully — do not overwrite existing hooks, only append to the arrays.
-   - **Other agents** — display manual instructions:
+   If yes, first install the runtime hook files (step 6-install), then configure each agent detected (steps below).
+
+   **Step 6-install — Install runtime hooks:**
+   - Create `~/.cortex-forge/bin/hooks/` if it doesn't exist.
+   - Copy all scripts from `{vault}/bin/hooks/` to `~/.cortex-forge/bin/hooks/` (overwrite if already present).
+   - This is the single runtime location for all agents. The vault repo is the source of truth; `~/.cortex-forge/bin/hooks/` is the installed copy.
+
+   **Claude Code** (`~/.claude/` exists):
+   - Create `~/.claude/hooks/` if it doesn't exist.
+   - For each hook script, create a symlink `~/.claude/hooks/{script}` → `~/.cortex-forge/bin/hooks/{script}`. If a symlink already exists pointing to the right target, skip silently. If it points elsewhere or is a plain file, overwrite with the symlink.
+   - Read `~/.claude/settings.json` (or create it if missing).
+   - Add the following hooks if not already present:
+     ```json
+     "SessionStart": [{ "type": "command", "command": "~/.claude/hooks/cortex-reactivate.sh" }]
+     "PreCompact":   [{ "type": "command", "command": "~/.claude/hooks/cortex-crystallize-claude.sh" }]
+     "SessionEnd":   [{ "type": "command", "command": "~/.claude/hooks/cortex-crystallize-claude.sh", "timeout": 60 }]
+     ```
+   - Merge carefully — do not overwrite existing hooks, only append to the arrays.
+
+   **Antigravity** (`~/.gemini/config/` exists):
+   - Create `~/.gemini/config/hooks/` if it doesn't exist.
+   - Create symlinks `~/.gemini/config/hooks/{script}` → `~/.cortex-forge/bin/hooks/{script}` for each Antigravity hook script (`cortex-reactivate-antigravity.sh`, `cortex-crystallize-antigravity.sh`).
+   - Display instructions for `~/.gemini/config/hooks.json`:
+     ```
+     Antigravity (~/.gemini/config/hooks.json):
+       PreInvocation (invocationNum == 0) → bash ~/.gemini/config/hooks/cortex-reactivate-antigravity.sh
+       Stop (fullyIdle == true)           → bash ~/.gemini/config/hooks/cortex-crystallize-antigravity.sh
+     ```
+
+   **Codex** (`~/.codex/` exists):
+   - Create `~/.codex/hooks/` if it doesn't exist.
+   - Create symlinks `~/.codex/hooks/{script}` → `~/.cortex-forge/bin/hooks/{script}` for each Codex hook script (`cortex-reactivate.sh`, `cortex-crystallize-codex.sh`).
+   - Display instructions for `~/.codex/hooks.json`:
      ```
      Codex (~/.codex/hooks.json):
        SessionStart → ~/.codex/hooks/cortex-reactivate.sh
        Stop         → ~/.codex/hooks/cortex-crystallize-codex.sh
-
-       Note: keep Codex hooks in a stable global folder and make the scripts vault-aware at runtime; do not point Codex directly at a specific vault path.
-
-     Antigravity (~/.gemini/config/hooks.json):
-       PreInvocation (invocationNum == 0) → bash ~/.gemini/config/hooks/cortex-reactivate.sh
-       Stop (fullyIdle == true)           → bash ~/.gemini/config/hooks/cortex-crystallize-claude.sh
-       Note: copy scripts to ~/.gemini/config/hooks/ — Antigravity cannot use ~/.claude/hooks/
-
-     CommandCode ({vault}/.commandcode/settings.local.json):
-       Stop → bash {vault}/bin/hooks/cortex-crystallize-commandcode.sh, timeout: 120
-       Note: scope must be the vault's .commandcode/, not cortex-forge's. Timeout de 120s porque la síntesis IA via `cmd -p` requiere llamada API.
-       El script usa `cmd` en el PATH de CommandCode (headless mode).
      ```
+
+   **CommandCode** (`~/.commandcode/` exists):
+   - Create `~/.commandcode/hooks/` if it doesn't exist.
+   - Create symlink `~/.commandcode/hooks/cortex-crystallize-commandcode.sh` → `~/.cortex-forge/bin/hooks/cortex-crystallize-commandcode.sh`.
+   - Display instructions for `~/.commandcode/settings.json` (user scope — applies to all projects):
+     ```json
+     "hooks": {
+       "Stop": [{ "command": "bash ~/.commandcode/hooks/cortex-crystallize-commandcode.sh", "timeout": 120 }]
+     }
+     ```
+   - Note: user scope (`~/.commandcode/settings.json`) is preferred over project scope so the hook works across all vaults. The script resolves the active vault at runtime from CWD. Timeout 120s — the script calls `cmd -p` which requires an API call.
+
+6u. **Update runtime hooks** (sub-task `update` only) — re-copy hook scripts from the vault to the runtime location without touching `settings.json` or agent configs:
+   - Verify `~/.cortex-forge/bin/hooks/` exists (if not, run step 6 instead — this is a first install).
+   - Copy all scripts from `{vault}/bin/hooks/` to `~/.cortex-forge/bin/hooks/` (overwrite).
+   - Report: files updated (list), files unchanged (count).
+   - Symlinks in `~/.claude/hooks/` and `~/.gemini/config/hooks/` do not need updating — they already point to `~/.cortex-forge/bin/hooks/`.
 
 6a. **Recall enforcement nudge (Claude Code only, v1)** — ask: "Install the cortex-recall nudge hook? It reminds the agent to use /cortex-recall when it greps vault content directly. (experimental)"
    If yes, ask scope (never the versioned `settings.json` of a template repo):
-   - **Global (recommended)** — the script self-gates (inert outside registered vaults, once per session), so user scope covers every vault without per-vault config. Copy `bin/hooks/cortex-recall-nudge.sh` to `~/.claude/hooks/` (chmod +x), then add to `~/.claude/settings.local.json`:
+   - **Global (recommended)** — the script self-gates (inert outside registered vaults, once per session), so user scope covers every vault without per-vault config. The script is already in `~/.cortex-forge/bin/hooks/` (copied in step 6-install); create symlink `~/.claude/hooks/cortex-recall-nudge.sh` → `~/.cortex-forge/bin/hooks/cortex-recall-nudge.sh`, then add to `~/.claude/settings.local.json`:
      ```json
      "PreToolUse": [{ "matcher": "Bash", "hooks": [{ "type": "command", "command": "bash ~/.claude/hooks/cortex-recall-nudge.sh" }] }]
      ```
@@ -252,5 +279,7 @@ Codex should use a stable global hook directory such as `~/.codex/hooks/`, not a
 - Do not modify any vault files during setup — read only for validation
 - Preserve all existing vault entries when writing config
 - Symlinks in `~/.claude/skills/`, not copies — updates propagate automatically
+- Hook scripts are copied to `~/.cortex-forge/bin/hooks/` (single runtime location); agent-specific dirs (`~/.claude/hooks/`, `~/.gemini/config/hooks/`) contain symlinks to that location — never plain file copies
+- To update hooks after a vault change: run `/cortex-forge-setup update` — never copy directly to `~/.claude/hooks/`
 - When merging into `settings.json`, preserve all existing hooks
 - Always ask for default when there are multiple vaults — never assume

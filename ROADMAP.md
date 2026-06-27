@@ -69,6 +69,7 @@ Decisiones derivadas de la ingesta de obsidian-mind + guías de @affaan (`wiki/s
 ## Fase 3 — Adoptabilidad
 
 - [x] Agregar licencia al repo público
+- [x] Arquitectura de distribución de hooks: `bin/hooks/` (fuente) → `~/.cortex-forge/bin/hooks/` (runtime) → symlinks por agente (`~/.claude/hooks/`, `~/.gemini/config/hooks/`, `~/.codex/hooks/`, `~/.commandcode/hooks/`); `/cortex-forge-setup update` para propagar cambios; `scripts/` colapsado en `bin/`
 - [ ] Guía de onboarding: 5 minutos desde cero hasta primera ingesta
 - [ ] Páginas de ejemplo en `wiki/concepts/` (demuestran el formato, no son contenido personal)
 - [ ] `wiki/prompts/` como tipo de página opcional — permite al usuario archivar invocaciones efectivas del agente con ejemplo de output; el vault hoy almacena conocimiento del mundo pero no conocimiento operacional sobre cómo trabajar con el agente
@@ -118,13 +119,13 @@ Diseño completo en `CORTEX_FORGE_PLAN.md`. Esta fase desbloquea Fase 4: sin vec
 
 ### Etapa 1 — Índice vectorial local
 
-- [ ] Crear `.cortex/embeddings.py` — módulo compartido que exporta `load_embedding_model()` y `embed()`; encapsula toda la lógica de detección de plataforma y selección de backend; el resto del sistema importa desde aquí, sin duplicar detección
+- [x] Crear `.cortex/embeddings.py` — módulo compartido; backends Ollama (default), mlx-embeddings (Apple Silicon), sentence-transformers (fallback); prefijos `search_document:`/`search_query:` para nomic-embed-text-v1.5
 - [ ] Actualizar `cortex-forge-setup` (skill): detectar OS/arch → instalar dependencias base + opcionales Apple Silicon → descargar pesos (~270 MB) → reportar qué backend quedó activo
-- [ ] Crear `scripts/cortex-index.py` — indexador completo (`--full`) e incremental (`--file`); chunker por sección `##` (~300 tokens); usa `embed()` desde `.cortex/embeddings.py`; INSERT en `.cortex/vault.db`
-- [ ] Crear `.cortex/cortex-search.py` — retrieval vía `vec_distance_dot`, invocable por bash: `python .cortex/cortex-search.py "query" --top-k 5`
+- [x] Crear `bin/cortex-index.py` — indexador completo con chunking por headings + sub-chunking 500 palabras/100 overlap; índice `(path, chunk_index)`; updates atómicos; limpieza de archivos eliminados; calibración automática de threshold (p75 inter-file)
+- [x] Crear `.cortex/cortex-search.py` — KNN two-step (vec_documents → documents JOIN por rowid); flags `--top-k`, `--threshold`, `--json`; threshold leído de `.cortex/config.json`
 - [ ] Hook post-commit: re-indexar solo archivos `wiki/` modificados en el commit
-- [ ] Modificar `cortex-recall/SKILL.md`: invocar `cortex-search.py` como primer paso; el agente recibe top-k paths y trabaja sobre ese conjunto acotado
-- [ ] Agregar `.cortex/vault.db` y `.cortex/__pycache__/` a `.gitignore`
+- [x] Modificar `cortex-recall/SKILL.md`: si existe `.cortex/vault.db` → invocar `cortex-search.py`; fallback a lectura manual del índice
+- [x] Agregar `.cortex/vault.db`, `.cortex/__pycache__/` y `.cortex/config.json` a `.gitignore`
 - [ ] Validar en second-brain: indexación inicial + query de prueba + indexación incremental tras `cortex-assimilate`; verificar que el backend reportado coincide con la plataforma
 
 ### Etapa 2 — MCP server (gate: Etapa 1 validada + vault usado desde >1 cliente)

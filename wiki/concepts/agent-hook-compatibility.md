@@ -2,7 +2,7 @@
 title: agent-hook-compatibility
 type: concept
 created: 2026-06-07
-updated: 2026-06-13
+updated: 2026-06-26
 tags: [multi-agent, hooks, cortex-forge, compatibility]
 aliases: [hook matrix, agent lifecycle]
 sources:
@@ -10,6 +10,7 @@ sources:
   - wiki/sources/commandcode-hooks-reference.md
   - wiki/sources/commandcode-hooks-examples.md
   - wiki/sources/commandcode-hooks-best-practices.md
+  - wiki/sources/antigravity-hooks-reference.md
 confidence: high
 schema_version: "0.3"
 ---
@@ -54,6 +55,25 @@ Configure in `~/.gemini/config/hooks.json`:
 ```
 
 Scripts must live in `~/.gemini/config/hooks/`, not in `~/.claude/hooks/`.
+
+**Full hook event list (Antigravity 2.0, confirmed from official docs 2026-06-26):**
+
+| Event | When | Matcher | Input key | Output key |
+|-------|------|---------|-----------|------------|
+| `PreToolUse` | Before tool execution | tool name regex | `toolCall.name`, `toolCall.args`, `stepIdx` | `decision` (`allow`/`deny`/`ask`/`force_ask`), `reason`, `permissionOverrides` |
+| `PostToolUse` | After tool execution | tool name regex | `stepIdx`, `error` | `{}` (observability only) |
+| `PreInvocation` | Before model is called | N/A | `invocationNum`, `initialNumSteps` | `injectSteps` (array of `ephemeralMessage`/`userMessage`/`toolCall`) |
+| `PostInvocation` | After tool calls finish | N/A | `invocationNum`, `initialNumSteps` | `injectSteps`, `terminationBehavior` (`force_continue`/`terminate`) |
+| `Stop` | Execution loop ends | N/A | `executionNum`, `terminationReason`, `fullyIdle` | `decision: "continue"`, `reason` |
+
+All events receive common fields: `conversationId`, `workspacePaths`, `transcriptPath`, `artifactDirectoryPath`.
+Transcript path: `~/.gemini/antigravity/brain/{conversationId}/.system_generated/logs/transcript.jsonl`
+
+**`PreInvocation` as SuperContext hook (2026-06-26):** `PreInvocation` with `invocationNum == 0` is the functional equivalent of Claude Code's `UserPromptSubmit` for first-message context injection. Key difference: the user's message is **not** delivered in the payload — it must be read from `transcriptPath` before running the semantic search. The `injectSteps.ephemeralMessage` field delivers the result to the model. This makes full SuperContext (query-aware semantic injection) achievable in Antigravity with one extra step.
+
+**`PostInvocation` guardrail potential:** `terminationBehavior: "force_continue"` or `"terminate"` enables loops and guardrails based on tool results — no equivalent exists in Claude Code or CommandCode hooks today.
+
+**Wire format incompatibility with Claude Code:** `PreToolUse` output in Antigravity uses `decision` (not `permissionDecision`). Hooks are not cross-compatible at the wire level even if the logic is portable.
 
 ### Codex
 Configure in `~/.codex/hooks.json`:
@@ -193,6 +213,19 @@ When `/cortex-crystallize` is invoked manually, the skill must identify the call
 
 **Pending validation:** CommandCode, Antigravity, and Codex signals — update this table when each CLI is tested in a live session with `/cortex-crystallize`.
 
+## SuperContext injection capability per agent
+
+Ability to run query-aware semantic search and inject context before the model processes the first user message (SuperContext pattern — see [[wiki/concepts/super-context]]):
+
+| Agent | Hook | Query available | Inject mechanism | Status |
+|-------|------|-----------------|-----------------|--------|
+| Claude Code | `UserPromptSubmit` | ✅ direct in payload | `additionalContext` | ✅ implementable |
+| Antigravity | `PreInvocation` (invocationNum==0) | ⚠️ via `transcriptPath` (one extra read) | `injectSteps.ephemeralMessage` | ✅ implementable |
+| Codex | not documented | ❌ | — | ❌ unknown |
+| CommandCode | no equivalent | ❌ | — | ❌ not feasible |
+
+For Antigravity: read `transcriptPath` → extract last `role: user` message → run `cortex-search.py "{query}"` → return `injectSteps: [{ ephemeralMessage: "..." }]`.
+
 ## Universal fallback rule
 
 If an agent has no startup hook, `AGENTS.md` acts as a fallback: the explicit instruction to read `.hot/MEMORY.md` is interpreted by any agent that processes the instructions file before operating. It is less reliable than a hook (depends on the agent respecting AGENTS.md), but covers the gap.
@@ -207,4 +240,5 @@ If an agent has no startup hook, `AGENTS.md` acts as a fallback: the explicit in
 - 2026-06-08 [claude-sonnet-4-6]: Claude Code SessionStart — `source` field documented (startup|resume|clear|compact), `asyncRewake` added, `PreCompact` with exit 2 confirmed. CommandCode — plan mode gotcha documented. Source: handoff from second-brain
 - 2026-06-08 [Claude Code]: Translated to English
 - 2026-06-11 [Claude Code]: Agent detection signals section added — confirmed Claude Code env vars; other CLIs marked unconfirmed pending live validation
-- 2026-06-13 [CommandCode]: CommandCode crystallize upgraded with `cmd -p` IA synthesis — now produces structured `#### What was done / Discarded / Fragile context` entries instead of minimal "Session closed via Stop hook."
+- 2026-06-13 [CommandCode]: CommandCode crystallize upgraded with `cmd -p` IA synthesis
+- 2026-06-26 [Claude Code]: Antigravity section expanded with full hook event table (PreInvocation/PostInvocation confirmed from official docs); SuperContext injection table added; wire format incompatibility with Claude Code documented. Source: wiki/sources/antigravity-hooks-reference.md — now produces structured `#### What was done / Discarded / Fragile context` entries instead of minimal "Session closed via Stop hook."
