@@ -145,7 +145,7 @@ AGY="agy"
 if [ -x "/opt/homebrew/bin/agy" ]; then
   AGY="/opt/homebrew/bin/agy"
 fi
-SUMMARY=$("$AGY" -p "$FULL_PROMPT" 2>/dev/null)
+SUMMARY=$("$AGY" --model "gemini-3.5-flash" -p "$FULL_PROMPT" 2>/dev/null)
 [ -z "$SUMMARY" ] && echo '{"decision":""}' && exit 0
 
 case "$SUMMARY" in

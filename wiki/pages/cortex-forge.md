@@ -24,7 +24,13 @@ schema_version: "0.3"
 **Status:** active
 **Repo:** /Users/itsmistermoon/proyectos/cortex-forge
 
+## Origin
+
+Born as a public mirror of moon-multivac (JP's private vault), created initially to apply to OpenAI Codex for OSS. After the application, JP decided to develop it as a real OSS project with an independent repo. Local development: `~/proyectos/cortex-forge/`. moon-multivac is a *consumer* of cortex-forge, not its source.
+
 ## Goal
+
+Be the reference implementation of an LLM-native vault for multi-agent operation: any developer can fork the repo and have a knowledge base that any agent (Claude Code, Codex, Gemini, Cursor) can operate without additional configuration. Unlike tools like Obsidian or Notion, cortex-forge assumes the agent is the primary operator, not the human.
 
 Vault with a hot cache protocol that synchronizes context across multiple agents (Claude Code, Codex, Antigravity, CommandCode) without token bloat at session start. Synthesized knowledge lives in `wiki/` (secondary sources); originals in `.raw/` (primary sources, immutable); ephemeral per-project context in `.hot/MEMORY.md`; vault identity in `CODEX.md`.
 
@@ -58,13 +64,38 @@ Vault with a hot cache protocol that synchronizes context across multiple agents
 - **Ollama discarded for embeddings** — requires a running server at `localhost:11434`. Breaks in post-commit hooks, CI environments, and any user who hasn't installed it. Not viable for a public project with no infrastructure prerequisites.
 - **Dot product over cosine similarity** — `nomic-embed-text-v1.5` with `normalize_embeddings=True` produces unit-norm vectors. For unit-norm vectors, dot product and cosine are mathematically equivalent. sqlite-vec exposes `vec_distance_dot`, which is computationally cheaper than explicit cosine. No precision is lost.
 - **MCP server deferred to Etapa 2** — sqlite-vec solves retrieval; MCP solves multi-client dispatch. These are separate problems. Implementing both simultaneously creates two simultaneous diagnostic surfaces if something fails. Gate: Etapa 1 validated in an organic session AND the vault is accessed from more than one client. `AGENTS.md` remains the design contract regardless — an agent without MCP can still operate the vault by reading `AGENTS.md` directly.
+- **[[wiki/entities/openhuman|OpenHuman]] is the closest full-harness comparable** — both solve the agent cold-start problem via a local Karpathy-style Obsidian vault as the memory layer, and both implement the [[wiki/concepts/super-context|Super Context]] pattern (harness-level deterministic context injection on session start). Key divergences: OpenHuman is a desktop GUI application with 118+ managed OAuth integrations and automatic 20-minute auto-fetch loops that populate the vault without agent involvement; Cortex Forge is a vault protocol that any CLI agent operates via hooks and skills, with knowledge synthesized manually from ingested sources. OpenHuman's SuperContext runs inside the harness (Python/Rust app); Cortex Forge's equivalent is a bash `SessionStart` hook that injects `.hot/MEMORY.md` before the first prompt. OpenHuman is user-facing and batteries-included; Cortex Forge is agent-infrastructure and composable. TokenJuice (OpenHuman's token compression layer — up to 80% reduction via HTML→Markdown, URL shortening, dedup) has no Cortex Forge equivalent; the vault reduces token cost indirectly by replacing file-by-file retrieval with a pre-built semantic index.
+
 - **[[wiki/entities/graphify|Graphify]] + Leiden discarded for retrieval** — Leiden is community detection over graphs inferred from code ASTs (via tree-sitter). Cortex Forge's vault contains synthesized prose knowledge in Markdown, not source code. Relationships between pages are captured by the vault taxonomy (`wiki/concepts/`, `wiki/entities/`, etc.) and don't need to be inferred from syntax. Embeddings + semantic similarity solve the actual problem with lower complexity.
 
-## Next steps
+## Roadmap
 
-- [ ] Validar `cortex-crystallize-antigravity.sh` en sesión real (flujo orgánico completo, no mock)
-- [ ] Implementar PostToolUse como guardrail de plataforma (detección SPA + intercepción grep/find) — Roadmap Fase 2
-- [ ] MOCs por área temática (Fase 3)
+### Phase 1 — Multi-agent parity
+Goal: Hot Cache Protocol working across all supported agents.
+
+- [x] Claude Code — configured via `cortex-forge-setup`
+- [ ] Antigravity CLI — documented, pending real organic session test
+- [x] Codex — wire format confirmed in real session; SessionStart multi-source, hook context visible in UI
+- [ ] CommandCode — partial (close only); startup via AGENTS.md as fallback
+- [x] Compatibility matrix → `wiki/concepts/agent-hook-compatibility.md`
+
+### Phase 2 — Protocol hardening
+- [ ] Schema versioning in `AGENTS.md` and templates (`schema_version:`)
+- [ ] Automatic `cortex-prune` via periodic hook
+- [ ] Stale hot cache detection (not updated in N days)
+- [ ] PostToolUse as platform guardrail (SPA detection + grep/find interception)
+
+### Phase 3 — Adoptability
+- [ ] Add license to public repo
+- [ ] Onboarding guide: 5 minutes from zero to first ingest
+- [ ] Example pages in `wiki/concepts/` of public repo (demonstrate format, not personal content)
+- [x] Phase 3.6: Semantic vector retrieval (sqlite-vec + nomic-embed-text-v1.5)
+
+### Phase 4 — Accumulated intelligence
+- [ ] `cortex-recall` with cross-page synthesis and contradiction detection
+- [ ] Cross-session pattern detection: recurring themes in `.hot/` that never reach `wiki/`
+
+## Next steps
 
 ## Resolved
 
@@ -98,6 +129,8 @@ Vault with a hot cache protocol that synchronizes context across multiple agents
 - [[wiki/sources/antigravity-hooks]] — Antigravity/Gemini CLI configuration
 - [[wiki/sources/gemini-cli-hooks-video]] — Official hooks & skills video
 - [[wiki/sources/ai-coding-dictionary]] — Vocabulary source: handoff, compaction, primary/secondary source, memory system
+- [[wiki/sources/openhuman]] — OpenHuman README: comparable harness with Memory Tree, SuperContext, TokenJuice
+- [[wiki/sources/openhuman-super-context]] — SuperContext feature article (featured): harness-level deterministic context injection
 
 ---
 
@@ -106,3 +139,4 @@ Vault with a hot cache protocol that synchronizes context across multiple agents
 - 2026-06-08 [Claude Code]: Updated to reflect v0.1.0 state — CODEX.md layer, fixed MEMORY.md name, 5 wiki types, PreCompact/SessionEnd distinction, parametric knowledge decision, primary/secondary source taxonomy, co-located templates, updated next steps and recurring issues
 - 2026-06-10 [Claude Code]: Linked primary-source/secondary-source concepts (full-article ingestion); adopted "context pointer" and "drift" vocabulary in the `.raw/` key decision
 - 2026-06-16 [Claude Code]: Added design decisions for Fase 3.6 (vector retrieval stack): sqlite-vec rationale, sentence-transformers over Ollama/mlx, dot product metric, MCP deferral gate, Graphify+Leiden discard
+- 2026-06-26 [Claude Code]: Added OpenHuman as closest full-harness comparable; SuperContext pattern comparison; added openhuman sources

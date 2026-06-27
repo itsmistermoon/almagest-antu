@@ -23,9 +23,12 @@ Answer a question using the vault's wiki content as the source.
 
 2. If `{vault}/CODEX.md` exists, read **Vocabulary** and **Domains** — use them to interpret the query correctly and scope the search.
 
-3. Read `{vault}/wiki/index.md` to identify relevant pages.
+3. **Identify relevant pages** — prefer semantic search if the index is available:
+   - If `.cortex/vault.db` exists: run `python {vault}/.cortex/cortex-search.py "{query}" --top-k 8 --json`
+     and use the returned chunks (path + heading + content) as the primary source set.
+   - Otherwise: read `{vault}/wiki/index.md` and identify pages manually.
 
-4. Read the relevant pages.
+4. Read the full pages for any result where the chunk alone is insufficient for a complete answer.
 
 5. Synthesize a response with citations to specific pages.
 

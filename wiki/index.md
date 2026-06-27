@@ -30,6 +30,10 @@
 - [[wiki/concepts/headless-agent-mode]] — Modo no-interactivo (`-p` / `--print`): flags por agente, permisos de escritura, persistencia de sesión; `--yolo` requerido en CommandCode para hooks de síntesis
 - [[wiki/concepts/tool-context-budget]] — Tool schemas consumen ~30K tokens antes del primer mensaje; cada MCP server suma 3–15K adicionales; ventana efectiva ≠ ventana nominal
 - [[wiki/concepts/agent-permission-model]] — Superficie de permisos cross-agent: CommandCode bloquea escrituras en headless por defecto (`--yolo` requerido); Antigravity usa per-action-type; MCP expande superficie independientemente
+- [[wiki/concepts/super-context]] — Harness-level pattern for deterministic context injection on session start; eliminates agent cold starts; Cortex Forge equivalent is the SessionStart hook + .hot/MEMORY.md
+- [[wiki/concepts/cortex-forge-vs-alternatives]] — Comprehensive comparison of cortex-forge vs 16+ alternative systems (OpenHuman, GBrain, Hermes, Obsidian Mind, OpenBrain, Mem0, etc.)
+- [[wiki/concepts/vault-design-karpathy-vs-hq]] — Two design reference models (epistemic vs executive); gaps analysis with Hermes cross-reference; cortex-forge chose Karpathy
+- [[wiki/concepts/vault-mcp-server-pattern]] — Architecture pattern for exposing a vault as an MCP server; skills vs MCP trade-off; gate for Phase 2 transition
 
 ## Entities
 - [[wiki/entities/openbrain-nate-jones]] — Personal semantic memory system: Postgres + pgvector + MCP server; any agent connects with URL + key
@@ -41,6 +45,7 @@
 - [[wiki/entities/codebase-memory-mcp]] — High-performance MCP server: codebase → SQLite knowledge graph; 158 languages, 14 tools, zero dependencies, single static binary; 3,902 stars
 - [[wiki/entities/codex]] — Codex CLI (OpenAI): terminal coding agent con hook system compatible con Claude Code; `cortex-crystallize-codex.sh` validated
 - [[wiki/entities/graphify]] — Skill multi-agente que convierte cualquier folder en knowledge graph (`graph.html`); 66.3k stars, YC S26; no soporta CommandCode (brecha que cortex-forge cubre)
+- [[wiki/entities/openhuman]] — Open-source agentic desktop assistant (33k stars); Memory Tree + Obsidian vault + 118 integrations + SuperContext; closest full-harness comparable to Cortex Forge
 
 ## Sources
 - [[wiki/sources/antigravity-hooks]] — Hook documentation for Google Antigravity (ingested 2026-06-07)
@@ -92,6 +97,8 @@
 - [[wiki/sources/pi-session-format]] — Pi session JSONL tree format: versions, AgentMessage union, entry types, SessionManager API (ingested 2026-06-16)
 - [[wiki/sources/pi-terminal-setup]] — Pi terminal compatibility matrix and per-emulator config (Kitty protocol, Ghostty, WezTerm, Alacritty, VS Code, Windows Terminal) (ingested 2026-06-16)
 - [[wiki/sources/codebase-memory-mcp]] — codebase-memory-mcp GitHub README: knowledge graph indexer, 14 MCP tools, Hybrid LSP, team-shared artifact (ingested 2026-06-16)
+- [[wiki/sources/openhuman]] — OpenHuman README: Memory Tree, SuperContext, TokenJuice, 118+ integrations, agentmemory backend interop (ingested 2026-06-26)
+- [[wiki/sources/openhuman-super-context]] — OpenHuman SuperContext feature article (featured): harness-level deterministic context injection, read-only scout, tag-delimited bundle (ingested 2026-06-26)
 
 ## Reference
 - [[wiki/reference/workflow-architecture]] — Three-phase session flow: hooks, skills, scripts, degraded modes, config files per agent
