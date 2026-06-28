@@ -1,143 +1,143 @@
 # Roadmap
 
-## Fase 1 — Multi-agent parity
+## Phase 1 — Multi-agent parity
 
-Objetivo: que el Hot Cache Protocol funcione en todos los agentes soportados.
+Goal: Hot Cache Protocol working across all supported agents.
 
-- [x] Claude Code — configurado vía `cortex-forge-setup`
-- [x] Matriz de compatibilidad → `wiki/concepts/agent-hook-compatibility.md`
-- [x] Antigravity CLI — completo
-  - [x] Correr `/cortex-forge-setup` desde Antigravity — muestra el bloque JSON a agregar
-  - [x] Configurar hooks en `~/.gemini/config/hooks.json` (PreInvocation + Stop) — migrado a `cortex-reactivate-antigravity.sh` + `cortex-crystallize-antigravity.sh`; symlink a `~/.gemini/antigravity-cli/hooks.json` por bug agy-cli #49
-  - [x] **PROBAR**: `cortex-reactivate-antigravity.sh` inyecta Zone 1 de `.cortex/` al inicio — sin payload devuelve `{"injectSteps":[]}` (correcto); con `invocationNum=0` + workspace inyecta Zone 1 correctamente
-  - [x] **REESCRIBIR**: `cortex-crystallize-antigravity.sh` — script original usaba `jq` sobre el transcript; Antigravity guarda transcripts como SQLite+Protobuf (`.db`), no JSON. Script reescrito para extraer via `strings $TRANSCRIPT | grep -oE '"toolSummary":"[^"]*"'` y mensajes de usuario desde `history.jsonl`. Fix de portabilidad: `grep -P` → `grep -E` (BSD grep en macOS). Guard `[ -z "$TOOL_SUMMARIES" ] && exit 0` protege sesiones de solo lectura.
-  - [x] **VALIDAR** en sesión orgánica real: `fullyIdle==true` dispara hook → `agy -p` sobre transcript real → síntesis descriptiva escrita en `.cortex/MEMORY.md` — trigger real validado en sesión orgánica (692b01be) ✅
-  - [x] **VERIFICAR**: contradicción en path de `settings.json` — no existe `~/.gemini/config/settings.json`; el archivo real es `~/.gemini/antigravity-cli/settings.json`
-  - [x] Ingestar una fuente con `cortex-assimilate`
-  - [x] Consultar conocimiento con `cortex-recall` — validado con citations y confidence level ✅
-- [ ] Codex — parcial
-  - [ ] Correr `/cortex-forge-setup` desde Codex — verificar que detecta config existente y ofrece "Update"
-  - [x] Pegar bloque en `~/.codex/hooks.json` (SessionStart + Stop)
-  - [x] Verificar que `.cortex/` se inyecta en contexto al iniciar sesión — hook nativo confirmado; `hook context:` visible en UI es comportamiento de diseño, no error de parsing
-  - [x] Crear `cortex-crystallize-codex.sh` — wrapper de 12 líneas que delega en `cortex-crystallize-claude.sh` con `AGENT_LABEL=Codex`; instalado en `~/.codex/hooks/cortex-crystallize-codex.sh`
-  - [ ] **VALIDAR** flujo end-to-end: SessionStart inyecta `.cortex/` → trabajo real → Stop dispara wrapper → síntesis escrita — wrapper creado ✅; validación en sesión orgánica pendiente ❌
-  - [ ] Ingestar una fuente con `cortex-assimilate`
-  - [ ] Consultar conocimiento con `cortex-recall`
-- [ ] CommandCode — parcial; Capa 1 confirmada, hooks de cierre pendientes
-  - [x] Correr `/cortex-forge-setup` desde CommandCode — re-ejecutado; skills y symlinks actualizados
-  - [x] Pegar bloque de Stop hook en el archivo de hooks de CommandCode — copiado a `second-brain/.commandcode/settings.local.json` con wire format anidado
-  - [x] Verificar modo degradado sesión 1: agente lee `.cortex/` vía `AGENTS.md` (Capa 1 confirmada — lectura en primer turno, contexto de proyecto inmediato)
-  - [x] Verificar ciclo completo sesión 2: `.cortex/` escrito en sesión 1 es leído correctamente en sesión 2
-  - [x] Ejecutar `cortex-crystallize` y confirmar snapshot guardado
-  - [x] Ingestar una fuente con `cortex-assimilate`
-  - [ ] Consultar conocimiento con `cortex-recall` — falló proactivamente (usó `grep`); funciona bajo instrucción explícita
-  - [x] Instalar TASTE rule (`## Cortex Forge Skills`) en `taste.md` per-project (second-brain) y global (`~/.commandcode/taste/`) — paso 7 de setup ejecutado por Claude Code; CommandCode no puede editar `taste/` por system policy
+- [x] Claude Code — configured via `cortex-forge-setup`
+- [x] Compatibility matrix → `wiki/concepts/agent-hook-compatibility.md`
+- [x] Antigravity CLI — complete
+  - [x] Run `/cortex-forge-setup` from Antigravity — displays JSON block to add
+  - [x] Configure hooks in `~/.gemini/config/hooks.json` (PreInvocation + Stop) — migrated to `cortex-reactivate-antigravity.sh` + `cortex-crystallize-antigravity.sh`; symlink to `~/.gemini/antigravity-cli/hooks.json` due to agy-cli bug #49
+  - [x] **TEST**: `cortex-reactivate-antigravity.sh` injects Zone 1 of `.cortex/` on startup — without payload returns `{"injectSteps":[]}` (correct); with `invocationNum=0` + workspace injects Zone 1 correctly
+  - [x] **REWRITE**: `cortex-crystallize-antigravity.sh` — original script used `jq` on the transcript; Antigravity stores transcripts as SQLite+Protobuf (`.db`), not JSON. Rewritten to extract via `strings $TRANSCRIPT | grep -oE '"toolSummary":"[^"]*"'` and user messages from `history.jsonl`. Portability fix: `grep -P` → `grep -E` (BSD grep on macOS). Guard `[ -z "$TOOL_SUMMARIES" ] && exit 0` protects read-only sessions.
+  - [x] **VALIDATE** in real organic session: `fullyIdle==true` fires hook → `agy -p` on real transcript → descriptive synthesis written to `.cortex/MEMORY.md` — real trigger validated in organic session (692b01be) ✅
+  - [x] **VERIFY**: contradiction in `settings.json` path — `~/.gemini/config/settings.json` does not exist; real file is `~/.gemini/antigravity-cli/settings.json`
+  - [x] Ingest a source with `cortex-assimilate`
+  - [x] Query knowledge with `cortex-recall` — validated with citations and confidence level ✅
+- [ ] Codex — partial
+  - [ ] Run `/cortex-forge-setup` from Codex — verify it detects existing config and offers "Update"
+  - [x] Paste block into `~/.codex/hooks.json` (SessionStart + Stop)
+  - [x] Verify `.cortex/` is injected into context on session start — native hook confirmed; `hook context:` visible in UI is intended behavior, not a parsing error
+  - [x] Create `cortex-crystallize-codex.sh` — 12-line wrapper that delegates to `cortex-crystallize-claude.sh` with `AGENT_LABEL=Codex`; installed at `~/.codex/hooks/cortex-crystallize-codex.sh`
+  - [ ] **VALIDATE** end-to-end flow: SessionStart injects `.cortex/` → real work → Stop fires wrapper → synthesis written — wrapper created ✅; validation in organic session pending ❌
+  - [ ] Ingest a source with `cortex-assimilate`
+  - [ ] Query knowledge with `cortex-recall`
+- [ ] CommandCode — partial; Layer 1 confirmed, close hooks pending
+  - [x] Run `/cortex-forge-setup` from CommandCode — re-run; skills and symlinks updated
+  - [x] Paste Stop hook block into CommandCode hooks file — copied to `second-brain/.commandcode/settings.local.json` with nested wire format
+  - [x] Verify degraded mode session 1: agent reads `.cortex/` via `AGENTS.md` (Layer 1 confirmed — read on first turn, immediate project context)
+  - [x] Verify full cycle session 2: `.cortex/` written in session 1 is read correctly in session 2
+  - [x] Run `cortex-crystallize` and confirm snapshot saved
+  - [x] Ingest a source with `cortex-assimilate`
+  - [ ] Query knowledge with `cortex-recall` — failed proactively (used `grep`); works under explicit instruction
+  - [x] Install TASTE rule (`## Cortex Forge Skills`) in `taste.md` per-project (second-brain) and global (`~/.commandcode/taste/`) — setup step 7 run by Claude Code; CommandCode cannot edit `taste/` due to system policy
 
-## Fase 2 — Hardening del protocolo
+## Phase 2 — Protocol hardening
 
-- [x] **Detección de agente en `cortex-crystallize` (paso 1a)** — 3 niveles: (1) env vars (`CLAUDECODE=1`, `AI_AGENT` — Claude Code ✅); (2) árbol de procesos desde `$PPID` buscando binario conocido — CommandCode ✅; (3) `which` como fallback parcial. Antigravity y Codex: hipótesis proceso-árbol, pendientes de validación en sesión real.
-- [x] **Multi-vault**: `~/.cortex-forge/config.yml` con `vaults: {name: path}` + `default:`; vault resuelto por CWD primero, luego default; `cortex-forge-setup` registra/deregistra el vault actual (toggle por CWD); legacy `vault:` soportado en `cortex-crystallize`
-- [x] Guardrails de compliance para skills — contratos verificables en `AGENTS.md` (criterio de cumplimiento por protocolo) + output format obligatorio en `cortex-recall`, `cortex-assimilate`, `cortex-crystallize` — commit `ee7cbe5`
-- [x] **Link-count scan** — detección de páginas islote (orphan_pages) implementada en cortex-prune.sh con matching por ruta completa (elimina colisiones de basename); campo añadido a vault-report.json y surfaceado en session-start. knowledge_map completo descartado por falta de consumidor. (2026-06-28)
-- [-] Hook guardrail de plataforma — **cancelado** (2026-06-28)
-  - [x] Grep interception: `cortex-recall-nudge.sh` implementado 2026-06-12 — **desinstalado**. El hook nunca registró activaciones y el experimento resultó no medible sin logging. El bypass declarativo (agente invoca `cortex-recall` por instrucción en `AGENTS.md`) cubre el caso con mejor cobertura y sin overhead. Kill criterion de facto: 0 datos en semanas. Script retenido como `.retired` en `~/.cortex-forge/bin/hooks/`.
-  - [-] SPA/PostToolUse — cancelado. El skill `cortex-assimilate` ya cubre el caso por protocolo; un hook PostToolUse no puede modificar la respuesta del agente y el valor marginal no justifica la complejidad.
-- [x] Versionado de schema en `AGENTS.md` y templates (`schema_version: "0.3"`) — 2026-06-15
-- [/] `cortex-prune` automático vía hook periódico — **parcial** 2026-06-12: post-commit hook (backlog #2 Item 2) refresca `vault-report.json` en cada commit (setup paso 6b); post-commit ≠ periódico — detección de staleness en vaults dormidos sigue abierta. Pendiente: validar en second-brain (vault con commits de contenido reales)
-- [x] Detección de hot cache stale (sin actualizar en N días) — `hot_cache_stale_days:` en `config.yml`; `cortex-reactivate.sh` y `cortex-reactivate-antigravity.sh` inyectan warning al inicio de sesión si supera el umbral
-- [x] Campo `agent:` en frontmatter de snapshots `.cortex/` — identifica qué agente escribió cada entrada; necesario para resolver conflictos en vaults multi-agente
-- [x] Split `Project state` / `Agent context` — `.cortex/MEMORY.md` (estado de sesión) + `.cortex/PRAXIS.md` (contexto acumulado del agente: convenciones permanentes + working context con TTL 30 días). `.hot/` eliminado; todo en `.cortex/`. `CODEX.md` absorbido en `AGENTS.md` (`## Vault identity`). (2026-06-28)
-- [x] Context fencing en `cortex-imprint` — jerarquía de fuentes (sesión > `.raw/` > `wiki/` solo referencia), test de síntesis circular, campo `raw:` en provenance, regla de source fencing en Rules. (2026-06-28)
-- [x] Tags de comportamiento en skills (`behavior:` en frontmatter) — 6 tags asignados: `#ingest`, `#synthesize`, `#recall`, `#prune`, `#snapshot`, `#configure`; cortex-assimilate y cortex-prune marcados como multi-behavior (candidatos a split futuro). (2026-06-28)
+- [x] **Agent detection in `cortex-crystallize` (step 1a)** — 3 levels: (1) env vars (`CLAUDECODE=1`, `AI_AGENT` — Claude Code ✅); (2) process tree from `$PPID` looking for known binary — CommandCode ✅; (3) `which` as partial fallback. Antigravity and Codex: process-tree hypothesis, pending validation in real sessions.
+- [x] **Multi-vault**: `~/.cortex-forge/config.yml` with `vaults: {name: path}` + `default:`; vault resolved by CWD first, then default; `cortex-forge-setup` registers/deregisters the current vault (toggle by CWD); legacy `vault:` supported in `cortex-crystallize`
+- [x] Compliance guardrails for skills — verifiable contracts in `AGENTS.md` (protocol compliance criteria) + mandatory output format in `cortex-recall`, `cortex-assimilate`, `cortex-crystallize` — commit `ee7cbe5`
+- [x] **Link-count scan** — orphan page detection implemented in `cortex-prune.sh` with full vault-relative path matching (eliminates basename collisions); `orphan_pages` field added to `vault-report.json` and surfaced on session start. Full `knowledge_map` dropped — no consumer. (2026-06-28)
+- [-] Platform hook guardrail — **canceled** (2026-06-28)
+  - [x] Grep interception: `cortex-recall-nudge.sh` implemented 2026-06-12 — **uninstalled**. The hook never logged any activations and the experiment was unmeasurable without logging. The declarative bypass (agent invokes `cortex-recall` via `AGENTS.md` instruction) covers the case with better reach and no overhead. De facto kill criterion: 0 data points in weeks. Script retained as `.retired` in `~/.cortex-forge/bin/hooks/`.
+  - [-] SPA/PostToolUse — canceled. `cortex-assimilate` already covers the case by protocol; a PostToolUse hook cannot modify the agent's response and the marginal value does not justify the complexity.
+- [x] Schema versioning in `AGENTS.md` and templates (`schema_version: "0.3"`) — 2026-06-15
+- [/] Automatic `cortex-prune` via periodic hook — **partial** 2026-06-12: post-commit hook (backlog #2 item 2) refreshes `vault-report.json` on every commit (setup step 6b); post-commit ≠ periodic — staleness detection in dormant vaults still open. Pending: validate in second-brain (vault with real content commits)
+- [x] Stale hot cache detection (not updated in N days) — `hot_cache_stale_days:` in `config.yml`; `cortex-reactivate.sh` and `cortex-reactivate-antigravity.sh` inject a warning on session start if threshold is exceeded
+- [x] `agent:` field in `.cortex/` snapshot frontmatter — identifies which agent last wrote the mutable zone; needed to resolve conflicts in multi-agent vaults
+- [x] Split `Project state` / `Agent context` — `.cortex/MEMORY.md` (session state) + `.cortex/PRAXIS.md` (accumulated agent context: permanent conventions + working context with 30-day TTL). `.hot/` removed; everything in `.cortex/`. `CODEX.md` absorbed into `AGENTS.md` (`## Vault identity`). (2026-06-28)
+- [x] Context fencing in `cortex-imprint` — source hierarchy (session > `.raw/` > `wiki/` reference only), circular synthesis test, `raw:` field in provenance, source fencing rule in Rules. (2026-06-28)
+- [x] Behavior tags in skills (`behavior:` in frontmatter) — 6 tags assigned: `#ingest`, `#synthesize`, `#recall`, `#prune`, `#snapshot`, `#configure`; `cortex-assimilate` and `cortex-prune` marked as multi-behavior (split candidates). (2026-06-28)
 
-## Fase 2.5 — Batch 2026-06-12 (prioridad: implementar pronto)
+## Phase 2.5 — Batch 2026-06-12 (priority: implement soon)
 
-Decisiones derivadas de la ingesta de obsidian-mind + guías de @affaan (`wiki/sources/obsidian-mind.md`, `claude-code-shorthand-guide.md`, `claude-code-longform-guide.md`, `agentic-security-shorthand-guide.md`). Estrategia: **Claude Code primero**; si otro agente retrasa un paso, queda como pendiente por agente y se valida empíricamente solo con Claude.
+Decisions derived from ingesting obsidian-mind + @affaan's guides (`wiki/sources/obsidian-mind.md`, `claude-code-shorthand-guide.md`, `claude-code-longform-guide.md`, `agentic-security-shorthand-guide.md`). Strategy: **Claude Code first**; if another agent blocks a step, it stays pending per-agent and is validated empirically with Claude only.
 
-- [x] **Sección "Attempted and failed" en el template del hot cache** — agregada a `MEMORY-FORMAT.md` y `cortex-crystallize/SKILL.md` (junto a What was done / Fragile context). Registro explícito de enfoques intentados que fallaron, con evidencia. (2026-06-12, CommandCode)
-- [x] **Sanitización en `cortex-assimilate`** — `bin/cortex-sanitize.sh` creado y paso 4a agregado al skill. Escanea: Unicode invisible, comentarios HTML, base64 embebido, comandos de egress, `ANTHROPIC_BASE_URL`. Hallazgo → reporta al usuario, no bloquea. (2026-06-12, CommandCode)
-- [x] **Pipeline imprint: detección al Stop + triage al SessionStart** — implementado 2026-06-15:
-  - [x] Crystallize (Stop): Haiku detecta síntesis durable → genera `#### Imprint candidate` con bullet + `— transcript: <path>` en la entrada de History.
-  - [x] SessionStart: detecta candidate en la entrada más reciente del History, chequea expiración (>30 días → ignora), escribe `.cortex/imprint-draft.md` con candidate + transcript path, inyecta nudge.
-  - [x] Toggle `imprint_triage: off | suggest | auto` en `~/.cortex-forge/config.yml` (global o por vault). Backwards compat `true`→`suggest`, `false`→`off`. Default `suggest` en config global.
-  - [x] `cortex-imprint/SKILL.md` lee `.cortex/imprint-draft.md` si existe (paso 0) y lo elimina tras leerlo.
-  - [ ] **Pendiente — modo `auto` completo**: hoy `auto` se comporta igual que `suggest` (nudge más fuerte, pero sin subagente autónomo). Implementación completa: el hook lanza `claude -p` (Haiku) bloqueante que lee el transcript + candidate y escribe la página wiki directamente en el vault. Requiere que el hook conozca vault path, taxonomía de tipos y templates — diseñar como script separado `bin/cortex-imprint-auto.sh` invocado desde el hook solo cuando `imprint_triage: auto`.
-  - Nota de diseño: la garantía de consumo viene del **canal inyectado** (hot cache), no de la redacción de skills/AGENTS.md — los flags viajan en la misma inyección que ya es confiable. Lección crítica que deba sobrevivir siempre → destilar a una línea en `Current state`, detalle largo en wiki.
-  - Pendientes por agente: localización de transcripts en Codex (`~/.codex/sessions/`) y Antigravity (SQLite+Protobuf — sin path JSONL); **CommandCode resuelto** (2026-06-12): `~/.commandcode/projects/{project-slug}/{session-uuid}.jsonl`, también disponible vía `transcript_path` en stdin de hooks. Subagente en background es capacidad de Claude Code, sin equivalente verificado en los demás. Fuentes: `wiki/sources/commandcode-hooks-reference`, `wiki/sources/commandcode-headless`, inspección de filesystem real.
+- [x] **"Attempted and failed" section in hot cache template** — added to `MEMORY-FORMAT.md` and `cortex-crystallize/SKILL.md` (alongside What was done / Fragile context). Explicit record of attempted approaches that failed, with evidence. (2026-06-12, CommandCode)
+- [x] **Sanitization in `cortex-assimilate`** — `bin/cortex-sanitize.sh` created and step 4a added to the skill. Scans: invisible Unicode, HTML comments, embedded base64, egress commands, `ANTHROPIC_BASE_URL`. Finding → report to user, do not block. (2026-06-12, CommandCode)
+- [x] **Imprint pipeline: detection at Stop + triage at SessionStart** — implemented 2026-06-15:
+  - [x] Crystallize (Stop): Haiku detects durable synthesis → generates `#### Imprint candidate` bullet + `— transcript: <path>` in the History entry.
+  - [x] SessionStart: detects candidate in the most recent History entry, checks expiration (>30 days → ignore), writes `.cortex/imprint-draft.md` with candidate + transcript path, injects nudge.
+  - [x] Toggle `imprint_triage: off | suggest | auto` in `~/.cortex-forge/config.yml` (global or per-vault). Backwards compat `true`→`suggest`, `false`→`off`. Default `suggest` in global config.
+  - [x] `cortex-imprint/SKILL.md` reads `.cortex/imprint-draft.md` if it exists (step 0) and removes it after reading.
+  - [ ] **Pending — full `auto` mode**: today `auto` behaves like `suggest` (stronger nudge, but no autonomous subagent). Full implementation: the hook launches a blocking `claude -p` (Haiku) that reads the transcript + candidate and writes the wiki page directly to the vault. Requires the hook to know vault path, page taxonomy, and templates — design as a separate `bin/cortex-imprint-auto.sh` script invoked from the hook only when `imprint_triage: auto`.
+  - Design note: delivery guarantee comes from the **injected channel** (hot cache), not from skill/AGENTS.md wording — flags travel in the same injection that is already reliable. Anything critical enough to survive forever → distill to one line in `Current state`, long detail goes to wiki.
+  - Per-agent pending: transcript location in Codex (`~/.codex/sessions/`) and Antigravity (SQLite+Protobuf — no JSONL path); **CommandCode resolved** (2026-06-12): `~/.commandcode/projects/{project-slug}/{session-uuid}.jsonl`, also available via `transcript_path` in hook stdin. Background subagent is a Claude Code capability with no verified equivalent in other agents. Sources: `wiki/sources/commandcode-hooks-reference`, `wiki/sources/commandcode-headless`, real filesystem inspection.
 
-## Fase 3 — Adoptabilidad
+## Phase 3 — Adoptability
 
-- [x] Agregar licencia al repo público
-- [x] Arquitectura de distribución de hooks: `bin/hooks/` (fuente) → `~/.cortex-forge/bin/hooks/` (runtime) → symlinks por agente (`~/.claude/hooks/`, `~/.gemini/config/hooks/`, `~/.codex/hooks/`, `~/.commandcode/hooks/`); `/cortex-forge-setup update` para propagar cambios; `scripts/` colapsado en `bin/`
-- [ ] Guía de onboarding: 5 minutos desde cero hasta primera ingesta
-- [ ] Páginas de ejemplo en `wiki/concepts/` (demuestran el formato, no son contenido personal)
-- [ ] `wiki/prompts/` como tipo de página opcional — permite al usuario archivar invocaciones efectivas del agente con ejemplo de output; el vault hoy almacena conocimiento del mundo pero no conocimiento operacional sobre cómo trabajar con el agente
-- [ ] MOCs por área temática — `wiki/concepts/_index.md`, `wiki/entities/_index.md` como índices navegables por área, complementarios al índice global; facilita que el agente entre por el MOC correcto en vez de cargar todo el índice
+- [x] Add license to the public repo
+- [x] Hook distribution architecture: `bin/hooks/` (source) → `~/.cortex-forge/bin/hooks/` (runtime) → per-agent symlinks (`~/.claude/hooks/`, `~/.gemini/config/hooks/`, `~/.codex/hooks/`, `~/.commandcode/hooks/`); `/cortex-forge-setup update` to propagate changes; `scripts/` collapsed into `bin/`
+- [ ] Onboarding guide: 5 minutes from zero to first ingest
+- [ ] Example pages in `wiki/concepts/` (demonstrate the format, not personal content)
+- [ ] `wiki/prompts/` as an optional page type — lets users archive effective agent invocations with sample output; the vault currently stores world knowledge but not operational knowledge about how to work with the agent
+- [ ] MOCs per topic area — `wiki/concepts/_index.md`, `wiki/entities/_index.md` as navigable area indexes, complementary to the global index; helps the agent enter via the right MOC instead of loading the full index
 
-## Fase 3.5 — cortex-prune modo dual
+## Phase 3.5 — cortex-prune dual mode
 
-Decisión de diseño cerrada en sesión 2026-06-14, derivada de la ingesta de SkillOpt (Microsoft) y SkillOpt-Sleep.
+Design decision closed in session 2026-06-14, derived from ingesting SkillOpt (Microsoft) and SkillOpt-Sleep.
 
-### `prune-vault` (modo actual)
-Mantenimiento del vault: páginas huérfanas, wikilinks rotos, staleness del hot cache. Comportamiento ya existente en `cortex-prune`.
+### `prune-vault` (current mode)
+Vault maintenance: orphan pages, broken wikilinks, hot cache staleness. Existing behavior in `cortex-prune`.
 
-### `prune-cortex` (modo nuevo)
-Optimización del sistema mismo: analiza transcripts donde fallaron skills de cortex-forge y propone edits acotados a los `SKILL.md` correspondientes.
+### `prune-cortex` (new mode)
+System self-optimization: analyzes transcripts where cortex-forge skills failed and proposes targeted edits to the corresponding `SKILL.md` files.
 
-**Por qué:** cortex-forge hoy mejora sus skills manualmente, por observación. SkillOpt demuestra que este proceso es automatizable: un optimizer lee éxitos/fracasos y propone add/delete/replace de reglas, un validation gate acepta solo los edits que mejoran un held-out. `prune-cortex` implementa esta idea dentro del paradigma de cortex-forge, sin dependencias externas.
+**Why:** cortex-forge currently improves its skills manually, by observation. SkillOpt demonstrates this process is automatable: an optimizer reads successes/failures and proposes add/delete/replace rule edits; a validation gate accepts only edits that improve a held-out set. `prune-cortex` implements this idea within the cortex-forge paradigm, without external dependencies.
 
-**Por qué la Fase 3 es el gate:** las páginas de ejemplo planeadas en Fase 3 (`wiki/concepts/` con casos de formato canónico) son exactamente el answer key que SkillOpt necesita como held-out set. Sin esas páginas, `prune-cortex` puede proponer edits pero no puede validarlos objetivamente — el gate queda vacío. Con ellas, cada página de ejemplo es un test vivo: input conocido → output esperado. El gate corre automáticamente cuando un skill cambia.
+**Why Phase 3 is the gate:** the example pages planned in Phase 3 (`wiki/concepts/` with canonical format cases) are exactly the answer key SkillOpt needs as a held-out set. Without those pages, `prune-cortex` can propose edits but cannot validate them objectively — the gate is empty. With them, each example page is a live test: known input → expected output. The gate runs automatically when a skill changes.
 
-**Consecuencia de diseño:** las páginas de ejemplo de Fase 3 tienen doble función — onboarding para usuarios nuevos + infraestructura de calidad para `prune-cortex`. Esto obliga a mantenerlas actualizadas: un ejemplo desactualizado produce un gate ruidoso.
+**Design consequence:** Phase 3 example pages have a dual function — onboarding for new users + quality infrastructure for `prune-cortex`. This requires keeping them up to date: a stale example produces a noisy gate.
 
-**Skills aptos para `prune-cortex`** (outputs verificables):
-- `cortex-recall` — la cita existe o no en el vault
-- `cortex-assimilate` — los archivos se crean en las rutas correctas
+**Skills suitable for `prune-cortex`** (verifiable outputs):
+- `cortex-recall` — the citation either exists in the vault or it doesn't
+- `cortex-assimilate` — files are created at the correct paths
 
-**Skills no aptos** (outputs subjetivos, sin respuesta canónica):
+**Skills not suitable** (subjective outputs, no canonical answer):
 - `cortex-crystallize`, `cortex-imprint`
 
-**Implementación en fases:**
-- [ ] Fase 3.5a — `prune-cortex` sin gate: analiza transcripts, propone edits a `SKILL.md`, usuario aprueba. Sin scoring automático.
-- [ ] Fase 3.5b — validation gate: enchufar páginas de ejemplo de Fase 3 como held-out set. Acepta edits solo si el score mejora estrictamente.
-- [ ] Fase 3.5c (opcional) — integración con SkillOpt-Sleep plugin si la comunidad lo demanda; el diseño de 3.5a/b es compatible con el loop de SkillOpt.
+**Implementation in phases:**
+- [ ] Phase 3.5a — `prune-cortex` without gate: analyze transcripts, propose edits to `SKILL.md`, user approves. No automatic scoring.
+- [ ] Phase 3.5b — validation gate: plug Phase 3 example pages in as held-out set. Accept edits only if the score improves strictly.
+- [ ] Phase 3.5c (optional) — integration with SkillOpt-Sleep plugin if the community demands it; the 3.5a/b design is compatible with the SkillOpt loop.
 
-**Referencia:** `wiki/concepts/skillopt-text-space-optimization.md`, `wiki/reference/skillopt-cli.md`
+**Reference:** `wiki/concepts/skillopt-text-space-optimization.md`, `wiki/reference/skillopt-cli.md`
 
-## Fase 3.6 — Retrieval semántico (sqlite-vec)
+## Phase 3.6 — Semantic retrieval (sqlite-vec)
 
-Diseño completo en `CORTEX_FORGE_PLAN.md`. Esta fase desbloquea Fase 4: sin vector retrieval, `cortex-recall` no puede escalar a vaults de >50 páginas.
+Full design in `CORTEX_FORGE_PLAN.md`. This phase unblocks Phase 4: without vector retrieval, `cortex-recall` cannot scale beyond ~50 pages.
 
-**Stack:** `sqlite-vec` + backend de embeddings seleccionado por plataforma. No requiere Ollama ni proceso externo.
+**Stack:** `sqlite-vec` + platform-selected embedding backend. No Ollama or external process required.
 
-**Selección de backend (encapsulada en `.cortex/embeddings.py`):**
-- Apple Silicon (`Darwin` + `arm64`): `mlx-embeddings` con `mlx-community/nomic-embed-text-v1.5` — más rápido vía Neural Engine; fallback automático a `sentence-transformers` si mlx no está instalado.
-- Linux / Windows / Intel Mac: `sentence-transformers` con `nomic-ai/nomic-embed-text-v1.5`, `normalize_embeddings=True`. Fallback universal, sin prerequisitos.
+**Backend selection (encapsulated in `.cortex/embeddings.py`):**
+- Apple Silicon (`Darwin` + `arm64`): `mlx-embeddings` with `mlx-community/nomic-embed-text-v1.5` — faster via Neural Engine; automatic fallback to `sentence-transformers` if mlx is not installed.
+- Linux / Windows / Intel Mac: `sentence-transformers` with `nomic-ai/nomic-embed-text-v1.5`, `normalize_embeddings=True`. Universal fallback, no prerequisites.
 
-**Dependencias** (`pyproject.toml`): base `sentence-transformers>=2.7.0` + `sqlite-vec>=0.1.0`; opcional `apple-silicon`: `mlx>=0.5.0` + `mlx-embeddings>=0.0.8`.
+**Dependencies** (`pyproject.toml`): base `sentence-transformers>=2.7.0` + `sqlite-vec>=0.1.0`; optional `apple-silicon`: `mlx>=0.5.0` + `mlx-embeddings>=0.0.8`.
 
-### Etapa 1 — Índice vectorial local
+### Stage 1 — Local vector index
 
-- [x] Crear `.cortex/db/embeddings.py` — módulo compartido; backends Ollama (default), mlx-embeddings (Apple Silicon), sentence-transformers (fallback); prefijos `search_document:`/`search_query:` para nomic-embed-text-v1.5
-- [ ] Actualizar `cortex-forge-setup` (skill): detectar OS/arch → instalar dependencias base + opcionales Apple Silicon → descargar pesos (~270 MB) → reportar qué backend quedó activo
-- [x] Crear `bin/cortex-index.py` — indexador completo con chunking por headings + sub-chunking 500 palabras/100 overlap; índice `(path, chunk_index)`; updates atómicos; limpieza de archivos eliminados; calibración automática de threshold (p75 inter-file)
-- [x] Crear `.cortex/db/cortex-search.py` — KNN two-step (vec_documents → documents JOIN por rowid); flags `--top-k`, `--threshold`, `--json`; threshold leído de `.cortex/db/config.json`
-- [ ] Hook post-commit: re-indexar solo archivos `wiki/` modificados en el commit
-- [x] Modificar `cortex-recall/SKILL.md`: si existe `.cortex/vault.db` → invocar `cortex-search.py`; fallback a lectura manual del índice
-- [x] Agregar `.cortex/` completo a `.gitignore` (todo el directorio, no solo archivos individuales)
-- [ ] Validar en second-brain: indexación inicial + query de prueba + indexación incremental tras `cortex-assimilate`; verificar que el backend reportado coincide con la plataforma
+- [x] Create `.cortex/db/embeddings.py` — shared module; Ollama (default), mlx-embeddings (Apple Silicon), and sentence-transformers (fallback) backends; `search_document:`/`search_query:` prefixes for nomic-embed-text-v1.5
+- [ ] Update `cortex-forge-setup` (skill): detect OS/arch → install base + Apple Silicon optional dependencies → download weights (~270 MB) → report which backend is active
+- [x] Create `bin/cortex-index.py` — full indexer with heading-based chunking + 500-word/100-overlap sub-chunking; `(path, chunk_index)` index; atomic updates; deleted-file cleanup; automatic threshold calibration (inter-file p75)
+- [x] Create `.cortex/db/cortex-search.py` — KNN two-step (vec_documents → documents JOIN by rowid); `--top-k`, `--threshold`, `--json` flags; threshold read from `.cortex/db/config.json`
+- [ ] Post-commit hook: re-index only `wiki/` files modified in the commit
+- [x] Update `cortex-recall/SKILL.md`: if `.cortex/vault.db` exists → invoke `cortex-search.py`; fallback to manual index read
+- [x] Add full `.cortex/` directory to `.gitignore` (entire directory, not individual files)
+- [ ] Validate in second-brain: initial indexing + test query + incremental indexing after `cortex-assimilate`; verify reported backend matches the platform
 
-### Etapa 2 — MCP server (gate: Etapa 1 validada + vault usado desde >1 cliente)
+### Stage 2 — MCP server (gate: Stage 1 validated + vault used from >1 client)
 
-No implementar antes. Ver diseño completo en `CORTEX_FORGE_PLAN.md` → sección "Etapa 2".
+Do not implement before Stage 1 is validated. See full design in `CORTEX_FORGE_PLAN.md` → "Stage 2" section.
 
-- [ ] Crear `.cortex/server.py` con FastMCP — 5 tools: `vault_ingest`, `vault_query`, `vault_imprint`, `session_snapshot`, `vault_prune`
-- [ ] Registrar en `.claude/settings.json` del vault (stdio transport)
-- [ ] Verificar degradación limpia: vault sigue siendo funcional sin MCP leyendo `AGENTS.md` directamente
+- [ ] Create `.cortex/server.py` with FastMCP — 5 tools: `vault_ingest`, `vault_query`, `vault_imprint`, `session_snapshot`, `vault_prune`
+- [ ] Register in the vault's `.claude/settings.json` (stdio transport)
+- [ ] Verify clean degradation: vault remains functional without MCP by reading `AGENTS.md` directly
 
-## Fase 4 — Inteligencia acumulada
+## Phase 4 — Accumulated intelligence
 
-- [ ] `cortex-recall` con síntesis cross-página y detección de contradicciones
-- [ ] Detección de patrones cross-sesión: temas recurrentes en `.cortex/` que nunca llegan a `wiki/` — al crystallizar, revisar historial y proponer candidatos; patrón validado por dialectic reasoning de Honcho
-- [ ] Carga progresiva en `cortex-recall` — navegar wiki como filesystem según relevancia en lugar de cargar el índice completo al inicio; reduce token bloat sin perder cobertura
-- [/] **Archivo de historial.** Capa simple implementada 2026-06-15: entries >30 días en `MEMORY.md` → `.cortex/CONSOLIDATED.md` (mismo formato Markdown, append-only, no se inyecta al inicio de sesión). Capa estructurada pendiente: cuando `CONSOLIDATED.md` supere N entradas, parsear a JSON con tags `{ts, agent, trigger, tags: [], files: [], decisions: [], discarded: [], fragile: []}` extraídos por el crystallize al momento de escribir. JSON no se carga al inicio — consultable vía `/cortex-recall` o skill dedicado.
+- [ ] `cortex-recall` with cross-page synthesis and contradiction detection
+- [ ] Cross-session pattern detection: recurring topics in `.cortex/` that never reach `wiki/` — at crystallize time, review history and propose candidates; pattern validated by Honcho's dialectic reasoning
+- [ ] Progressive loading in `cortex-recall` — navigate wiki as a filesystem by relevance instead of loading the full index at startup; reduces token bloat without losing coverage
+- [/] **History archive.** Simple layer implemented 2026-06-15: entries >30 days in `MEMORY.md` → `.cortex/CONSOLIDATED.md` (same Markdown format, append-only, not injected at session start). Structured layer pending: when `CONSOLIDATED.md` exceeds N entries, parse to JSON with tags `{ts, agent, trigger, tags: [], files: [], decisions: [], discarded: [], fragile: []}` extracted by crystallize at write time. JSON is not loaded at startup — queryable via `/cortex-recall` or a dedicated skill.
