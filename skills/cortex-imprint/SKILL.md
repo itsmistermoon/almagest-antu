@@ -1,6 +1,6 @@
 ---
 name: cortex-imprint
-behavior: [#synthesize]
+behavior: ["synthesize"]
 description: Archive a valuable session synthesis as a permanent wiki page in the vault.
 argument-hint: "[vault-name]"
 ---

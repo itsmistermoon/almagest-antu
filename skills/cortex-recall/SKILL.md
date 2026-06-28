@@ -1,6 +1,6 @@
 ---
 name: cortex-recall
-behavior: [#recall]
+behavior: ["recall"]
 description: Answer a question using the vault's synthesized wiki content as the source of truth. Returns citations to specific pages.
 argument-hint: "[vault-name] <query>"
 ---

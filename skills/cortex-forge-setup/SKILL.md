@@ -1,6 +1,6 @@
 ---
 name: cortex-forge-setup
-behavior: [#configure]
+behavior: ["configure"]
 description: Register or deregister the current vault in Cortex Forge, install global skills, and configure lifecycle hooks. Run from inside a vault directory.
 argument-hint: "Optional sub-task: hooks | skills | sync | vaults"
 ---
@@ -173,9 +173,9 @@ Always end with the relevant subset of step 9 (confirmation).
    - Read `~/.claude/settings.json` (or create it if missing).
    - Add the following hooks if not already present:
      ```json
-     "SessionStart": [{ "type": "command", "command": "~/.claude/hooks/cortex-reactivate.sh" }]
-     "PreCompact":   [{ "type": "command", "command": "~/.claude/hooks/cortex-crystallize-claude.sh" }]
-     "SessionEnd":   [{ "type": "command", "command": "~/.claude/hooks/cortex-crystallize-claude.sh", "timeout": 60 }]
+     "SessionStart": [{ "type": "command", "command": "~/.claude/hooks/cortex-reactivate.sh" }"]
+     "PreCompact":   [{ "type": "command", "command": "~/.claude/hooks/cortex-crystallize-claude.sh" }"]
+     "SessionEnd":   [{ "type": "command", "command": "~/.claude/hooks/cortex-crystallize-claude.sh", "timeout": 60 }"]
      ```
    - Merge carefully — do not overwrite existing hooks, only append to the arrays.
 
@@ -205,7 +205,7 @@ Always end with the relevant subset of step 9 (confirmation).
    - Display instructions for `~/.commandcode/settings.json` (user scope — applies to all projects):
      ```json
      "hooks": {
-       "Stop": [{ "command": "bash ~/.commandcode/hooks/cortex-crystallize-commandcode.sh", "timeout": 120 }]
+       "Stop": [{ "command": "bash ~/.commandcode/hooks/cortex-crystallize-commandcode.sh", "timeout": 120 }"]
      }
      ```
    - Note: user scope (`~/.commandcode/settings.json`) is preferred over project scope so the hook works across all vaults. The script resolves the active vault at runtime from CWD. Timeout 120s — the script calls `cmd -p` which requires an API call.
@@ -220,7 +220,7 @@ Always end with the relevant subset of step 9 (confirmation).
    If yes, ask scope (never the versioned `settings.json` of a template repo):
    - **Global (recommended)** — the script self-gates (inert outside registered vaults, once per session), so user scope covers every vault without per-vault config. The script is already in `~/.cortex-forge/bin/hooks/` (copied in step 6-install); create symlink `~/.claude/hooks/cortex-recall-nudge.sh` → `~/.cortex-forge/bin/hooks/cortex-recall-nudge.sh`, then add to `~/.claude/settings.local.json`:
      ```json
-     "PreToolUse": [{ "matcher": "Bash", "hooks": [{ "type": "command", "command": "bash ~/.claude/hooks/cortex-recall-nudge.sh" }] }]
+     "PreToolUse": [{ "matcher": "Bash", "hooks": [{ "type": "command", "command": "bash ~/.claude/hooks/cortex-recall-nudge.sh" }] }"]
      ```
    - **Vault-local** — add to the vault's `.claude/settings.local.json` with `"bash \"$CLAUDE_PROJECT_DIR\"/bin/hooks/cortex-recall-nudge.sh"` instead.
    - Scope criterion (applies to any future hook): global only if the script self-discards deterministically, cheaply, and silently from environment signals (config, files, CWD); if relevance can't be detected from the environment, install per project.

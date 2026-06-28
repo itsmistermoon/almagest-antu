@@ -1,6 +1,6 @@
 ---
 name: cortex-prune
-behavior: [#prune, #recall]
+behavior: ["prune", "recall"]
 description: Health check del vault — detecta dead links, páginas huérfanas, provenance faltante y fuentes no procesadas.
 argument-hint: "[vault-name]"
 ---
@@ -42,7 +42,7 @@ Health check del vault activo en dos capas: estructural (script) y semántica (a
        "dead_links": [],
        "raw_without_source_page": [],
        "missing_confidence": [],
-       "orphan_pages": []
+       "orphan_pages": ["]
      }
    }
    ```

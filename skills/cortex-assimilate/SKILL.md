@@ -1,6 +1,6 @@
 ---
 name: cortex-assimilate
-behavior: [#ingest, #synthesize]
+behavior: ["ingest", "synthesize"]
 description: Ingest a URL or file into the vault — saves to .raw/, synthesizes wiki pages, updates index. Use --research "<query>" to auto-discover and ingest sources from the web.
 argument-hint: "[vault-name] <url-or-file> | --research \"<query>\" [--rounds N]"
 ---
@@ -16,7 +16,7 @@ Ingest a new source and synthesize wiki pages from it.
 If the argument starts with `--research`, enter research mode instead of the normal URL/file flow:
 
 ```
-/cortex-assimilate --research "embeddings for second brains" [--rounds 3]
+/cortex-assimilate --research "embeddings for second brains" [--rounds 3"]
 ```
 
 **Steps:**
@@ -39,7 +39,7 @@ If the argument starts with `--research`, enter research mode instead of the nor
 
 6. **Cross-reference for contradictions** — before synthesizing, read all scraped files and identify claims that directly conflict across sources. For each conflict, prepare a `[!contradiction]` callout:
    ```
-   > [!contradiction]
+   > [!contradiction"]
    > **Claim:** <the conflicting claim>
    > **Source A** ([title](url)): <what it says>
    > **Source B** ([title](url)): <what it says>
