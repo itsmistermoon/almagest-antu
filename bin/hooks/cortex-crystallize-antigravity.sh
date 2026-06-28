@@ -23,7 +23,7 @@ find_git_root_dir() {
 
 GIT_ROOT=$(find_git_root_dir)
 
-mkdir -p "$GIT_ROOT/.hot" 2>/dev/null || exit 0
+mkdir -p "$GIT_ROOT/.cortex" 2>/dev/null || exit 0
 if ! grep -qF '.cortex/' "$GIT_ROOT/.gitignore" 2>/dev/null; then
   echo '.cortex/' >> "$GIT_ROOT/.gitignore"
 fi

@@ -65,7 +65,7 @@ fi
 [ -z "$TRANSCRIPT_PATH" ] && exit 0
 [ ! -f "$TRANSCRIPT_PATH" ] && exit 0
 
-mkdir -p "$GIT_ROOT/.hot" 2>/dev/null || exit 0
+mkdir -p "$GIT_ROOT/.cortex" 2>/dev/null || exit 0
 
 if ! grep -qF '.cortex/' "$GIT_ROOT/.gitignore" 2>/dev/null; then
   echo '.cortex/' >> "$GIT_ROOT/.gitignore"
