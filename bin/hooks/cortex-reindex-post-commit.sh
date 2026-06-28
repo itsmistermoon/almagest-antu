@@ -16,4 +16,4 @@ CHANGED=$(git diff-tree --no-commit-id -r --name-only HEAD | grep -c '^wiki/' ||
 [[ "$CHANGED" -gt 0 ]] || exit 0
 
 echo "[cortex-forge] Re-indexing $CHANGED changed wiki file(s)..."
-python "$INDEXER" "$VAULT_ROOT"
+python3 "$INDEXER" "$VAULT_ROOT"
