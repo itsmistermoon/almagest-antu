@@ -23,9 +23,9 @@ Archive a valuable session synthesis as a permanent wiki page.
    - If no default and multiple vaults → ask the user to pick one.
    - If no vaults registered → stop and prompt to run `/cortex-forge-setup`.
 
-2. If `{vault}/CODEX.md` exists, read **Mission**, **Domains**, and **Vocabulary** — use them to validate whether the synthesis is worth persisting and to name the page consistently with the vault's terminology.
+2. Read **Vault identity** from `{vault}/AGENTS.md` — use **Mission**, **Domains**, and **Vocabulary** to validate whether the synthesis is worth persisting and to name the page consistently with vault terminology.
 
-3. Review the current conversation and identify the main synthesis produced.
+3. Review the current conversation and identify the main synthesis produced. Apply source hierarchy (see Rules) to determine what the synthesis derives from — and whether a `.raw/` primary source needs to be read before writing.
 
 4. Propose: page type, suggested title, proposed path inside the resolved vault.
 
@@ -58,6 +58,16 @@ Typical cases:
 | Analysis of a tool or person | entity | `wiki/entities/` |
 | Synthesis of an external source | source | `wiki/sources/` |
 
+## Source hierarchy
+
+The synthesis must derive from one of these, in order:
+
+1. **Current session** — analysis, decisions, or conclusions produced during this conversation.
+2. **`.raw/` primary source** — if the session worked from an ingested source, read the `.raw/` file directly before writing. Do not read the derived `wiki/sources/` page as a substitute.
+3. **`wiki/` pages** — reference only. Use them to detect pages to update and to add `[[wikilinks]]`. Never use a wiki page as the input for new synthesis.
+
+**Circular synthesis test:** before writing, ask — "could I justify this content by citing only wiki pages, with no `.raw/` file or session analysis behind it?" If yes, stop. Trace the claim back to its primary source first. If no primary source exists, the content may not be ready to imprint.
+
 ## Provenance
 
 Create the page using the corresponding template (step 5) — all frontmatter fields come from the template. Then populate these provenance fields:
@@ -65,8 +75,9 @@ Create the page using the corresponding template (step 5) — all frontmatter fi
 ```yaml
 sources:
   - conversation {YYYY-MM-DD}
-  - wiki/sources/{slug}.md      # if the session worked on a concrete source
+  - .raw/{slug}.md              # if the session derived from a primary source — prefer .raw/ over wiki/sources/
 confidence: high | medium | low
+raw: .raw/{slug}.md             # only when the imprint directly synthesizes a specific primary source
 ```
 
 **`confidence` criteria:**
@@ -81,7 +92,9 @@ confidence: high | medium | low
 - If the page already exists, rewrite the body integrating the new information — do not append "Update" sections or addendum blocks. The result must read as a cohesive document with no visible edit seams.
 - If a page already exists on the topic, update it instead of duplicating
 - Include the agent in the changelog: `- YYYY-MM-DD [Claude Code]: description`
+- **Source fencing:** wiki pages are reference, not source. Content derived only from wiki pages (no `.raw/` or session analysis behind it) is circular synthesis — it amplifies drift instead of grounding knowledge. When in doubt, read the `.raw/` file first.
 
 ## Changelog
 
 - 2026-06-24 [Claude Code]: Reformulated vague Rules into verifiable criteria (no-op audit — "durable page" → 4 testable conditions; "compiled truth" → explicit rewrite contract)
+- 2026-06-28 [Claude Code]: Context fencing — added source hierarchy section, circular synthesis test, source fencing rule, and `raw:` provenance field; updated step 2 (CODEX.md → AGENTS.md vault identity) and step 3 (references source hierarchy)
