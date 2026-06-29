@@ -1,0 +1,315 @@
+#!/usr/bin/env bash
+# Cortex Forge installer
+# Usage: curl -fsSL https://raw.githubusercontent.com/itsmistermoon/cortex-forge/main/install.sh | bash
+# Or:    bash install.sh [--vault /path/to/vault] [--no-hooks] [--no-skills] [--quiet]
+set -euo pipefail
+
+# ── Constants ─────────────────────────────────────────────────────────────────
+REPO="itsmistermoon/cortex-forge"
+REPO_URL="https://github.com/${REPO}.git"
+FORGE_DIR="${HOME}/.cortex-forge"
+CONFIG="${FORGE_DIR}/config.yml"
+SKILLS_DIR="${HOME}/.agents/skills"
+SKILL_NAMES=(cortex-crystallize cortex-forge-setup cortex-recall cortex-assimilate cortex-imprint cortex-prune)
+
+# ── Colors ────────────────────────────────────────────────────────────────────
+if [ -t 1 ]; then
+  BOLD='\033[1m'; DIM='\033[2m'; GREEN='\033[0;32m'; YELLOW='\033[0;33m'
+  CYAN='\033[0;36m'; RED='\033[0;31m'; RESET='\033[0m'
+else
+  BOLD=''; DIM=''; GREEN=''; YELLOW=''; CYAN=''; RED=''; RESET=''
+fi
+
+log()  { printf "${CYAN}▸${RESET} %s\n" "$*"; }
+ok()   { printf "${GREEN}✓${RESET} %s\n" "$*"; }
+warn() { printf "${YELLOW}⚠${RESET} %s\n" "$*"; }
+err()  { printf "${RED}✗${RESET} %s\n" "$*" >&2; }
+bold() { printf "${BOLD}%s${RESET}\n" "$*"; }
+dim()  { printf "${DIM}%s${RESET}\n" "$*"; }
+
+# ── Flags ─────────────────────────────────────────────────────────────────────
+VAULT_PATH=""
+INSTALL_HOOKS=true
+INSTALL_SKILLS=true
+QUIET=false
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --vault)    VAULT_PATH="$2"; shift 2 ;;
+    --no-hooks) INSTALL_HOOKS=false; shift ;;
+    --no-skills) INSTALL_SKILLS=false; shift ;;
+    --quiet)    QUIET=true; shift ;;
+    *) err "Unknown option: $1"; exit 1 ;;
+  esac
+done
+
+# ── Detect if running interactively (not piped) ───────────────────────────────
+INTERACTIVE=false
+[ -t 0 ] && INTERACTIVE=true
+
+ask() {
+  # ask <prompt> <default>
+  # Returns 0 (yes) or 1 (no). In non-interactive mode uses the default.
+  local prompt="$1" default="${2:-y}"
+  if $INTERACTIVE; then
+    local yn_hint; [ "$default" = "y" ] && yn_hint="[Y/n]" || yn_hint="[y/N]"
+    printf "%s %s " "$prompt" "$yn_hint"
+    read -r answer
+    case "$answer" in
+      [Yy]*|"") [ "$default" = "y" ] && return 0 || return 1 ;;
+      *)         [ "$default" = "y" ] && return 1 || return 0 ;;
+    esac
+  else
+    [ "$default" = "y" ] && return 0 || return 1
+  fi
+}
+
+ask_input() {
+  # ask_input <prompt> <default>
+  # Prints the chosen value to stdout.
+  local prompt="$1" default="$2"
+  if $INTERACTIVE; then
+    printf "%s [%s]: " "$prompt" "$default"
+    read -r answer
+    echo "${answer:-$default}"
+  else
+    echo "$default"
+  fi
+}
+
+# ── Header ────────────────────────────────────────────────────────────────────
+$QUIET || {
+  printf "\n"
+  bold "  Cortex Forge — Installer"
+  dim   "  https://github.com/${REPO}"
+  printf "\n"
+}
+
+# ── Step 1: Clone or update the forge repo ───────────────────────────────────
+log "Installing forge to ${FORGE_DIR}"
+
+if [ -d "${FORGE_DIR}/.git" ]; then
+  git -C "$FORGE_DIR" pull --ff-only --quiet
+  ok "Forge updated"
+elif [ -d "$FORGE_DIR" ] && [ -f "${FORGE_DIR}/AGENTS.md" ]; then
+  # Already populated (e.g. manually cloned or dev setup) — skip clone
+  ok "Forge already present (skipping clone)"
+else
+  rm -rf "$FORGE_DIR"
+  git clone --depth=1 --quiet "$REPO_URL" "$FORGE_DIR"
+  ok "Forge cloned"
+fi
+
+# ── Step 2: Resolve vault ─────────────────────────────────────────────────────
+if [ -z "$VAULT_PATH" ]; then
+  if [ -f "$FORGE_DIR/wiki/index.md" ] && [ -f "$FORGE_DIR/AGENTS.md" ]; then
+    # The forge itself is a vault — common for contributors
+    VAULT_PATH="$FORGE_DIR"
+  elif [ -f "$(pwd)/wiki/index.md" ] && [ -f "$(pwd)/AGENTS.md" ]; then
+    VAULT_PATH="$(pwd)"
+  else
+    if $INTERACTIVE; then
+      printf "\n"
+      warn "No vault found in CWD. Enter the path to your vault, or press Enter to skip."
+      VAULT_PATH=$(ask_input "Vault path" "")
+    else
+      warn "No vault specified. Skipping vault registration (re-run with --vault /path/to/vault)."
+    fi
+  fi
+fi
+
+VAULT_VALID=false
+if [ -n "$VAULT_PATH" ]; then
+  VAULT_PATH=$(cd "$VAULT_PATH" 2>/dev/null && pwd || echo "")
+  if [ -d "${VAULT_PATH}/wiki" ] && [ -f "${VAULT_PATH}/AGENTS.md" ] && [ -d "${VAULT_PATH}/.git" ]; then
+    VAULT_VALID=true
+    VAULT_NAME=$(basename "$VAULT_PATH")
+    ok "Vault: ${VAULT_NAME} (${VAULT_PATH})"
+  else
+    warn "Path '${VAULT_PATH}' is not a valid vault (missing wiki/, AGENTS.md, or .git/). Skipping registration."
+    VAULT_PATH=""
+  fi
+fi
+
+# ── Step 3: Register vault in config.yml ─────────────────────────────────────
+if $VAULT_VALID; then
+  mkdir -p "$FORGE_DIR"
+  if [ ! -f "$CONFIG" ]; then
+    cat > "$CONFIG" <<YAML
+vaults:
+  ${VAULT_NAME}:
+    path: ${VAULT_PATH}
+    locale: en
+default: ${VAULT_NAME}
+imprint_triage: suggest
+hot_cache_stale_days: 15
+YAML
+    ok "Config created: ${CONFIG}"
+  elif ! grep -qF "$VAULT_PATH" "$CONFIG"; then
+    # Append vault entry without clobbering existing entries
+    python3 - <<PYEOF
+import re, sys
+cfg = open("${CONFIG}").read()
+entry = "  ${VAULT_NAME}:\n    path: ${VAULT_PATH}\n    locale: en\n"
+if "vaults:" not in cfg:
+    cfg = "vaults:\n" + entry + cfg
+else:
+    cfg = re.sub(r"(vaults:\n)", r"\1" + entry, cfg, count=1)
+open("${CONFIG}", "w").write(cfg)
+PYEOF
+    ok "Vault registered in config"
+  else
+    ok "Vault already registered"
+  fi
+fi
+
+# ── Step 4: Install runtime hooks ─────────────────────────────────────────────
+if $INSTALL_HOOKS; then
+  HOOKS_SRC="${FORGE_DIR}/bin/hooks"
+  HOOKS_RT="${FORGE_DIR}/bin/hooks"  # source IS runtime for self-install
+
+  # Claude Code
+  if [ -d "${HOME}/.claude" ]; then
+    mkdir -p "${HOME}/.claude/hooks"
+    for f in "$HOOKS_SRC"/*.sh; do
+      [ -f "$f" ] || continue
+      name=$(basename "$f")
+      target="${HOME}/.claude/hooks/${name}"
+      ln -sf "$f" "$target"
+    done
+    ok "Claude Code hooks linked"
+
+    # Merge into settings.json
+    SETTINGS="${HOME}/.claude/settings.json"
+    [ -f "$SETTINGS" ] || echo '{}' > "$SETTINGS"
+    python3 - <<PYEOF
+import json, os
+p = "${SETTINGS}"
+with open(p) as f:
+    s = json.load(f)
+hooks_dir = os.path.expanduser("~/.claude/hooks")
+def add_hook(s, event, cmd, timeout=None):
+    s.setdefault("hooks", {}).setdefault(event, [])
+    cmds = [h.get("command","") for h in s["hooks"][event]]
+    if cmd not in cmds:
+        entry = {"type": "command", "command": cmd}
+        if timeout:
+            entry["timeout"] = timeout
+        s["hooks"][event].append(entry)
+add_hook(s, "SessionStart", f"{hooks_dir}/cortex-reactivate.sh")
+add_hook(s, "PreCompact",   f"{hooks_dir}/cortex-crystallize-claude.sh")
+add_hook(s, "SessionEnd",   f"{hooks_dir}/cortex-crystallize-claude.sh", timeout=60)
+with open(p, "w") as f:
+    json.dump(s, f, indent=2)
+PYEOF
+    ok "Claude Code settings.json updated"
+  fi
+
+  # Antigravity
+  if [ -d "${HOME}/.gemini/config" ]; then
+    mkdir -p "${HOME}/.gemini/config/hooks"
+    ln -sf "${HOOKS_SRC}/cortex-reactivate-antigravity.sh" \
+           "${HOME}/.gemini/config/hooks/cortex-reactivate-antigravity.sh"
+    ok "Antigravity hook linked"
+    warn "Antigravity: add to ~/.gemini/config/hooks.json manually:"
+    printf '      "PreInvocation": { "condition": "invocationNum == 0", "command": "bash ~/.gemini/config/hooks/cortex-reactivate-antigravity.sh" }\n'
+  fi
+
+  # Codex
+  if [ -d "${HOME}/.codex" ]; then
+    mkdir -p "${HOME}/.codex/hooks"
+    for name in cortex-reactivate-codex.sh cortex-crystallize-codex.sh; do
+      [ -f "${HOOKS_SRC}/${name}" ] && \
+        ln -sf "${HOOKS_SRC}/${name}" "${HOME}/.codex/hooks/${name}"
+    done
+    ok "Codex hooks linked"
+    warn "Codex: add to ~/.codex/hooks.json and ~/.codex/config.toml — see README for exact blocks"
+  fi
+
+  # CommandCode
+  if [ -d "${HOME}/.commandcode" ]; then
+    mkdir -p "${HOME}/.commandcode/hooks"
+    name="cortex-crystallize-commandcode.sh"
+    [ -f "${HOOKS_SRC}/${name}" ] && \
+      ln -sf "${HOOKS_SRC}/${name}" "${HOME}/.commandcode/hooks/${name}"
+    ok "CommandCode hook linked"
+    warn "CommandCode: add Stop hook to ~/.commandcode/settings.json — see README"
+  fi
+fi
+
+# ── Step 5: Install skills ────────────────────────────────────────────────────
+if $INSTALL_SKILLS; then
+  mkdir -p "$SKILLS_DIR"
+  for skill in "${SKILL_NAMES[@]}"; do
+    src="${FORGE_DIR}/skills/${skill}"
+    [ -d "$src" ] || continue
+    cp -r "$src" "${SKILLS_DIR}/${skill}"
+  done
+  ok "Skills installed to ${SKILLS_DIR}"
+
+  # Claude Code symlinks
+  if [ -d "${HOME}/.claude" ]; then
+    mkdir -p "${HOME}/.claude/skills"
+    for skill in "${SKILL_NAMES[@]}"; do
+      ln -sf "${SKILLS_DIR}/${skill}" "${HOME}/.claude/skills/${skill}"
+    done
+    ok "Claude Code skill symlinks created"
+  fi
+
+  # Antigravity symlinks
+  if [ -d "${HOME}/.gemini/config" ]; then
+    mkdir -p "${HOME}/.gemini/config/skills"
+    for skill in "${SKILL_NAMES[@]}"; do
+      ln -sf "${SKILLS_DIR}/${skill}" "${HOME}/.gemini/config/skills/${skill}"
+    done
+    ok "Antigravity skill symlinks created"
+  fi
+fi
+
+# ── Step 6: Post-commit hooks (opt-in) ───────────────────────────────────────
+if $VAULT_VALID && $INTERACTIVE; then
+  printf "\n"
+  if ask "Install post-commit prune hook (refreshes vault-report.json)?" "y"; then
+    PC="${VAULT_PATH}/.git/hooks/post-commit"
+    [ -f "$PC" ] || printf '#!/bin/bash\n' > "$PC"
+    chmod +x "$PC"
+    BLOCK='# >>> cortex-forge prune >>>\nif [ -f bin/cortex-prune.sh ]; then\n  (bash bin/cortex-prune.sh >/dev/null 2>&1 || true) &\nfi\n# <<< cortex-forge prune <<<'
+    if ! grep -q "cortex-forge prune" "$PC"; then
+      printf "\n%b\n" "$BLOCK" >> "$PC"
+      ok "Post-commit prune hook installed"
+    else
+      ok "Post-commit prune hook already present"
+    fi
+  fi
+
+  if ask "Install post-commit reindex hook (updates semantic search)?" "y"; then
+    PC="${VAULT_PATH}/.git/hooks/post-commit"
+    [ -f "$PC" ] || printf '#!/bin/bash\n' > "$PC"
+    chmod +x "$PC"
+    BLOCK='# >>> cortex-forge reindex >>>\nbash ~/.cortex-forge/bin/hooks/cortex-reindex-post-commit.sh\n# <<< cortex-forge reindex <<<'
+    if ! grep -q "cortex-forge reindex" "$PC"; then
+      printf "\n%b\n" "$BLOCK" >> "$PC"
+      ok "Post-commit reindex hook installed"
+    else
+      ok "Post-commit reindex hook already present"
+    fi
+  fi
+fi
+
+# ── Done ──────────────────────────────────────────────────────────────────────
+printf "\n"
+bold "  Installation complete"
+printf "\n"
+
+if $VAULT_VALID; then
+  dim "  Vault registered : ${VAULT_NAME}"
+fi
+dim   "  Forge location   : ${FORGE_DIR}"
+dim   "  Config           : ${CONFIG}"
+$INSTALL_SKILLS && dim "  Skills           : ${SKILLS_DIR}"
+printf "\n"
+dim   "  Next steps:"
+dim   "  1. Open a new Claude Code session inside your vault"
+dim   "  2. The SessionStart hook will inject your hot cache automatically"
+dim   "  3. Run /cortex-forge-setup if you need to adjust anything"
+printf "\n"
