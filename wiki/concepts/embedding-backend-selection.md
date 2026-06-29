@@ -49,6 +49,19 @@ Secondary blocker: `sqlite-vec` (required by `cortex-search.py`) is only availab
 
 **Gate for switching to MLX as default:** upstream packages resolve `transformers` 5.x compatibility. When that happens, MLX becomes the clear preferred backend: in-process, Neural Engine, no daemon, works in Codex without `config.toml` changes.
 
+## Upgrade path: nomic-embed-text-v2-moe
+
+`nomic-embed-text-v2-moe` (NomicBertMoE, ~475M active / ~1.5B total) is the successor to v1.5: multilingual, MoE architecture, Matryoshka dimensions (256–768). It would be the natural next model for the vault.
+
+**Gate:** ollama/ollama issue [#16076](https://github.com/ollama/ollama/issues/16076) must be resolved. As of 2026-06-28 the issue is open and unassigned. The blockers are:
+- Ollama's MLX engine has no `NomicBertMoE` forward path — `ollama create --experimental` imports the weights but `/api/embed` returns `unsupported architecture: NomicBertModel`
+- The Safetensors converter never emits `pooling_type` KV, so `Capabilities()` never sets `CapabilityEmbedding`
+
+Current `nomic-embed-text` (v1, GGUF) is unaffected — it works correctly via Ollama today.
+
+**Migration cost when the gate opens:** v2-moe produces different vectors (different model weights), so `vault.db` must be fully re-indexed with `bin/cortex-index.py`. Matryoshka dimensions mean the target dimension (768 for maximum quality, 256 for speed) must be fixed at index time and cannot change without re-indexing again.
+
 ---
 
 - 2026-06-28 [Claude Code]: Page created — synthesized from live testing of mlx backends and Codex sandbox investigation
+- 2026-06-28 [Claude Code]: Added upgrade path section for nomic-embed-text-v2-moe — gated on ollama/ollama#16076
