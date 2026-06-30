@@ -29,6 +29,7 @@ fields_concept="title type created updated tags aliases sources confidence schem
 fields_entity="title type created updated tags aliases sources confidence schema_version"
 fields_reference="title type created updated tags sources confidence schema_version"
 fields_project="title type created updated tags status repo domains sources confidence schema_version"
+fields_series="title type created updated tags sources confidence schema_version"
 
 # ── Per-file check ────────────────────────────────────────────────────────────
 check_fields() {
@@ -60,7 +61,19 @@ walk "sources"   "$fields_source"
 walk "concepts"  "$fields_concept"
 walk "entities"  "$fields_entity"
 walk "reference" "$fields_reference"
-walk "pages"     "$fields_project"
+walk_pages() {
+  local dir="$WIKI/pages"
+  [ -d "$dir" ] || return
+  find "$dir" -name "*.md" | grep -v '_index\|/index\.md\|/log\.md' | while read -r p; do
+    type_val=$(awk '/^---/{c++} c==1 && /^type:/{print $2; exit}' "$p")
+    if [ "$type_val" = "series" ]; then
+      check_fields "$p" "$fields_series"
+    else
+      check_fields "$p" "$fields_project"
+    fi
+  done
+}
+walk_pages
 
 # ── Output ────────────────────────────────────────────────────────────────────
 if [ -n "$FINDINGS_FILE" ]; then
