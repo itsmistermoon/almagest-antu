@@ -327,9 +327,8 @@ Always end with the relevant subset of step 9 (confirmation).
    - If the file already contains a `## Cortex Forge Skills` section, skip — do not duplicate.
 
 8. **Update AGENTS.md vault identity** — check if `AGENTS.md` contains a `## Vault identity` section.
-   - If missing: ask "Add vault identity section to AGENTS.md? (recommended — sets locale, vocabulary, and out-of-scope rules)"
-     If yes: append a `## Vault identity` section with the template from `CODEX-FORMAT.md` (locale, vocabulary, domains, out-of-scope).
    - If present: skip silently.
+   - If missing: remind the user that vault identity (locale, vocabulary, domains, out-of-scope) lives in `## Vault identity` inside `AGENTS.md` — suggest adding it manually based on the other registered vaults as reference.
 
 9. **Set default vault** — if more than one vault is registered:
    - Ask: "Which vault should be the default? ({list of registered names})"
