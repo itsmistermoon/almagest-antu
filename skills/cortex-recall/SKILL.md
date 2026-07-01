@@ -1,7 +1,7 @@
 ---
 name: cortex-recall
 behavior: ["recall"]
-description: Answer a question using the vault's synthesized wiki content as the source of truth. Returns citations to specific pages.
+description: Answer questions using the vault's synthesized wiki content as the source of truth — never from training knowledge. Invoke when the user asks "what do I know about X", "what does my vault say about Y", "find my notes on Z", or anything that could be covered by their personal vault (projects, decisions, prior research, terminology, domain-specific topics), even if you think you already know the answer. Returns citations to specific pages.
 argument-hint: "[vault-name] <query>"
 ---
 
@@ -15,9 +15,9 @@ Answer a question using the vault's wiki content as the source.
 
 1. **Resolve vault** — read `~/.cortex-forge/config.yml`:
    Also read `locale:` from the vault's entry — use it for all agent-generated content. Fallback if absent: `.cortex/MEMORY.md` title line (`— locale: {lang}`) → `AGENTS.md` Vault identity (`**locale**:`) → default `en`.
-
+   - Config format: `vaults: {name: path, ...}` + `default: name`
    - If the first argument matches a registered vault name (e.g., `/cortex-recall second-brain <query>`) → use that vault; treat the remaining text as the query.
-   - Otherwise: check if CWD is inside any registered vault (CWD starts with a `vaults:` path) → use that vault.
+   - Otherwise: check if CWD is inside any registered vault → use that vault.
    - If not, use the `default` vault.
    - If no default and multiple vaults are registered → ask the user to pick one.
    - If no vaults registered → stop and prompt to run `/cortex-forge-setup`.
@@ -43,6 +43,11 @@ Every response must include:
 - If the page cannot be parsed due to malformed YAML, append `[confidence: read-error]` and flag it.
 - If `confidence: medium` or `low`, append the value and do not flag — these are valid states.
 - If no relevant pages exist: state "Not in vault" explicitly — do not fall back to training knowledge
+
+## Constraints
+
+- **Parametric knowledge is disqualified** for any topic this vault may cover. What you know from training is unverified — the vault is the source of truth. Even if you believe you already know the answer, run the steps anyway.
+- **Never bypass this skill** by using `grep`, `find`, `Explore`, or direct file reads to answer a vault-covered query. That is a protocol violation regardless of the search method.
 
 ## Rules
 

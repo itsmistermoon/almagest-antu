@@ -217,7 +217,7 @@ Always end with the relevant subset of step 9 (confirmation).
    - Display instructions for `~/.commandcode/settings.json` (user scope — applies to all projects):
      ```json
      "hooks": {
-       "Stop": [{ "command": "bash ~/.commandcode/hooks/cortex-crystallize-commandcode.sh", "timeout": 120 }"]
+       "Stop": [{ "command": "bash ~/.commandcode/hooks/cortex-crystallize-commandcode.sh", "timeout": 120 }]
      }
      ```
    - Note: user scope (`~/.commandcode/settings.json`) is preferred over project scope so the hook works across all vaults. The script resolves the active vault at runtime from CWD. Timeout 120s — the script calls `cmd -p` which requires an API call.
@@ -231,7 +231,7 @@ Always end with the relevant subset of step 9 (confirmation).
    If yes, ask scope (never the versioned `settings.json` of a template repo):
    - **Global (recommended)** — the script self-gates (inert outside registered vaults, once per session), so user scope covers every vault without per-vault config. The script is already in `~/.cortex-forge/bin/hooks/` (copied in step 6-install); create symlink `~/.claude/hooks/cortex-recall-nudge.sh` → `~/.cortex-forge/bin/hooks/cortex-recall-nudge.sh`, then add to `~/.claude/settings.local.json`:
      ```json
-     "PreToolUse": [{ "matcher": "Bash", "hooks": [{ "type": "command", "command": "bash ~/.claude/hooks/cortex-recall-nudge.sh" }] }"]
+     "PreToolUse": [{ "matcher": "Bash", "hooks": [{ "type": "command", "command": "bash ~/.claude/hooks/cortex-recall-nudge.sh" }] }]
      ```
    - **Vault-local** — add to the vault's `.claude/settings.local.json` with `"bash ~/.cortex-forge/bin/hooks/cortex-recall-nudge.sh"` instead.
    - Scope criterion (applies to any future hook): global only if the script self-discards deterministically, cheaply, and silently from environment signals (config, files, CWD); if relevance can't be detected from the environment, install per project.
@@ -328,7 +328,16 @@ Always end with the relevant subset of step 9 (confirmation).
 
 8. **Update AGENTS.md vault identity** — check if `AGENTS.md` contains a `## Vault identity` section.
    - If present: skip silently.
-   - If missing: remind the user that vault identity (locale, vocabulary, domains, out-of-scope) lives in `## Vault identity` inside `AGENTS.md` — suggest adding it manually based on the other registered vaults as reference.
+   - If missing: append the following stub to `AGENTS.md` and inform the user: "Added `## Vault identity` stub to `AGENTS.md` — fill it out before running `/cortex-assimilate`."
+     ```markdown
+     ## Vault identity
+
+     **locale**: en
+     **mission**: <!-- What this vault is for -->
+     **domains**: <!-- Comma-separated list of topics in scope -->
+     **out of scope**: <!-- Topics to reject at ingestion time -->
+     **vocabulary**: <!-- Key terms and preferred names used in this vault -->
+     ```
 
 9. **Set default vault** — if more than one vault is registered:
    - Ask: "Which vault should be the default? ({list of registered names})"

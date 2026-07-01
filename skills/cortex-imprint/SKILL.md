@@ -1,7 +1,7 @@
 ---
 name: cortex-imprint
 behavior: ["synthesize"]
-description: Archive a valuable session synthesis as a permanent wiki page in the vault.
+description: Archive a valuable session synthesis as a permanent wiki page in the vault. Invoke only when the user explicitly runs /cortex-imprint or says "imprint this", "save this synthesis to the vault", "make this a permanent page". Do not invoke automatically — even if the synthesis seems valuable.
 argument-hint: "[vault-name]"
 ---
 
@@ -13,11 +13,11 @@ Archive a valuable session synthesis as a permanent wiki page.
 
 ## Steps
 
-0. **Check for pending draft** — if `.cortex/imprint-draft.md` exists in the active repo, read it. Use `candidate:` as the default synthesis description and `transcript:` as the source path to cite. Delete the file after reading so the nudge doesn't repeat next session.
+0. **Check for pending draft** — if `.cortex/imprint-draft.md` exists in the active repo, read it. Use `candidate:` as the default synthesis description and `transcript:` as the source path to cite. Delete the file after reading so the nudge doesn't repeat next session. If `transcript:` points to a past session no longer in context, note this to the user and proceed using only `candidate:` as the synthesis description — do not attempt to reconstruct the session from the path.
 
 1. **Resolve vault** — read `~/.cortex-forge/config.yml`:
    Also read `locale:` from the vault's entry — use it for all agent-generated content. Fallback if absent: `.cortex/MEMORY.md` title line (`— locale: {lang}`) → `AGENTS.md` Vault identity (`**locale**:`) → default `en`.
-
+   - Config format: `vaults: {name: path, ...}` + `default: name`
    - If the first argument matches a registered vault name (e.g., `/cortex-imprint personal`) → use that vault.
    - Otherwise: check if CWD is inside any registered vault → use that vault.
    - If not, use the `default` vault.
@@ -30,15 +30,20 @@ Archive a valuable session synthesis as a permanent wiki page.
 
 4. Propose: page type, suggested title, proposed path inside the resolved vault.
 
-4. Wait for confirmation or adjustment.
+5. Wait for confirmation or adjustment.
 
-5. Create the page using the corresponding template.
+6. Create the page using the corresponding template.
 
-6. Add `[[wikilinks]]` to related existing pages.
+7. Add `[[wikilinks]]` to related existing pages.
 
-7. Update `{vault}/wiki/index.md`.
+8. Update `{vault}/wiki/index.md`.
 
-8. Add entry to `{vault}/wiki/meta/log.md`: `## [YYYY-MM-DD] imprint | {title}`
+9. Add entry to `{vault}/wiki/meta/log.md`: `## [YYYY-MM-DD] imprint | {title}`
+
+## Constraints
+
+- **Manual-only:** invoke exclusively when the user explicitly runs `/cortex-imprint` or uses a phrase listed in the `description`. Never invoke automatically based on conversation content — even if a synthesis seems valuable or ephemeral.
+- **No circular synthesis:** content derived only from wiki pages (no `.raw/` or session analysis behind it) must not be imprinted — see circular synthesis test in Rules.
 
 ## When to invoke
 

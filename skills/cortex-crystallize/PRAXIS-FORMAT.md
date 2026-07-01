@@ -1,15 +1,15 @@
-# PRAXIS — formato de referencia
+# PRAXIS — reference format
 
-PRAXIS.md vive en `.cortex/PRAXIS.md` y tiene dos zonas con ciclos de vida distintos.
+PRAXIS.md lives in `.cortex/PRAXIS.md` and has two zones with distinct lifecycles.
 
-## Cuándo escribir
+## When to write
 
-El agente decide cuándo algo merece ir a PRAXIS. No es un log automático — es una decisión deliberada.
+The agent decides when something deserves to go into PRAXIS. It is not an automatic log — it is a deliberate decision.
 
-- **`## Permanent`** → convenciones estructurales, invariantes de arquitectura, workarounds técnicos confirmados. Sin TTL. Escribe aquí si el próximo agente, en 6 meses, necesita saber esto para no romper nada.
-- **`## Working context`** → contexto activo con fecha. Se poda automáticamente en `/cortex-crystallize` cuando supera 30 días.
+- **`## Permanent`** → structural conventions, architecture invariants, confirmed technical workarounds. No TTL. Write here if the next agent, 6 months from now, needs to know this to avoid breaking something.
+- **`## Working context`** → active context with a date. Automatically pruned by `/cortex-crystallize` when older than 30 days.
 
-## Formato
+## Format
 
 ```markdown
 ---
@@ -21,17 +21,17 @@ updated: YYYY-MM-DD
 
 ## Permanent
 
-- **{convención}** — {descripción concisa de por qué existe y qué rompe si se viola}
-- **{workaround}** — {comportamiento inesperado, causa, fix aplicado, fecha confirmado: YYYY-MM-DD}
+- **{convention}** — {concise description of why it exists and what breaks if violated}
+- **{workaround}** — {unexpected behavior, cause, fix applied, date confirmed: YYYY-MM-DD}
 
 ## Working context
 
 ### YYYY-MM-DD
-- {entrada de contexto activo — se elimina cuando supera 30 días}
+- {active context entry — removed when older than 30 days}
 ```
 
-## Reglas
+## Rules
 
-- `## Permanent`: no tiene TTL, pero sí puede eliminarse si la convención dejó de aplicar. Quien borra, explica.
-- `## Working context`: cada bloque bajo `### YYYY-MM-DD` se elimina en `/cortex-crystallize` cuando `today - date > 30 days`. El agente no pregunta — poda automáticamente.
-- Ninguna sección es un log de sesión — para eso existe `MEMORY.md`. PRAXIS captura el aprendizaje que trasciende la sesión.
+- `## Permanent`: has no TTL, but can be removed if the convention no longer applies. Whoever deletes, explains.
+- `## Working context`: each block under `### YYYY-MM-DD` is removed by `/cortex-crystallize` when `today - date > 30 days`. The agent does not ask — it prunes automatically.
+- Neither section is a session log — that is what `MEMORY.md` is for. PRAXIS captures learning that outlasts the session.

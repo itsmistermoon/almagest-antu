@@ -6,6 +6,8 @@
 - [[wiki/pages/cortex-forge]] — Vault with multi-agent hot cache protocol (Claude Code, Codex, Antigravity, CommandCode)
 
 ## Concepts
+- [[wiki/concepts/crystallize-vs-imprint]] — Design boundary between cortex-crystallize (hot cache, ephemeral, automatic) and cortex-imprint (wiki, permanent, manual)
+- [[wiki/concepts/skill-dependency-graph]] — What each skill produces and consumes; contracts, failure modes, and the data flow between all 6 skills
 - [[wiki/concepts/no-op-audit-adversarial-debate]] — Methodology for identifying and rehabilitating no-op skill instructions via adversarial subagent debate (defender / attacker / judge)
 - [[wiki/concepts/parametric-knowledge]] — What the model knows from training; frozen, unverifiable, disqualified as a source for vault topics
 - [[wiki/concepts/contextual-knowledge]] — Facts the agent reads directly from context; the verifiable counterpart to parametric knowledge

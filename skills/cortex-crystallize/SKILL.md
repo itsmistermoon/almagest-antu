@@ -28,9 +28,7 @@ Behavior depends on where the skill is invoked:
    Use the detected identity as `{Agent}` in the history header and in the `agent:` frontmatter field.
 2. **Resolve vault** from `~/.cortex-forge/config.yml`. If missing, prompt to run `/cortex-forge-setup` first.
    Also read `locale:` from the vault's entry — use it for all agent-generated content. Fallback if absent: `.cortex/MEMORY.md` title line (`— locale: {lang}`) → `AGENTS.md` Vault identity (`**locale**:`) → default `en`.
-   - Config supports two formats — handle both:
-     - New: `vaults: {name: path, ...}` + `default: name`
-     - Legacy: `vault: path` (treat as single vault named after its `basename`)
+   - Config format: `vaults: {name: path, ...}` + `default: name`
    - If the first argument matches a registered vault name (e.g., `/cortex-crystallize second-brain`) → use that vault; treat the second argument (if any) as the project name override.
    - Otherwise: check if CWD is inside any registered vault (CWD starts with a vault path) → use that vault.
    - If not, use the `default` vault.
@@ -39,7 +37,7 @@ Behavior depends on where the skill is invoked:
    - If active repo contains `wiki/`, `AGENTS.md`, and `skills/` → **it IS a vault** → standard mode.
    - Otherwise → cross-vault mode (snapshot project repo + update linked vault page).
 4. Create `.cortex/` if it doesn't exist. Add `.cortex/` to `.gitignore` if not already there.
-5. Read `.cortex/MEMORY.md` in full if it exists.
+5. Read `.cortex/MEMORY.md` in full if it exists. If the file has malformed YAML frontmatter (parse error on the `---` block), do not stop — read the body as plain text, skip the frontmatter fields, and note the issue in the next `#### Fragile context` entry. Overwrite the frontmatter with correct values in step 6.
 5b. **Prune PRAXIS.md working context** — if `.cortex/PRAXIS.md` exists, remove any `### Working context` entries older than 30 days (compare entry date against today). Do not touch `## Permanent`. If nothing to prune, skip silently.
 6. **Update current state** (see limits below). Update `agent:` and `updated:` in the file frontmatter to reflect the current agent and date.
    - If an argument with `next: <focus>` was provided (e.g., `/cortex-crystallize next: PostToolUse hook`), add a `### Suggested skills` entry and tailor `### Pending` toward the declared next focus.
@@ -66,34 +64,17 @@ Never write to the vault without explicit confirmation.
 
 ## Zone 1 — Current state (MUTABLE)
 
-Update on every `/cortex-crystallize`. Hard limits: **max 5 pending items, max 3 active decisions**.
+Update on every `/cortex-crystallize`. Use the canonical format in `MEMORY-FORMAT.md` (co-located with this skill) — do not reproduce it here.
 
-When adding a new item, evaluate whether an existing one has become obsolete and remove it. The size constraint is what makes this zone reliable — if it grows unbounded, it degrades.
+Hard limits: **max 5 pending items, max 3 active decisions**. When adding an item, evaluate whether an existing one is obsolete and remove it. The size constraint is what makes this zone reliable — if it grows unbounded, it degrades.
 
 **What goes in Current state vs. History:**
-
-- **Current state** — work that requires action in a future session: tasks to resume, decisions to revisit, things left incomplete. If the next agent needs to act on it, it goes here.
-- **History** — work that is complete and closed within this session. If nothing is left to do, it belongs only in History.
+- **Current state** — requires action in a future session: tasks to resume, decisions to revisit, incomplete work. If the next agent needs to act on it, it goes here.
+- **History** — complete and closed within this session. If nothing is left to do, it belongs only in History.
 
 When in doubt: ask "does the next session need to act on this?" If no → History only. If yes → add to `### Pending` in Current state.
 
-```markdown
----
-agent: {agent-id}
-updated: {YYYY-MM-DD}
----
-
-# {project} — hot cache
-
-## Current state
-### Pending
-- [ ] {concise description with enough context to resume} — {file or path if applicable}
-
-### Active decisions
-- {decision and rationale — to avoid re-litigating it}
-```
-
-`agent:` identifies who last wrote Current state — the mutable zone. When multiple agents operate the same vault across sessions, this field makes it immediately clear whose snapshot is active without reading git history. Update it on every `/cortex-crystallize` invocation.
+`agent:` identifies who last wrote Current state. Update it on every invocation — when multiple agents operate the same vault, this field shows whose snapshot is active without reading git history.
 
 ## Zone 2 — History (APPEND-ONLY)
 

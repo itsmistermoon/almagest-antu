@@ -1,7 +1,7 @@
 ---
 name: cortex-prune
 behavior: ["prune", "recall"]
-description: Health check del vault — detecta dead links, páginas huérfanas, provenance faltante y fuentes no procesadas.
+description: Health check the vault — detects dead links, orphan pages, missing provenance, and unprocessed sources. Invoke when the user asks "is everything organized?", "check if something is broken", "are there orphan pages?", "run a vault health check", or "prune the vault".
 argument-hint: "[vault-name]"
 ---
 
@@ -12,8 +12,7 @@ Health check del vault activo en dos capas: estructural (script) y semántica (a
 ## Steps
 
 1. **Resolve vault** — read `~/.cortex-forge/config.yml`:
-   Also read `locale:` from the vault's entry — use it for all agent-generated content. Fallback if absent: `.cortex/MEMORY.md` title line (`— locale: {lang}`) → `AGENTS.md` Vault identity (`**locale**:`) → default `en`.
-
+   - Config format: `vaults: {name: path, ...}` + `default: name`
    - If the first argument matches a registered vault name (e.g., `/cortex-prune personal`) → use that vault.
    - Otherwise: check if CWD is inside any registered vault → use that vault.
    - If not, use the `default` vault.
@@ -25,9 +24,9 @@ Health check del vault activo en dos capas: estructural (script) y semántica (a
    Confirm vault is a Cortex Forge vault: path contains `wiki/` and `AGENTS.md`.
 
    Read **Domains** and **Out of scope** from `AGENTS.md` (`## Vault identity`) — use them to flag pages whose topics fall outside the vault's defined scope.
-   Also read `locale:` from `~/.cortex-forge/config.yml` (match vault by path) — use it for all agent-generated content. Fallback if absent: `.cortex/MEMORY.md` title line (`— locale: {lang}`) → `AGENTS.md` Vault identity (`**locale**:`) → default `en`.
+   Read `locale:` from the vault's entry in `~/.cortex-forge/config.yml` — use it for all agent-generated content. Fallback if absent: `.cortex/MEMORY.md` title line (`— locale: {lang}`) → `AGENTS.md` Vault identity (`**locale**:`) → default `en`.
 
-2. **Capa 1 — Structural check**: Run `bash ~/.cortex-forge/bin/cortex-prune.sh {vault}` and capture output.
+2. **Capa 1 — Structural check**: Run `bash ~/.cortex-forge/bin/cortex-prune.sh {vault}` and capture output. If the script is not found, stop and tell the user: "cortex-prune.sh is missing from ~/.cortex-forge/bin/ — run `/cortex-forge-setup` (sub-task: update) to restore the runtime."
 
 3. **Capa 2 — Semantic analysis**: Run the four semantic checks below. For each check, spawn subagents as described — do not attempt to reason about the wiki pages from memory alone.
 
@@ -42,7 +41,7 @@ Health check del vault activo en dos capas: estructural (script) y semántica (a
        "dead_links": [],
        "raw_without_source_page": [],
        "missing_confidence": [],
-       "orphan_pages": ["]
+       "orphan_pages": []
      }
    }
    ```
@@ -138,7 +137,7 @@ Report verdict as MEDIUM. Never auto-apply — always requires user confirmation
 | HIGH | `.raw/` files with no corresponding `wiki/sources/` page |
 | HIGH | Pages without YAML frontmatter (excl. `index.md`, `log.md`) |
 | MEDIUM | Orphan pages — no incoming wikilinks from any other vault page |
-| MEDIUM | Concepts/entities/references without `sources:` or `confidence:` frontmatter |
+| MEDIUM | Concepts/entities without `sources:` or `confidence:` frontmatter |
 | MEDIUM | Source pages without `confidence:` frontmatter |
 | LOW | Source pages without `tags:` (or `tags: []`) |
 
