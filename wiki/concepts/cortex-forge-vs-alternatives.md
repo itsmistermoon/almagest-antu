@@ -3,7 +3,7 @@ title: "cortex-forge vs alternative systems"
 type: concept
 created: 2026-06-26
 updated: 2026-06-26
-tags: [cortex-forge, knowledge-management, ai-agents, personal-brain, comparison]
+tags: [cortex-forge/architecture, knowledge-management, ai-agents, personal-brain, comparison]
 sources:
   - wiki/sources/openhuman.md
   - wiki/sources/openhuman-super-context.md

@@ -3,7 +3,7 @@ title: Crystallize Automation Architecture
 type: concept
 created: 2026-06-28
 updated: 2026-06-28
-tags: [crystallize, hooks, agents, architecture, cortex-forge]
+tags: [crystallize, hooks, agents, architecture, cortex-forge/protocol]
 aliases: [agent-specific-crystallize, per-agent-crystallize]
 sources:
   - wiki/concepts/agent-hook-compatibility.md

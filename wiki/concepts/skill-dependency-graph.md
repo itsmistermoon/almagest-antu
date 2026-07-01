@@ -3,7 +3,7 @@ title: skill dependency graph
 type: concept
 created: 2026-06-30
 updated: 2026-06-30
-tags: [cortex-forge, skills, architecture, dependency, data-flow]
+tags: [cortex-forge/skills, skills, architecture, dependency, data-flow]
 sources:
   - conversation 2026-06-30
 confidence: high

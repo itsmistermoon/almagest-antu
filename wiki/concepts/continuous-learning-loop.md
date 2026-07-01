@@ -2,7 +2,7 @@
 title: "Continuous Learning Loop"
 type: concept
 created: 2026-06-12
-updated: 2026-06-12
+updated: 2026-07-01
 tags: [memory, skills, hooks, self-improvement]
 aliases: [session-to-skill extraction, learned skills]
 sources:
@@ -31,9 +31,16 @@ Session-end evaluation is deliberately preferred over per-message evaluation (Us
 
 `cortex-crystallize` already runs at Stop, but it extracts *state* (pending, decisions, fragile context), not *lessons*. A learning loop would extract the reusable correction — closer to what CommandCode's TASTE does implicitly ([[wiki/concepts/commandcode-taste]]). The output target differs too: skills (executable behavior) rather than wiki pages (knowledge). Security note: skills extracted automatically are supply-chain artifacts — see [[wiki/concepts/memory-as-attack-surface]].
 
+## Implemented examples
+
+- **CommandCode TASTE** — implicit, per-session extraction into taste profiles ([[wiki/concepts/commandcode-taste]])
+- **[[wiki/entities/compound-engineering]] `/ce-compound`** — explicit, manual-trigger step in the compound loop; writes to `docs/solutions/` so future `/ce-brainstorm` and `/ce-plan` runs read prior learnings as grounding. The return arrow in the compound loop is the same mechanism as a learning loop: each cycle deposits knowledge that reduces the cost of the next.
+- **Cortex Forge `/cortex-imprint`** — manual, session-to-wiki; captures durable insight rather than behavioral corrections. Complementary to `/cortex-crystallize` (state) — together they cover what `/ce-compound` handles in a single step.
+
 ## Connections
-- Related concepts: [[wiki/concepts/commandcode-taste]], [[wiki/concepts/memory-system]], [[wiki/concepts/prompt-classification-hook]], [[wiki/concepts/handoff-artifact]]
+- Related concepts: [[wiki/concepts/commandcode-taste]], [[wiki/concepts/memory-system]], [[wiki/concepts/prompt-classification-hook]], [[wiki/concepts/handoff-artifact]], [[wiki/concepts/skill-self-improvement-loop]]
 
 ---
 
 - 2026-06-12 [Claude Code]: Page created from Longform Guide ingestion
+- 2026-07-01 [Claude Code]: Added implemented examples section — CommandCode TASTE, Compound Engineering /ce-compound, Cortex Forge /cortex-imprint

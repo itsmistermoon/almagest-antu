@@ -3,7 +3,7 @@ title: {{title}}
 type: project
 created: {{date:YYYY-MM-DD}}
 updated: {{date:YYYY-MM-DD}}
-tags: []
+tags: []  # project/subtopic for nested grouping
 status: active
 repo: 
 domains: []

@@ -3,7 +3,7 @@ title: No-Op Audit with Adversarial Subagent Debate
 type: concept
 created: 2026-06-24
 updated: 2026-06-24
-tags: [skills, agent-design, quality, workflow]
+tags: [skills, agent-design, quality, workflow, cortex-forge/skills]
 aliases: [no-op audit, skill audit, adversarial debate]
 sources:
   - conversation 2026-06-24

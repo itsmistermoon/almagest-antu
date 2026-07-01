@@ -3,7 +3,7 @@ title: {{title}}
 type: concept
 created: {{date:YYYY-MM-DD}}
 updated: {{date:YYYY-MM-DD}}
-tags: []
+tags: []  # project/subtopic for nested grouping
 aliases: []
 sources: []
 confidence: high

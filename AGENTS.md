@@ -123,7 +123,7 @@ Each page follows: YAML frontmatter + compiled truth + chronological changelog. 
 | `fetched` | yes | Date this source was ingested into the vault (`YYYY-MM-DD`) |
 | `timestamp` | recommended | Publication or last-known-accurate date of the resource (OKF-aligned) |
 | `source_author` | recommended | Author(s) of the original resource |
-| `tags` | recommended | Cross-cutting categorization strings |
+| `tags` | recommended | Cross-cutting categorization strings. Use `project/subtopic` slash notation to scope tags to a project (e.g. `cortex-forge/skill-audit`). Obsidian renders these as nested tags. |
 | `confidence` | yes | `high` (primary source) · `medium` (blog, video) · `low` (inference) |
 | `schema_version` | yes | Protocol version this page was written against |
 | `raw` | yes | Path to the immutable primary source in `.raw/` |

@@ -79,6 +79,8 @@ Vault with a hot cache protocol that synchronizes context across multiple agents
 
 - **wiki/meta/ convention: `_index.md` for humans, trigger rules in AGENTS.md for agents** — `_index.md` is not auto-loaded by any agent, so agent behavioral rules placed there are invisible. The convention for when to write to `wiki/meta/log.md` belongs in AGENTS.md `## On session close` — that section IS read every session. `_index.md` documents the directory for human readers (file table, what goes/doesn't, log format). Neither duplicates the other.
 
+- **Backward enrichment — planned post-ingest step** — `cortex-assimilate` creates pages for new sources but doesn't update existing pages that should now reference the new source. Planned detection mechanism: compare the new source's `tags:` against all wiki pages; flag those whose `updated:` predates the ingestion and share at least one tag. An agent reviews each candidate and proposes updates — no write without evaluation (catches false positives where tag overlap is incidental, not topical). The same signal (tag overlap + `updated:` age) works in `cortex-prune` as a Layer 3 post-hoc check across all sources, complementing the proactive ingest-time version. Connection to git-diff-scoped pattern: both mechanisms use structured page metadata (tags, updated, raw:) to detect staleness without re-reading all content. Currently planned — not yet implemented.
+
 - **MCP server deferred to Etapa 2** — sqlite-vec solves retrieval; MCP solves multi-client dispatch. These are separate problems. Implementing both simultaneously creates two simultaneous diagnostic surfaces if something fails. Gate: Etapa 1 validated in an organic session AND the vault is accessed from more than one client. `AGENTS.md` remains the design contract regardless — an agent without MCP can still operate the vault by reading `AGENTS.md` directly.
 - **[[wiki/entities/openhuman|OpenHuman]] is the closest full-harness comparable** — both solve the agent cold-start problem via a local Karpathy-style Obsidian vault as the memory layer, and both implement the [[wiki/concepts/super-context|Super Context]] pattern (harness-level deterministic context injection on session start). Key divergences: OpenHuman is a desktop GUI application with 118+ managed OAuth integrations and automatic 20-minute auto-fetch loops that populate the vault without agent involvement; Cortex Forge is a vault protocol that any CLI agent operates via hooks and skills, with knowledge synthesized manually from ingested sources. OpenHuman's SuperContext runs inside the harness (Python/Rust app); Cortex Forge's equivalent is a bash `SessionStart` hook that injects `.hot/MEMORY.md` before the first prompt. OpenHuman is user-facing and batteries-included; Cortex Forge is agent-infrastructure and composable. TokenJuice (OpenHuman's token compression layer — up to 80% reduction via HTML→Markdown, URL shortening, dedup) has no Cortex Forge equivalent; the vault reduces token cost indirectly by replacing file-by-file retrieval with a pre-built semantic index.
 
@@ -90,30 +92,7 @@ Vault with a hot cache protocol that synchronizes context across multiple agents
 
 ## Roadmap
 
-### Phase 1 — Multi-agent parity
-Goal: Hot Cache Protocol working across all supported agents.
-
-- [x] Claude Code — configured via `cortex-forge-setup`
-- [ ] Antigravity CLI — documented, pending real organic session test
-- [x] Codex — wire format confirmed in real session; SessionStart multi-source, hook context visible in UI
-- [ ] CommandCode — partial (close only); startup via AGENTS.md as fallback
-- [x] Compatibility matrix → `wiki/concepts/agent-hook-compatibility.md`
-
-### Phase 2 — Protocol hardening
-- [ ] Schema versioning in `AGENTS.md` and templates (`schema_version:`)
-- [ ] Automatic `cortex-prune` via periodic hook
-- [x] Stale hot cache detection (not updated in N days) — `hot_cache_stale_days:` en config.yml; `cortex-reactivate.sh` y `cortex-reactivate-antigravity.sh` inyectan warning si supera el umbral
-- [ ] PostToolUse as platform guardrail (SPA detection + grep/find interception)
-
-### Phase 3 — Adoptability
-- [ ] Add license to public repo
-- [ ] Onboarding guide: 5 minutes from zero to first ingest
-- [ ] Example pages in `wiki/concepts/` of public repo (demonstrate format, not personal content)
-- [x] Phase 3.6: Semantic vector retrieval (sqlite-vec + nomic-embed-text-v1.5)
-
-### Phase 4 — Accumulated intelligence
-- [ ] `cortex-recall` with cross-page synthesis and contradiction detection
-- [ ] Cross-session pattern detection: recurring themes in `.hot/` that never reach `wiki/`
+See [ROADMAP.md](../../ROADMAP.md).
 
 ## Next steps
 
@@ -164,4 +143,5 @@ Goal: Hot Cache Protocol working across all supported agents.
 - 2026-06-27 [Claude Code]: Added post-commit reindex hook to stack description; corrected repo path to moon-cortexforge
 - 2026-06-28 [Claude Code]: Added three key decisions — hook scripts global-only (no bin/ in consumer vaults), cortex-forge-setup maintenance menu for existing vaults, semantic search init gate corrected
 - 2026-06-28 [Claude Code]: Major restructure — `.hot/` + `.cortex/` consolidated into single `.cortex/` directory (`db/` for semantic search, `MEMORY.md` + `PRAXIS.md` flat); `CODEX.md` retired and identity absorbed into `AGENTS.md`; PRAXIS.md introduced for two-zone accumulated agent context (permanent + working with 30-day TTL); updated stack layer count from 6 to 5
+- 2026-07-01 [Claude Code]: Backward enrichment + drift detection patterns designed and documented — Key decisions, Roadmap Phase 4; reflected in README
 - 2026-07-01 [Claude Code]: Skill suite audit (adversarial review + SkillOpt + writing-great-skills) — added CI, extracted LOCALE-RESOLUTION.md and EMBEDDING-SETUP.md, added disable-model-invocation to cortex-imprint, deduplicated Rules/Constraints across skills, removed ## When to invoke redundancy, added completion criterion to assimilate step 5, translated Spanish sediment in cortex-prune, co-located YAML block in forge-setup; wiki/meta/ convention defined; 4 key decisions added

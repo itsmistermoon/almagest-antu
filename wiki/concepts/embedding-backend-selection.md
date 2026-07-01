@@ -3,7 +3,7 @@ title: embedding-backend-selection
 type: concept
 created: 2026-06-28
 updated: 2026-06-28
-tags: [embeddings, semantic-search, mlx, ollama, cortex-forge]
+tags: [embeddings, semantic-search, mlx, ollama, cortex-forge/architecture]
 confidence: high
 schema_version: "0.3"
 aliases: []

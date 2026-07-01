@@ -8,6 +8,8 @@
 ## Concepts
 - [[wiki/concepts/crystallize-vs-imprint]] — Design boundary between cortex-crystallize (hot cache, ephemeral, automatic) and cortex-imprint (wiki, permanent, manual)
 - [[wiki/concepts/skill-dependency-graph]] — What each skill produces and consumes; contracts, failure modes, and the data flow between all 6 skills
+- [[wiki/concepts/skill-design-principles]] — Compiled checklist of what separates a working skill from one that appears to work; whiteness test, 9 principles, commit checklist
+- [[wiki/concepts/skill-self-improvement-loop]] — Observer skill pattern: run inner skill → evaluate with computer use → generate diff → improve SKILL.md; inner vs outer loop distinction
 - [[wiki/concepts/no-op-audit-adversarial-debate]] — Methodology for identifying and rehabilitating no-op skill instructions via adversarial subagent debate (defender / attacker / judge)
 - [[wiki/concepts/parametric-knowledge]] — What the model knows from training; frozen, unverifiable, disqualified as a source for vault topics
 - [[wiki/concepts/contextual-knowledge]] — Facts the agent reads directly from context; the verifiable counterpart to parametric knowledge
@@ -38,6 +40,7 @@
 - [[wiki/concepts/vault-mcp-server-pattern]] — Architecture pattern for exposing a vault as an MCP server; skills vs MCP trade-off; gate for Phase 2 transition
 
 ## Entities
+- [[wiki/entities/compound-engineering]] — Every Inc's compound engineering plugin: 27 skills, compound loop (brainstorm→plan→work→simplify→review→compound), skill-local prompt assets architecture; 22k stars
 - [[wiki/entities/openwiki]] — CLI by LangChain AI: LLM-generated codebase wiki + automated git-diff-scoped updates via GitHub Actions; injects reference into AGENTS.md/CLAUDE.md
 - [[wiki/entities/openbrain-nate-jones]] — Personal semantic memory system: Postgres + pgvector + MCP server; any agent connects with URL + key
 - [[wiki/entities/google-antigravity]] — Agent-first development platform oriented toward autonomous workflows
@@ -103,6 +106,10 @@
 - [[wiki/sources/codebase-memory-mcp]] — codebase-memory-mcp GitHub README: knowledge graph indexer, 14 MCP tools, Hybrid LSP, team-shared artifact (ingested 2026-06-16)
 - [[wiki/sources/openhuman]] — OpenHuman README: Memory Tree, SuperContext, TokenJuice, 118+ integrations, agentmemory backend interop (ingested 2026-06-26)
 - [[wiki/sources/openhuman-super-context]]
+- [[wiki/sources/writing-great-skills]] — Matt Pocock's writing-great-skills SKILL.md + GLOSSARY.md: vocabulary and failure modes for predictable skills (ingested 2026-07-01)
+- [[wiki/sources/anthropic-skill-creator]] — Anthropic's official skill-creator: creation loop, eval harness, description optimization (ingested 2026-07-01)
+- [[wiki/sources/compound-engineering-plugin]] — Compound Engineering README + June 2026 architectural update: agents→skill-local prompt assets, unified plan doc (ingested 2026-07-01)
+- [[wiki/sources/skill-optimization-loop]] — Zach Lloyd's outer-loop skill optimization: observer skill + computer use grader + SKILL.md diffs (ingested 2026-07-01)
 - [[wiki/sources/openwiki]] — OpenWiki README + architecture + agent workflow + GitHub Actions pattern (ingested 2026-07-01) — OpenHuman SuperContext feature article (featured): harness-level deterministic context injection, read-only scout, tag-delimited bundle (ingested 2026-06-26)
 
 ## Reference

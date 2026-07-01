@@ -7,7 +7,7 @@ argument-hint: "[vault-name]"
 
 Begin your response by outputting exactly: `Pruning vault...`
 
-Health check the active vault in two layers: structural (script) and semantic (agents).
+Health check the active vault in three layers: structural (script), semantic (agents), and drift (metadata comparison).
 
 ## Steps
 
@@ -30,7 +30,14 @@ Health check the active vault in two layers: structural (script) and semantic (a
 
 3. **Layer 2 — Semantic analysis**: Run the four semantic checks below. For each check, spawn subagents as described — do not attempt to reason about the wiki pages from memory alone.
 
-4. **Report** all findings (Layer 1 + Layer 2) grouped by severity. For each: path(s), problem, proposed action.
+3a. **Layer 3 — Drift detection**: For each `wiki/sources/` page, check whether its `.raw/` file was modified after the page was last synthesized.
+
+   1. For each file in `{vault}/wiki/sources/`, read its `raw:` and `updated:` frontmatter fields. Skip pages with no `raw:` field.
+   2. Run `stat -f "%Sm" -t "%Y-%m-%d" {vault}/{raw}` (macOS) or `date -r {vault}/{raw} "+%Y-%m-%d"` to get the `.raw/` file's modification date. If the file does not exist, skip — already covered by Layer 1's `raw_without_source_page` check.
+   3. If `.raw/` mtime > `updated:` → MEDIUM finding: "`.raw/{slug}.md` was modified after `wiki/sources/{slug}.md` was last synthesized — source page may be stale."
+   4. If no drift found, note: "Layer 3: no drift detected."
+
+4. **Report** all findings (Layer 1 + Layer 2 + Layer 3) grouped by severity. For each: path(s), problem, proposed action.
 
 4a. **Verify `wiki/meta/vault-report.json`** — the Layer 1 script (step 2) writes or overwrites this file on every run. Confirm it was refreshed (its `generated` date matches today) and report its path to the user. Do not write it yourself — the script is the single writer. The canonical schema:
 
@@ -150,3 +157,8 @@ Report verdict as MEDIUM. Never auto-apply — always requires user confirmation
 - Orphan sources are normal if freshly ingested and not yet linked from concepts/entities
 - Never delete or merge pages without explicit user confirmation
 - Debate pattern (2d) only triggers on genuine ambiguity — not on clear component relationships
+- Layer 3 drift findings are informational — never auto-re-synthesize; always ask the user
+
+## Changelog
+
+- 2026-07-01 [Claude Code]: Added Layer 3 — drift detection: mtime of `.raw/` vs `updated:` in `wiki/sources/`; intro updated from two to three layers

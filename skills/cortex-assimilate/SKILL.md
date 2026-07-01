@@ -117,6 +117,16 @@ If the argument starts with `--research`, enter research mode instead of the nor
 
 8. **Project linking** — check `{vault}/wiki/pages/` for active projects whose `domains:` match the source; propose the update before writing.
 
+9. **Backward enrichment** — scan existing wiki pages for candidates that should now reference the new source.
+
+   Skip this step if the new source page has no `tags:` or if fewer than 5 wiki pages exist total.
+
+   1. Read `tags:` from the newly created `wiki/sources/{slug}.md`.
+   2. Scan every page in `wiki/concepts/`, `wiki/entities/`, and `wiki/pages/`. For each page: read its frontmatter and check if it shares at least one tag with the new source AND does not already list `wiki/sources/{slug}.md` in its `sources:` field. These are candidates.
+   3. For each candidate, evaluate inline: does the new source add substantive information this page should reference? Possible reasons: the page covers a comparable tool/pattern and the new source is a notable comparable; the page has a comparison table or list where the new source belongs; the new source contradicts or refines a claim in the page. Classify as **ENRICHABLE** (clear gap identified, specific addition stated) or **FALSE_POSITIVE** (tag overlap is incidental or thematic only).
+   4. For each ENRICHABLE candidate: state exactly what to add and where — e.g., "Add OpenWiki to the comparison table in §Key mechanisms" or "Add a `[[wiki/entities/openwiki]]` wikilink in §Comparable tools."
+   5. Report all ENRICHABLE candidates to the user. Do not apply any changes without explicit confirmation per candidate.
+
 ## Types, paths, and templates
 
 | Type | Path | Template |
@@ -200,4 +210,5 @@ After completing ingestion, your response must confirm:
 
 ## Changelog
 
+- 2026-07-01 [Claude Code]: Added Step 9 — backward enrichment: tag-based scan of existing pages after ingest, inline ENRICHABLE/FALSE_POSITIVE classification, confirmation required before any change
 - 2026-06-24 [Claude Code]: Reformulated "compiled truth" rule into a verifiable rewrite contract with a concrete violation signal (no-op audit)

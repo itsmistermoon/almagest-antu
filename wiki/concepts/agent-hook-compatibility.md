@@ -3,7 +3,7 @@ title: agent-hook-compatibility
 type: concept
 created: 2026-06-07
 updated: 2026-06-27
-tags: [multi-agent, hooks, cortex-forge, compatibility]
+tags: [multi-agent, hooks, cortex-forge/protocol, compatibility]
 aliases: [hook matrix, agent lifecycle]
 sources:
   - wiki/sources/commandcode-hooks-configuration.md

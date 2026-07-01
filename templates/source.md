@@ -7,7 +7,7 @@ created: {{date:YYYY-MM-DD}}
 updated: {{date:YYYY-MM-DD}}
 timestamp: 
 source_author: 
-tags: []
+tags: []  # project/subtopic for nested grouping
 confidence: high
 schema_version: "0.3"
 raw: .raw/{{slug}}.md

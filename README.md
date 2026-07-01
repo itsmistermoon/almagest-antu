@@ -60,6 +60,8 @@ Six skills that map to how knowledge actually moves through a system. All are gl
 
 Sources land in `.raw/`: articles, PDFs, transcripts, URLs. The agent processes them and produces structured wiki pages. The brain doesn't store what it perceives — it stores what it processes. Without this step, information enters the system in name only.
 
+**Backward enrichment** *(planned)*: after synthesizing new pages, assimilate scans existing wiki pages that share `tags:` with the new source and whose `updated:` date predates the ingestion. These are candidates for backward enrichment — existing concept pages, entity entries, and comparison tables that should now mention the new source but don't. An agent evaluates each candidate before any change is made. This closes the gap where ingesting a new tool updates the vault going forward but leaves prior knowledge incomplete.
+
 ### `/cortex-crystallize` — Session context
 
 Working memory lasts seconds. `.hot/MEMORY.md` extends it indefinitely: current state, active decisions, open threads. The agent reads it on session start; you invoke it at milestones. Without it, every conversation starts from zero. Works from any repo, not just the vault.

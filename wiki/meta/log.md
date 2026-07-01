@@ -14,6 +14,40 @@ Operations: `ingest`, `imprint`, `prune`, `query`
 
 <!-- entries below -->
 
+## [2026-07-01] ingest | 4 sources on skill design and optimization
+
+Sources:
+- `.raw/writing-great-skills.md` → `wiki/sources/writing-great-skills.md`
+- `.raw/anthropic-skill-creator.md` → `wiki/sources/anthropic-skill-creator.md`
+- `.raw/compound-engineering-plugin.md` → `wiki/sources/compound-engineering-plugin.md`
+- `.raw/skill-optimization-loop.md` → `wiki/sources/skill-optimization-loop.md`
+
+Pages created: `wiki/entities/compound-engineering.md`, `wiki/concepts/skill-self-improvement-loop.md`
+Pages updated: `wiki/concepts/skill-design-principles.md` (sources upgraded to primary)
+
+Agent: Claude Code
+
+## [2026-07-01] skill-improvement | Backward enrichment + drift detection implemented
+
+Step 9 added to `cortex-assimilate`: after ingest, scans existing wiki pages for tag overlap, classifies as ENRICHABLE/FALSE_POSITIVE, proposes updates with confirmation required.
+Layer 3 added to `cortex-prune`: compares mtime of `.raw/` files against `updated:` in corresponding `wiki/sources/` pages; MEDIUM finding when `.raw/` is newer.
+
+Agent: Claude Code
+
+## [2026-07-01] imprint | Backward enrichment + drift detection patterns designed
+
+Two related staleness patterns identified and documented during OpenWiki ingestion analysis:
+
+**Backward enrichment**: after ingesting a new source, existing wiki pages that share `tags:` and have `updated:` before the ingestion date are candidates for update — concept pages, entity entries, and comparison tables that should now mention the new source. Detection: O(pages) tag scan; evaluation by agent before any write. Planned as a step in `cortex-assimilate`.
+
+**Drift detection**: sources whose `.raw/` file was modified after their `wiki/sources/` page was last synthesized. Planned as Layer 3 in `cortex-prune`. Surfaced by the OpenWiki git-diff-scoped update pattern (`lastHead` in `.last-update.json` → only feed changed commits to the agent).
+
+Both mechanisms use structured page metadata (tags, updated:, raw: frontmatter field) to detect staleness without re-reading all content.
+
+Documented in: `wiki/pages/cortex-forge.md` (Key decisions + Roadmap Phase 4), `README.md` (`/cortex-assimilate` section).
+
+Agent: Claude Code
+
 ## [2026-06-10] ingest | Codex hooks docs refresh
 
 Checked `https://developers.openai.com/codex/hooks` against the existing vault source before rewriting anything. The source was already present as `.raw/codex-hooks.md` and `wiki/sources/codex-hooks.md`, so no new raw capture was needed.

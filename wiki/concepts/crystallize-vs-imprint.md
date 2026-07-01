@@ -3,7 +3,7 @@ title: crystallize vs imprint — design boundary
 type: concept
 created: 2026-06-30
 updated: 2026-06-30
-tags: [cortex-forge, skills, memory, knowledge-management, design-decision]
+tags: [cortex-forge/protocol, skills, memory, knowledge-management, design-decision]
 sources:
   - conversation 2026-06-30
 confidence: high

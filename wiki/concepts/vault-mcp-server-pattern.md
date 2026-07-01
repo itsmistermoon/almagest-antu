@@ -3,7 +3,7 @@ title: "Vault MCP Server Pattern"
 type: concept
 created: 2026-06-26
 updated: 2026-06-26
-tags: [mcp-server, ai-agents, knowledge-management, architecture, cortex-forge]
+tags: [mcp-server, ai-agents, knowledge-management, architecture, cortex-forge/architecture]
 aliases: [vault-as-mcp, knowledge-base-mcp]
 sources: []
 confidence: high

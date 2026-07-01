@@ -3,7 +3,7 @@ title: "Vault design — Karpathy LLM Wiki vs. Productive Setups HQ"
 type: concept
 created: 2026-06-26
 updated: 2026-06-26
-tags: [vault-design, llm, knowledge-management, cortex-forge, design-decisions]
+tags: [vault-design, llm, knowledge-management, cortex-forge/architecture, design-decisions]
 aliases: [karpathy-vs-hq]
 sources: []
 confidence: medium
