@@ -106,7 +106,7 @@ If the argument starts with `--research`, enter research mode instead of the nor
 
    If `rg` is not available or the script errors: skip the check silently (fail-open).
 
-5. **Synthesize** — determine what to create (see criteria below) and create pages at the correct path inside the resolved vault.
+5. **Synthesize** — evaluate the source against the criteria below and create pages for every qualifying type. **Done when:** every content type (concept, entity, reference, project) that meets its creation criteria has a page — zero qualifying types skipped. If a topic is borderline, evaluate it rather than skipping.
 
 6. Update `{vault}/wiki/index.md` with new pages.
 
@@ -117,15 +117,6 @@ If the argument starts with `--research`, enter research mode instead of the nor
    Report the result inline: "Indexed N new chunk(s)." If `.cortex/vault.db` does not exist, skip silently — the vault may not have semantic search enabled.
 
 8. **Project linking** — check `{vault}/wiki/pages/` for active projects whose `domains:` match the source; propose the update before writing.
-
-## When to invoke
-
-Invoke automatically when the user provides new content in any of these forms:
-- "new ingest {url or file}"
-- "process {url or file}"
-- "add / include {source}"
-- URL provided directly (no additional context)
-- File name visible in `.raw/` that has no wiki page yet
 
 ## Types, paths, and templates
 

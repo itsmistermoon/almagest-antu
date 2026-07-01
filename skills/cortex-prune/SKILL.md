@@ -7,7 +7,7 @@ argument-hint: "[vault-name]"
 
 Begin your response by outputting exactly: `Pruning vault...`
 
-Health check del vault activo en dos capas: estructural (script) y semántica (agentes).
+Health check the active vault in two layers: structural (script) and semantic (agents).
 
 ## Steps
 
@@ -26,9 +26,9 @@ Health check del vault activo en dos capas: estructural (script) y semántica (a
    Read **Domains** and **Out of scope** from `AGENTS.md` (`## Vault identity`) — use them to flag pages whose topics fall outside the vault's defined scope.
    Read `locale:` from the vault's entry in `~/.cortex-forge/config.yml` — use it for all agent-generated content. Fallback if absent: `.cortex/MEMORY.md` title line (`— locale: {lang}`) → `AGENTS.md` Vault identity (`**locale**:`) → default `en`.
 
-2. **Capa 1 — Structural check**: Run `bash ~/.cortex-forge/bin/cortex-prune.sh {vault}` and capture output. If the script is not found, stop and tell the user: "cortex-prune.sh is missing from ~/.cortex-forge/bin/ — run `/cortex-forge-setup` (sub-task: update) to restore the runtime."
+2. **Layer 1 — Structural check**: Run `bash ~/.cortex-forge/bin/cortex-prune.sh {vault}` and capture output. If the script is not found, stop and tell the user: "cortex-prune.sh is missing from ~/.cortex-forge/bin/ — run `/cortex-forge-setup` (sub-task: update) to restore the runtime."
 
-3. **Capa 2 — Semantic analysis**: Run the four semantic checks below. For each check, spawn subagents as described — do not attempt to reason about the wiki pages from memory alone.
+3. **Layer 2 — Semantic analysis**: Run the four semantic checks below. For each check, spawn subagents as described — do not attempt to reason about the wiki pages from memory alone.
 
 4. **Report** all findings (Layer 1 + Layer 2) grouped by severity. For each: path(s), problem, proposed action.
 
@@ -69,7 +69,7 @@ Health check del vault activo en dos capas: estructural (script) y semántica (a
 
 ---
 
-## Capa 2 — Semantic checks
+## Layer 2 — Semantic checks
 
 **Hard cap**: evaluate at most 20 candidate pairs in 2a and at most 20 uncovered sources in 2c. If there are more, pick the 20 with the strongest surface-level signal and note the total count skipped. Do not write scripts, external files, or spawn more than 3 subagents total — inline evaluation is always acceptable and preferred for small vaults.
 
@@ -129,7 +129,7 @@ Report verdict as MEDIUM. Never auto-apply — always requires user confirmation
 
 ---
 
-## Detection criteria — Capa 1 (bin/cortex-prune.sh)
+## Detection criteria — Layer 1 (bin/cortex-prune.sh)
 
 | Severity | Check |
 |---|---|

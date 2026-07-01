@@ -1,7 +1,8 @@
 ---
 name: cortex-imprint
 behavior: ["synthesize"]
-description: Archive a valuable session synthesis as a permanent wiki page in the vault. Invoke only when the user explicitly runs /cortex-imprint or says "imprint this", "save this synthesis to the vault", "make this a permanent page". Do not invoke automatically — even if the synthesis seems valuable.
+disable-model-invocation: true
+description: Archive a valuable session synthesis as a permanent wiki page in the vault.
 argument-hint: "[vault-name]"
 ---
 
@@ -42,18 +43,7 @@ Archive a valuable session synthesis as a permanent wiki page.
 
 ## Constraints
 
-- **Manual-only:** invoke exclusively when the user explicitly runs `/cortex-imprint` or uses a phrase listed in the `description`. Never invoke automatically based on conversation content — even if a synthesis seems valuable or ephemeral.
 - **No circular synthesis:** content derived only from wiki pages (no `.raw/` or session analysis behind it) must not be imprinted — see circular synthesis test in Rules.
-
-## When to invoke
-
-Only when the user explicitly invokes `/cortex-imprint`. Never invoke automatically — the user decides what's worth persisting.
-
-Typical cases:
-- A comparative analysis produced a non-obvious conclusion
-- A design decision was grounded and documented
-- A conversation revealed a pattern or principle worth consulting later
-- A query answered something useful for future sessions
 
 ## Valid types and paths
 

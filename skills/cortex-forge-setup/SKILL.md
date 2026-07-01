@@ -65,7 +65,18 @@ Always end with the relevant subset of step 9 (confirmation).
 
    After all selected operations complete, show confirmation (step 10) for only the operations that ran.
 
-3. **Write config** — add the vault entry in `~/.cortex-forge/config.yml` (new vault only).
+3. **Write config** — add the vault entry in `~/.cortex-forge/config.yml` (new vault only):
+
+   ```yaml
+   vaults:
+     {name}: {absolute-path}
+     # ... other registered vaults preserved as-is
+   default: {name}   # set as default only if this is the first vault, or if it was already default
+   ```
+   - Create `~/.cortex-forge/` if it doesn't exist.
+   - Preserve all existing vault entries — never overwrite other vaults.
+   - If this is the first vault registered, set it as `default`.
+   - If a `default` already exists, leave it unchanged.
 
 3b. **Sync infrastructure from upstream** — pull infrastructure files from the upstream repo and apply them to the current vault.
 
@@ -112,18 +123,6 @@ Always end with the relevant subset of step 9 (confirmation).
    upstream: itsmistermoon/cortex-forge   # default; override to point at a fork
    upstream_ref: main                      # optional; branch or tag to sync from
    ```
-
-
-   ```yaml
-   vaults:
-     {name}: {absolute-path}
-     # ... other registered vaults preserved as-is
-   default: {name}   # set as default only if this is the first vault, or if it was already default
-   ```
-   - Create `~/.cortex-forge/` if it doesn't exist.
-   - Preserve all existing vault entries — never overwrite other vaults.
-   - If this is the first vault registered, set it as `default`.
-   - If a `default` already exists, leave it unchanged.
 
 4. **Install global skills** — create `~/.agents/skills/{skill}/` dirs and symlink each `SKILL.md` to `~/.cortex-forge/skills/`:
    - `~/.agents/skills/cortex-crystallize/SKILL.md` → `~/.cortex-forge/skills/cortex-crystallize/SKILL.md`
@@ -277,42 +276,7 @@ Always end with the relevant subset of step 9 (confirmation).
    - The hook self-gates: exits immediately if `.cortex/db/vault.db` or `bin/cortex-index.py` don't exist, and only runs when the commit touched `wiki/` files. Runs in the background (`&`) — never delays the commit. Appends a timestamped line to `.git/cortex-reindex.log` (ok or error with exit code).
    - Uninstall (deregister path): remove only the marked block — a diff against the pre-install file must be empty.
 
-6d. **Embedding dependency check** — run this before any indexing attempt (option 4 and 6c). This check is also triggered if `cortex-index.py` fails with an import error.
-
-   Detect platform: `uname -m` → `arm64` = Apple Silicon, anything else = generic.
-
-   Run:
-   ```bash
-   python3 -c "import mlx_lm" 2>/dev/null && echo mlx || python3 -c "import sentence_transformers" 2>/dev/null && echo st || echo none
-   ```
-
-   - **`mlx` or `st` available** → proceed silently (report which backend is active in the summary).
-   - **`none`** → do NOT fail silently. Present this message:
-
-     ```
-     Semantic search requires an embedding library to generate vectors locally.
-     No compatible library was found on this machine.
-
-     Why this matters: without embeddings, cortex-recall falls back to keyword search
-     across the full index. With embeddings, it retrieves the most relevant pages
-     semantically — useful as the vault grows beyond ~50 pages.
-
-     Long-term implications of installing:
-     • ~270 MB of model weights downloaded once, stored in ~/.cache/
-     • On Apple Silicon: mlx-embeddings runs via Neural Engine (fast, low power)
-     • On other platforms: sentence-transformers runs on CPU (slower but portable)
-     • No network calls at query time — fully local after the first download
-
-     Install now?
-       [1] Yes — install for this platform ({mlx-embeddings | sentence-transformers})
-       [2] No — skip semantic search for now (can re-run /cortex-forge-setup later)
-     ```
-
-   - If user chooses **[1]**:
-     - Apple Silicon → `pip install mlx-embeddings` (primary); if it fails, fall back to `pip install sentence-transformers` and note the fallback.
-     - Other → `pip install sentence-transformers`.
-     - After install, re-run the detection snippet to confirm. If still failing, report the error and skip indexing — do not proceed blindly.
-   - If user chooses **[2]**: skip indexing, note in the final summary that semantic search is not active.
+6d. **Embedding dependency check** — run this before any indexing attempt (option 4 and 6c). Also triggered if `cortex-index.py` fails with an import error. See `EMBEDDING-SETUP.md` (co-located with this skill) for the full detection and installation procedure.
 
 7. **Install TASTE rule for `cortex-recall`** — ask: "Install a TASTE rule so CommandCode invokes `/cortex-recall` automatically? (recommended)"
    If yes:
