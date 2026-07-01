@@ -18,7 +18,18 @@ Format: `[semver] — YYYY-MM-DD`
 
 ## [Unreleased]
 
-- `refactor:` `e7c0e19` refactor no-op audit in 4 skills (`cortex-assimilate`, `cortex-crystallize`, `cortex-imprint`, `cortex-prune`) replacing vague rules with verifiable, concrete criteria.
+## [0.5.0] — 2026-07-01
+
+- `fix:` `27d1164` `cortex-prune` Layer 2: hard cap (20 pairs, 20 sources); replace "spawn subagents" language with always-inline evaluation.
+- `fix:` `b613627` `bin/cortex-prune.sh`: `sources:` YAML frontmatter now counts as a valid reference — pages linked via `sources:` are no longer reported as orphans.
+- `protocol:` `4273eee` Skill suite quality audit: no-op audit criteria made concrete and verifiable across all 6 skills; `cortex-crystallize` PRAXIS-FORMAT updated.
+- `schema:` `43605e6` Vault taxonomy consolidated to 4 canonical types: `source`, `concept`, `entity`, `project`. Type `reference` deprecated; existing pages migrated to `concept`.
+- `feat:` `3c3d63e` `bin/cortex-validate-schema.sh`: support for `type: series` in `wiki/pages/`.
+- `protocol:` `99dccc5` Locale resolution extracted to `skills/LOCALE-RESOLUTION.md` — single source of truth replacing 5 inline duplicate blocks. `cortex-crystallize` description enriched with session-close trigger phrases.
+- `protocol:` `d3f6b2e` Writing-great-skills audit: `cortex-assimilate` step 5 gains checkable completion criterion; `cortex-imprint` gains `disable-model-invocation: true`; `cortex-forge-setup` step 6d extracted to `EMBEDDING-SETUP.md` via context pointer; duplication and sediment removed across 5 skills.
+- `protocol:` `7c8afe5` `cortex-assimilate` gains Step 9 — Backward enrichment: scan existing wiki pages for tag overlap after ingestion; propose additions per candidate with confirmation required.
+- `protocol:` `7c8afe5` `cortex-prune` gains Layer 3 — Drift detection: compare `.raw/` mtime against `updated:` in `wiki/sources/`; MEDIUM finding when `.raw/` is newer.
+- `schema:` `7c8afe5` Slash-tag convention (`project/subtopic`) adopted in all vault `AGENTS.md` files and templates; applied retroactively to 11 cortex-forge wiki pages.
 
 ## [0.3.0] — 2026-06-15
 
