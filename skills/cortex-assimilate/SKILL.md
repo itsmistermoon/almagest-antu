@@ -132,21 +132,33 @@ If the argument starts with `--research`, enter research mode instead of the nor
 | Type | Path | Template |
 |------|------|----------|
 | **Source** | `wiki/sources/` | `templates/source.md` |
-| **Concept** | `wiki/concepts/` | `templates/concept.md` |
+| **Concept** | `wiki/concepts/` or `wiki/reference/` | `templates/concept.md` |
 | **Entity** | `wiki/entities/` | `templates/entity.md` |
 | **Project** | `wiki/pages/` | `templates/project.md` |
-| **Reference** | `wiki/reference/` | `templates/reference.md` |
 
-## Reference criteria
+`wiki/reference/` pages are concepts in tabular or code-block form — use `type: concept` and the same template. The directory is preserved for navigation; the type is unified.
 
-**Create** if:
-- The content is primarily a table, wire format, code block, or checklist
-- The user will scan it to find a specific value, not read it to understand an idea
-- Examples: hook wire formats per agent, detection signals, syntax cheat sheets, configuration schemas
+## Type disambiguation
 
-**Skip** if:
-- The topic needs prose explanation to be useful → create a Concept instead
-- It's a one-off lookup that won't be consulted again
+**concept vs entity:** use `entity` when the thing exists in the world independently and can become stale (a company can be acquired, a tool deprecated). Use `concept` for synthesized knowledge that has no independent existence outside the vault. If in doubt: could a journalist write a breaking news article about it? → entity. Is it an idea you'd look up in a textbook? → concept.
+
+**concept vs source:** use `source` when the content was created by someone external and has a verifiable URL or raw file. Use `concept` for vault-internal synthesis — even if it derives from sources (listed in `sources:` frontmatter).
+
+## Source frontmatter fields
+
+| Field | Required | Description |
+|-------|----------|-------------|
+| `type` | yes | Always `source` |
+| `title` | yes | Display name of the source |
+| `resource` | yes | Canonical URI of the original resource |
+| `fetched` | yes | Date ingested into the vault (`YYYY-MM-DD`) |
+| `timestamp` | recommended | Publication or last-known-accurate date of the resource |
+| `source_author` | recommended | Author(s) of the original resource |
+| `tags` | recommended | Use `project/subtopic` slash notation (e.g. `cortex-forge/skills`) |
+| `confidence` | yes | `high` (primary source) · `medium` (blog, video) · `low` (inference) |
+| `schema_version` | yes | Frontmatter field contract version — bumps only when required fields change |
+| `raw` | yes | Path to the immutable primary in `.raw/` |
+| `section` | optional | Grouping label for multi-part sources from the same origin |
 
 ## Concept criteria
 
