@@ -15,7 +15,7 @@ schema_version: "0.3"
 
 # Agent Permission Model
 
-Each AI coding agent exposes a permission surface that controls what actions it can take — file writes, shell commands, network requests, MCP tool calls. The models differ enough across agents that cortex-forge hook scripts must be aware of the target agent's defaults.
+Each AI coding agent exposes a permission surface that controls what actions it can take — file writes, shell commands, network requests, MCP tool calls. **Superseded for cortex-forge (2026-07-02):** the models differed enough across agents that cortex-forge's agent lifecycle hook scripts needed to be aware of the target agent's defaults — that was one of the frictions that led to removing hooks entirely (see [[wiki/concepts/agent-hook-compatibility]]). The permission-surface reference below remains valid general knowledge, useful for anyone scripting these agents outside cortex-forge.
 
 ## Cross-agent permission matrix
 
@@ -26,11 +26,9 @@ Each AI coding agent exposes a permission surface that controls what actions it 
 | Antigravity CLI | Sandbox | Per action type | Per action type | Sandbox controls | `--sandbox-mode off` |
 | Codex | Controlled | Controlled by mode | Controlled by mode | Controlled by mode | `--full-auto` |
 
-## Critical: CommandCode headless writes
+## Critical: CommandCode headless writes (historical)
 
-CommandCode's `cmd -p` (headless/print mode) blocks all writes and shell commands by default. This means crystallize hooks that call `cmd -p` without `--yolo` will appear to run successfully but silently fail to write `.hot/MEMORY.md`.
-
-The `cortex-crystallize-commandcode.sh` hook uses `cmd -p --yolo` for this reason. This is the most common silent failure when porting Claude Code hook scripts to CommandCode. See [[wiki/concepts/headless-agent-mode]] for the full headless surface.
+CommandCode's `cmd -p` (headless/print mode) blocks all writes and shell commands by default — a hook calling `cmd -p` without `--yolo` would appear to run successfully but silently fail to write. This was the most common silent failure when porting Claude Code hook scripts to CommandCode; kept here as a fact about the CLI, since cortex-forge no longer runs any hooks that do this. See [[wiki/concepts/headless-agent-mode]] for the full headless surface.
 
 ## CommandCode permission modes
 
@@ -58,9 +56,9 @@ MCP servers expand the permission surface beyond what the agent itself controls:
 - Untrusted MCP servers are an attack surface: a server returning crafted tool outputs can attempt to influence subsequent tool calls (see [[wiki/concepts/memory-as-attack-surface]])
 - CommandCode allows per-MCP trust level: `--trust-mcp <server>` auto-approves all calls to that server
 
-## Implication for cortex-forge hooks
+## Implication for headless hook design (general knowledge, not applicable to cortex-forge anymore)
 
-Hook scripts that invoke an agent headlessly must:
+Any hook script that invokes an agent headlessly must:
 1. Explicitly set the permission mode required for the operation (writes need auto-accept)
 2. Use the correct flag for the target agent (`--yolo` for CommandCode, not needed for Claude Code)
 3. Not assume that a successful exit code means the write succeeded — verify the file was written
@@ -69,10 +67,11 @@ See [[wiki/concepts/headless-agent-mode]] for the full headless execution surfac
 
 ## Relationships
 - Concept: [[wiki/concepts/headless-agent-mode]] (headless write permissions)
-- Concept: [[wiki/concepts/agent-hook-compatibility]] (hook matrix per agent)
+- Concept: [[wiki/concepts/agent-hook-compatibility]] (why cortex-forge no longer uses agent lifecycle hooks)
 - Concept: [[wiki/concepts/memory-as-attack-surface]] (MCP injection vectors)
-- Project: [[wiki/pages/cortex-forge]] (hook design decisions)
+- Project: [[wiki/pages/cortex-forge]] (protocol decisions)
 
 ---
 
 - 2026-06-16 [Claude Code]: Page created from commandcode-security.md + commandcode-headless.md — permission model is cross-agent and distinct from memory injection concern
+- 2026-07-02 [Claude Code]: Marked cortex-forge-specific sections as historical — cortex-forge no longer runs any agent lifecycle hooks; this page's cross-agent permission reference remains valid outside that context

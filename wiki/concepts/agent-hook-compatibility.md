@@ -2,9 +2,9 @@
 title: agent-hook-compatibility
 type: concept
 created: 2026-06-07
-updated: 2026-06-27
-tags: [multi-agent, hooks, cortex-forge/protocol, compatibility]
-aliases: [hook matrix, agent lifecycle]
+updated: 2026-07-02
+tags: [multi-agent, hooks, cortex-forge/protocol, compatibility, decision-record]
+aliases: [hook matrix, agent lifecycle, why no hooks, crystallize-automation-architecture]
 sources:
   - wiki/sources/commandcode-hooks-configuration.md
   - wiki/sources/commandcode-hooks-reference.md
@@ -15,260 +15,61 @@ confidence: high
 schema_version: "0.3"
 ---
 
-# Agent Hook Compatibility
+# Agent Hook Compatibility — why cortex-forge doesn't use agent lifecycle hooks
 
-Cortex Forge's Hot Cache Protocol requires two lifecycle events per agent: one at **session start** (inject context) and one at **close** (save snapshot). Not all agents expose both.
+Cortex Forge does not use agent lifecycle hooks (`SessionStart`, `PreCompact`, `SessionEnd`, `Stop`, `PreToolUse`) anywhere, as of 2026-07-02. This page is the decision record: what was tried, what broke, and why the fix was to remove hooks entirely rather than patch around each agent's quirks. It also absorbs the former `crystallize-automation-architecture.md` page, which covered the same ground from the crystallize-specific angle.
 
-## Compatibility Matrix
+**Current mechanism (all agents, identical):** `AGENTS.md` mandates reading `.cortex/MEMORY.md` before the first response, and invoking `/cortex-crystallize` manually at milestones and session close. See [[wiki/reference/workflow-architecture]] for the operational protocol.
 
-| Agent | SessionStart equiv. | Stop equiv. | Hot cache status |
-|--------|---------------------|-------------|-----------------|
-| Claude Code | `SessionStart` | `SessionEnd` + `PreCompact` | ✅ full — automatic via hooks |
-| Antigravity CLI | `PreInvocation (invocationNum==0)` | **no viable** | ⚠️ partial — SessionStart only; Stop hook unusable (see below) |
-| Codex | `SessionStart` | `Stop` | manual-only — hooks installed as no-op JSON guards |
-| CommandCode | **does not exist** | **none (retired 2026-06-28)** | manual-only — `/cortex-crystallize` invocation |
+## Why hooks were dropped, not fixed
 
-## Degraded mode per agent
+Only Claude Code had genuinely complete, reliable hook support (`SessionStart`, `PreCompact`, `SessionEnd` all exist and fire predictably). Every other agent required either a workaround, a no-op guard, or turned out to be structurally incompatible with the pattern cortex-forge needed (inject at start, synthesize at close):
 
-### Claude Code
-Configured via `cortex-forge-setup`. The `load-hot-cache.sh` and `update-hot-cache.sh` hooks run automatically. No agent action required.
+| Agent | What was tried | Root problem found in live testing |
+|-------|----------------|--------------------------------------|
+| **Codex** | `SessionStart` → inject MEMORY.md; `Stop` → synthesize snapshot | Live transcripts use a Codex-specific JSONL schema (`session_meta`, `event_msg`, `response_item`), not Claude's `.message.content[]` — the crystallize script couldn't parse it without a dedicated extractor. `Stop` also fires at the end of *every* turn, not only on session close — a hook there would run after every response. Codex also renders injected `additionalContext` as visible `hook context:` in the conversation, which meant full `.cortex/MEMORY.md` injection created user-visible noise and token bloat regardless. |
+| **CommandCode** | `Stop` → synthesize snapshot via `cmd -p` | Same turn-scoped firing problem as Codex: `Stop` fires on every agent pause, not only on session close. Background `cmd -p` synthesis left `__PENDING_SYNTHESIS_*__` placeholders and orphan `.synthesize-*.sh` helper files when the subprocess died before its cleanup ran, because the hook's parent process timed out before synthesis finished. The hook could not reliably distinguish "session end" from "agent idle between turns." Also: no `SessionStart` hook exists at all — context could only load via `AGENTS.md`. Plan mode disables hooks entirely, so even the unreliable `Stop` didn't fire there. |
+| **Antigravity** | `PreInvocation` (invoc. 0) → inject; `Stop` (`fullyIdle`) → synthesize via `agy -p` | Two blocking issues confirmed in live testing (2026-06-27): (1) no `SessionEnd`/`/exit` event — the CLI kills the process abruptly on close, no hook fires; (2) `agy -p` invoked from a `Stop` hook deadlocks permanently, because Antigravity blocks secondary instances while the primary session is alive. The crystallize pattern (hook → headless call → write file) was structurally impossible here, not just unreliable. |
+| **Claude Code** | `SessionStart`, `PreCompact`, `SessionEnd` — all worked | No blocking constraint on its own. But building the *whole system* around a mechanism only one of four target agents fully supported meant every other agent needed a different bespoke workaround (no-op guards, manual fallback text, agent-specific wire formats) — the inconsistency itself was the cost, independent of Claude Code's individual reliability. |
 
-### Codex
-Codex supports lifecycle hooks, but Cortex Forge uses them conservatively:
+## The actual decision (2026-07-02)
 
-- `SessionStart` points to `cortex-reactivate-codex.sh`, which returns `{}` and intentionally does **not** inject `.cortex/MEMORY.md`. Codex renders `additionalContext` as visible `hook context:` in the conversation, so full hot-cache injection creates user-visible noise and token bloat.
-- `Stop` points to `cortex-crystallize-codex.sh`, which returns `{}` and intentionally does **not** synthesize a snapshot. Live Codex transcripts use a Codex-specific JSONL event stream (`session_meta`, `event_msg`, `response_item`, `turn_context` under `payload`), not the Claude `.message.content[]` format. The event is not treated as a reliable session-close boundary for automatic crystallize.
-- Codex must follow `AGENTS.md`: read `.cortex/MEMORY.md`, `.cortex/PRAXIS.md`, and `wiki/meta/vault-report.json` at session start, then run `/cortex-crystallize` manually after milestones.
+Rather than maintain four different degradation strategies (full hooks / no-op guards / manual-only / structurally-impossible), cortex-forge dropped agent lifecycle hooks everywhere, including Claude Code, and standardized on one mechanism: `AGENTS.md` instructions, identical on every agent. This trades "automatic when it works" for "always the same, everywhere" — the guarantee comes from the protocol being unconditional and simple to follow, not from a harness feature only some agents implement. See [[wiki/pages/cortex-forge]] key decisions and the README "Design rationale" section for the fuller argument.
 
-**SessionStart details (official docs):**
-- The event has a `source` field with values `startup`, `resume`, `clear`, `compact` — same as Codex. Filter by `startup` if you want to limit the hook to the real session start.
-- `asyncRewake`: field available for hooks that run in background and need to wake the agent when done — useful for slow operations that should not block startup.
-- `PreCompact` can be blocked with exit 2 — Cortex Forge's `update-hot-cache.sh` hook already uses this to save a snapshot before compaction.
+## What was removed
 
-### Antigravity CLI
-Antigravity inherits the Gemini CLI path. Global config at `~/.gemini/config/hooks.json`; project config at `.agents/hooks.json`.
+- Runtime hook scripts in `~/.cortex-forge/bin/hooks/`: `cortex-reactivate.sh`, `cortex-reactivate-codex.sh`, `cortex-reactivate-antigravity.sh`, `cortex-crystallize-claude.sh`, `cortex-crystallize-codex.sh`, `cortex-crystallize-antigravity.sh`, `cortex-crystallize-commandcode.sh` (already retired before this cleanup, see changelog), `cortex-imprint-auto.sh`, `cortex-recall-nudge.sh`.
+- All hook-installation logic in `cortex-forge-setup/SKILL.md` and `install.sh` (settings.json/hooks.json merges, symlink creation for `~/.claude/hooks/`, `~/.codex/hooks/`, `~/.gemini/config/hooks/`, `~/.commandcode/hooks/`).
+- The imprint-triage subagent that would have run at `SessionStart` (never fully implemented as designed — `imprint_triage: auto` briefly existed as a config flag but its trigger point no longer exists).
 
-**⚠ Known bug (agy-cli issue #49)**: if you use CLI commands to configure hooks, it writes to `~/.gemini/antigravity-cli/hooks.json` (incorrect) instead of `~/.gemini/config/hooks.json` (correct). **Create the file manually** or use a symlink:
-```bash
-ln -s ~/.gemini/config/hooks.json ~/.gemini/antigravity-cli/hooks.json
-```
+**Kept, deliberately:** `cortex-reindex-post-commit.sh` and the prune post-commit block. These are **git hooks**, not agent lifecycle hooks — they fire on `git commit`, run identically regardless of which agent (or human) made the commit, and don't depend on any agent harness supporting a specific event. The distinction that matters isn't "hook vs. no hook," it's "does this depend on uneven per-agent support."
 
-Configure in `~/.gemini/config/hooks.json`:
-```json
-{
-  "PreInvocation": { "condition": "invocationNum == 0", "command": "bash ~/.gemini/config/hooks/load-hot-cache-antigravity.sh" },
-  "Stop":          { "condition": "fullyIdle == true",  "command": "bash ~/.gemini/config/hooks/update-hot-cache-antigravity.sh" }
-}
-```
+## Agent-specific technical facts (kept for reference, no longer load-bearing)
 
-Scripts must live in `~/.gemini/config/hooks/`, not in `~/.claude/hooks/`.
+These remain true about each CLI's native hook system — useful if you're building something else that needs them, irrelevant to how cortex-forge itself now works:
 
-**Full hook event list (Antigravity 2.0, confirmed from official docs 2026-06-26):**
+- **Codex:** supports `SessionStart`, `SessionEnd`, `PreToolUse`, `PostToolUse`, `SubagentStop`, `Stop`, `PromptSubmit`, `Compaction`. Config at `~/.codex/hooks.json` (global) or `.codex/hooks.json` (project, requires trust review). `SessionStart` can fire multiple times per session (`source`: `startup`/`resume`/`clear`/`compact`). Also requires explicit sandbox config for `cortex-search.py` to reach Ollama on localhost — see `cortex-forge-setup/SKILL.md` Codex embedding note, unrelated to lifecycle hooks and still relevant.
+- **Antigravity:** inherits the Gemini CLI hook path (`~/.gemini/config/hooks.json`). Full event list: `PreToolUse`, `PostToolUse`, `PreInvocation`, `PostInvocation`, `Stop`. Known bug (agy-cli issue #49): CLI-based hook config writes to the wrong path (`~/.gemini/antigravity-cli/hooks.json` instead of `~/.gemini/config/hooks.json`) — edit the file directly or symlink.
+- **CommandCode:** hooks configured under `hooks` key in `settings.json` (user or project scope, project wins). Wire format is a nested array (`hooks: [{ matcher, hooks: [{ type, command, timeout? }] }]`), unlike the flat format Codex/Claude Code use — not drop-in portable. `PreToolUse` runs sequentially with short-circuit on block; `PostToolUse` runs in parallel.
+- **Claude Code:** `SessionStart`/`PreCompact`/`SessionEnd` all exist and fire reliably; wire format is flat JSON via `settings.json`.
 
-| Event | When | Matcher | Input key | Output key |
-|-------|------|---------|-----------|------------|
-| `PreToolUse` | Before tool execution | tool name regex | `toolCall.name`, `toolCall.args`, `stepIdx` | `decision` (`allow`/`deny`/`ask`/`force_ask`), `reason`, `permissionOverrides` |
-| `PostToolUse` | After tool execution | tool name regex | `stepIdx`, `error` | `{}` (observability only) |
-| `PreInvocation` | Before model is called | N/A | `invocationNum`, `initialNumSteps` | `injectSteps` (array of `ephemeralMessage`/`userMessage`/`toolCall`) |
-| `PostInvocation` | After tool calls finish | N/A | `invocationNum`, `initialNumSteps` | `injectSteps`, `terminationBehavior` (`force_continue`/`terminate`) |
-| `Stop` | Execution loop ends | N/A | `executionNum`, `terminationReason`, `fullyIdle` | `decision: "continue"`, `reason` |
+## Agent detection signals (still used by `cortex-crystallize`)
 
-All events receive common fields: `conversationId`, `workspacePaths`, `transcriptPath`, `artifactDirectoryPath`.
-Transcript path: `~/.gemini/antigravity/brain/{conversationId}/.system_generated/logs/transcript.jsonl`
-
-**`PreInvocation` as SuperContext hook (2026-06-26):** `PreInvocation` with `invocationNum == 0` is the functional equivalent of Claude Code's `UserPromptSubmit` for first-message context injection. Key difference: the user's message is **not** delivered in the payload — it must be read from `transcriptPath` before running the semantic search. The `injectSteps.ephemeralMessage` field delivers the result to the model. This makes full SuperContext (query-aware semantic injection) achievable in Antigravity with one extra step.
-
-**`PostInvocation` guardrail potential:** `terminationBehavior: "force_continue"` or `"terminate"` enables loops and guardrails based on tool results — no equivalent exists in Claude Code or CommandCode hooks today.
-
-**Wire format incompatibility with Claude Code:** `PreToolUse` output in Antigravity uses `decision` (not `permissionDecision`). Hooks are not cross-compatible at the wire level even if the logic is portable.
-
-**⚠️ Stop hook — unusable for crystallize (confirmed 2026-06-27):** Two blocking issues discovered in live testing:
-1. **No `/exit` trigger:** There is no `SessionEnd` or `/exit` hook. When the user closes the CLI, the process is killed abruptly (Language Server shutting down) without giving lifecycle scripts a chance to run.
-2. **Background deadlock:** If the `Stop` hook attempts to invoke `agy -p` in background (e.g. via `nohup agy -p ... &`) for AI synthesis, the execution hangs permanently. Antigravity blocks secondary instances while the primary session is alive — this makes the cortex-forge crystallize pattern (Stop hook → `agy -p` → write `.hot/MEMORY.md`) impossible.
-
-**Consequence for cortex-forge:** `cortex-crystallize-antigravity.sh` is non-functional and has been removed from the protocol. In Antigravity, crystallize must be invoked **manually** via `/cortex-crystallize` — the hook cannot automate it. Source: `wiki/sources/antigravity-hooks.md` in moon-multivac (live testing 2026-06-27).
-
-### Codex
-Configure in `~/.codex/hooks.json`:
-```json
-{
-  "SessionStart": [{ "command": "bash ~/.codex/hooks/cortex-reactivate-codex.sh" }],
-  "Stop":         [{ "command": "bash ~/.codex/hooks/cortex-crystallize-codex.sh" }]
-}
-```
-
-**⚠️ Semantic search requires explicit network access (confirmed 2026-06-28):** Codex CLI runs with an OS-level sandbox that blocks loopback connections by default (`allow_local_binding = false`). This prevents `cortex-search.py` from reaching Ollama on `localhost:11434` — even when Ollama is running normally — causing `No embedding backend available`. Without the fix, `cortex-recall` silently falls back to keyword search via `wiki/index.md`.
-
-Add to `~/.codex/config.toml`:
-```toml
-[sandbox_workspace_write]
-network_access = true
-
-[features.network_proxy]
-enabled = true
-allow_local_binding = true
-```
-
-**How the sandbox works (macOS):** Codex uses Apple Seatbelt (`sandbox-exec`). The `network_proxy` feature routes sandboxed processes through a built-in MITM proxy; `allow_local_binding = true` unlocks loopback destinations. Source: OpenAI Codex docs — sandboxing + config-reference (2026-06-28).
-
-**Findings validated in session (2026-06-08; corrected 2026-06-28):**
-- Use a stable global hook directory (`~/.codex/hooks/`) rather than a vault-local path. The scripts must be vault-aware at runtime so the same Codex setup works across multiple vaults and from non-vault projects.
-- The hook payload is JSON, but Codex's persisted session transcript is not Claude-compatible. Live transcripts are JSONL events such as `session_meta`, `event_msg`, `response_item`, and `turn_context` under `payload`.
-- `SessionStart` may fire more than once per session: it has a `source` field with values `startup`, `resume`, `clear`, `compact`. Filter by `source` in the matcher if you want to limit to the real start.
-- Codex hooks are enabled by default. Multiple matching hooks from multiple files all run.
-- The CLI exposes `/hooks` for reviewing, trusting, and disabling non-managed hooks.
-- The `hook context:` is visible in chat by design in the Codex UI. There is no mechanism to suppress it today (`suppressOutput` is reserved for future use). Therefore Cortex Forge must not inject full `.cortex/MEMORY.md` through Codex `SessionStart`.
-- **Context cost**: `additionalContext` consumes tokens from the session context window like any message. Codex avoids this cost by relying on `AGENTS.md` startup instructions instead of hook injection.
-- First run requires manual hook approval (`Trust: New hook - review required`).
-- `Stop` does not use `matcher`; it expects JSON output on stdout when exiting `0`, or exit code `2` with the continuation reason on stderr.
-- `transcript_path` is a convenience field, but transcript format is not a stable hook interface. Treat it as best-effort debug input, not as a snapshotting contract.
-- `cortex-crystallize-codex.sh` is a no-op JSON guard. Actual Codex snapshots are manual via `/cortex-crystallize`.
-
-### CommandCode
-Has no SessionStart hook. Context is injected via `AGENTS.md`: the global rule to read `.hot/MEMORY.md` on startup is fulfilled by the agent if it reads the instructions file. Closing is automatic via the `Stop` hook.
-
-Configure under the `hooks` key in `settings.json`:
-- **User scope**: `~/.commandcode/settings.json` (not committed; applies to all of the user's projects)
-- **Project scope**: `.commandcode/settings.json` (committed to the repo; applies to anyone who clones)
-- **Precedence**: project > user
-
-Example (project scope) for the hot cache:
-```json
-{
-  "hooks": {
-    "Stop": [{ "command": "bash {vault}/bin/hooks/update-hot-cache.sh" }]
-  }
-}
-```
-
-**Execution order and short-circuit** (from the official Configuration docs):
-- `PreToolUse` runs **sequentially**; if a handler blocks (exit code != 0), subsequent `PreToolUse` handlers are skipped.
-- `PostToolUse` runs in **parallel** (the tool has already finished).
-- Multiple handlers under the same matcher run in listed order.
-- Wire format: nested array `hooks: [{ matcher, hooks: [{ type: "command", command, timeout? }] }]`, different from the flat format used by Codex/Claude Code.
-
-**⚠ Plan mode**: CommandCode disables hooks entirely in plan mode — the `Stop` hook does not run when closing a planning session. Keep this in mind when operating the crystallize protocol.
-
-**Synthesis upgrade (2026-06-13):** `cortex-crystallize-commandcode.sh` ahora usa `cmd -p` para sintetizar resúmenes IA, igual que la versión de Claude Code. Extrae user messages, tool calls y última respuesta del transcript JSONL via jq, construye un prompt estructurado, y escribe en `.hot/MEMORY.md` con formato `#### What was done / Discarded / Fragile context`. Esto reemplaza la entrada mínima "Session closed via Stop hook." que producía antes.
-
-**Implication**: in CommandCode the hot cache is write-only in the first session (no SessionStart hook to load it). From the second session onward, the previous context is already in `.hot/` and `AGENTS.md` instructs the agent to read it — the cycle closes via instruction, not via hook. The Stop crystallize now produces rich IA entries that make the handoff more informative.
-
-**Transcript location (for pipeline imprint):** Confirmed 2026-06-12 via filesystem inspection and official docs:
-- **Filesystem path:** `~/.commandcode/projects/{project-slug}/{session-uuid}.jsonl`
-  - Project slug mirrors the filesystem path with `/` replaced by `-` (e.g., `/Users/itsmistermoon/proyectos/cortex-forge` → `users-itsmistermoon-proyectos-cortex-forge`)
-- **Hook input field:** `transcript_path` is a common field on every hook event (PreToolUse, PostToolUse, Stop) — absolute path to the JSONL transcript. Available at runtime without guessing filesystem paths.
-- **Transcript format:** JSONL, one JSON object per line. Each object has `id`, `timestamp`, `sessionId`, `parentId`, `role` (user/assistant), `content` (array of content blocks), `gitBranch`, `metadata`.
-- **Retention:** No documented retention period. Filesystem inspection shows sessions dating back at least 5 days (no pruning observed). Assume indefinite retention or disk-pressure-based cleanup.
-- **Global history:** `~/.commandcode/history.jsonl` exists as a compact history log with `p` (prompt fragment) and `t` (timestamp) fields — not a full transcript, but useful for lightweight session tracing.
-
-**Recall nudge port (experimental, gated):** `bin/hooks/cortex-recall-nudge.sh` is I/O-compatible with CommandCode without any script changes — both use `payload.tool_input.command` on input and `hookSpecificOutput.additionalContext` on output. To install on CommandCode, add to `.commandcode/settings.local.json`:
-```json
-{
-  "hooks": {
-    "PreToolUse": [
-      {
-        "matcher": "shell",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash {vault}/bin/hooks/cortex-recall-nudge.sh"
-          }
-        ]
-      }
-    ]
-  }
-}
-```
-The port is gated on the recall nudge experiment result in AGENT-LOG — do not install until the kill criterion resolves.
-
-### CommandCode Wire Format I/O
-
-Hooks receive JSON on `stdin` with session context, tool details, and environment info. They return JSON on `stdout` with optional fields:
-
-| Field | Event | Effect |
-|-------|--------|--------|
-| `permissionDecision: "deny"` | PreToolUse | Blocks the tool; the model receives the message |
-| `permissionDecision: "allow"` | PreToolUse | Explicitly allows; useful together with `additionalContext` |
-| `decision: "block"` | PostToolUse | Advisory retry (tool already executed) |
-| `systemMessage` | any | Policy message injected into the model's context |
-| `additionalContext` | any | Non-blocking context for the model |
-| `continue` | Stop | Controls whether the session continues |
-
-Exit codes: `0` → execute JSON output; `2` → block/retry depending on event; others → non-blocking error (tool proceeds).
-
-### Security and performance (best practices)
-
-- **Never `eval`**: parse stdin with `jq -r`. Inputs come from the model and are untrusted.
-- **Always quote**: `grep -qE` over `printf` with quoting, not bare variables in shell.
-- **Timeout**: PreToolUse < 10s to avoid lagging the UI. Slow operations → PostToolUse or background.
-- **Debugging**: `--debug` flag generates logs with matcher results and payload. Can iterate with local mock payloads without launching CommandCode.
-- **Plan mode**: hooks are disabled in plan mode — do not assume they always run.
-- **`chmod +x`**: all scripts must be executable.
-
-> Sources: `wiki/sources/commandcode-hooks-configuration`, `commandcode-hooks-reference`, `commandcode-hooks-examples`, `commandcode-hooks-best-practices` (2026-06-08). See [[wiki/entities/commandcode]] for the full agent profile.
-
-## Common usage patterns (applicable to all agents)
-
-Patterns extracted from official CommandCode examples; the output mechanism varies per agent but the logic is portable:
-
-| Pattern | Event | Mechanism | Typical use case |
-|--------|--------|-----------|-------------|
-| **Security enforcement** | PreToolUse | `permissionDecision: "deny"` + `systemMessage` | Block `rm -rf /`, `curl \| sh` |
-| **Conditional context injection** | PreToolUse | `permissionDecision: "allow"` + `additionalContext` | Warn about `.env`, `.pem` files without blocking |
-| **Pure observability** | Pre or PostToolUse | exit `0`, writes to local log | Tool call audit with timestamp and session ID |
-| **Completion gate** | Stop | exit `2` + `systemMessage` | Block close if `DO NOT SHIP` markers exist; up to 3 retries |
-
-## Agent detection signals (for `cortex-crystallize` skill)
-
-When `/cortex-crystallize` is invoked manually, the skill must identify the calling agent to fill `agent:` and `{Agent}` in the history header. Detection is based on environment variables set by each CLI at runtime. Check in order:
+When `/cortex-crystallize` is invoked manually, the skill identifies the calling agent via environment variables, to fill the `agent:` frontmatter field:
 
 | Method | Signal | Agent | Reliability |
 |--------|--------|-------|-------------|
-| env var | `CLAUDECODE=1` | Claude Code | ✅ confirmed (2026-06-11) |
+| env var | `CLAUDECODE=1` | Claude Code | ✅ confirmed |
 | env var | `AI_AGENT` starts with `claude-code` | Claude Code (fallback) | ✅ confirmed |
-| process tree | `node .../commandcode` in `$PPID` ancestry | CommandCode | ✅ confirmed (2026-06-11) |
-| which | `which commandcode` yields path | CommandCode | ⚠ partial (shell-level, not session-level) |
-| env var | `AGY=1` | Antigravity | ❌ unconfirmed |
-| process tree | `node .../agy` in `$PPID` ancestry | Antigravity | ❌ unconfirmed |
-| env var | `CODEX=1` | Codex | ❌ unconfirmed |
-| process tree | `codex` in `$PPID` ancestry | Codex | ❌ unconfirmed |
+| env var | `COMMANDCODE=1` or `AI_AGENT` starts with `commandcode` | CommandCode | ✅ confirmed |
+| env var | `AGY=1` or `AI_AGENT` starts with `agy`/`antigravity` | Antigravity | ⚠ documented, less tested |
+| env var | `CODEX=1` or `AI_AGENT` starts with `codex` | Codex | ⚠ documented, less tested |
 | none matched | — | Fall back to self-knowledge | — |
 
-**Key finding (2026-06-11):** CommandCode 0.35.0 does **not** export any self-identifying environment variables (`COMMANDCODE`, `AI_AGENT`, or others). The `COMMANDCODE=1` signal was a false hypothesis. Detection must fall back to walking the process tree from `$PPID` upward, looking for known binary paths. This is the recommended universal fallback for any CLI that doesn't inject env vars.
-
-**Confirmed (Claude Code, 2026-06-11):** `CLAUDECODE=1`, `AI_AGENT=claude-code_{version}_agent`, `CLAUDE_CODE_ENTRYPOINT=cli`, `CLAUDE_CODE_SESSION_ID=…`
-
-**Pending validation:** CommandCode, Antigravity, and Codex signals — update this table when each CLI is tested in a live session with `/cortex-crystallize`.
-
-## SuperContext injection capability per agent
-
-Ability to run query-aware semantic search and inject context before the model processes the first user message (SuperContext pattern — see [[wiki/concepts/super-context]]):
-
-| Agent | Hook | Query available | Inject mechanism | Status |
-|-------|------|-----------------|-----------------|--------|
-| Claude Code | `UserPromptSubmit` | ✅ direct in payload | `additionalContext` | ✅ implementable |
-| Antigravity | `PreInvocation` (invocationNum==0) | ⚠️ via `transcriptPath` (one extra read) | `injectSteps.ephemeralMessage` | ✅ SessionStart only — Stop deadlocks |
-| Codex | not documented | ❌ | — | ❌ unknown |
-| CommandCode | no equivalent | ❌ | — | ❌ not feasible |
-
-For Antigravity: read `transcriptPath` → extract last `role: user` message → run `cortex-search.py "{query}"` → return `injectSteps: [{ ephemeralMessage: "..." }]`.
-
-## Universal fallback rule
-
-If an agent has no startup hook, `AGENTS.md` acts as a fallback: the explicit instruction to read `.hot/MEMORY.md` is interpreted by any agent that processes the instructions file before operating. It is less reliable than a hook (depends on the agent respecting AGENTS.md), but covers the gap.
+**Note (2026-06-11):** CommandCode does not export a dedicated env var by default in all versions — process-tree walking from `$PPID` is the fallback if env detection fails.
 
 ---
 
-- 2026-06-07 [claude-sonnet-4-6]: Page created — initial matrix based on official documentation of each agent; CommandCode verified against commandcode.ai/docs/hooks/reference
-- 2026-06-08 [claude-sonnet-4-6]: Codex updated with findings from real session — wire format confirmed, multi-source SessionStart behavior, hook context visibility, context cost
-- 2026-06-08 [claude-sonnet-4-6]: Antigravity corrected — global config is `~/.gemini/config/hooks.json`; path alignment bug documented (agy-cli issue #49)
-- 2026-06-08 [CommandCode / MiniMax-M3]: Expanded with scopes (user/project), precedence, PreToolUse order (sequential, short-circuit) vs PostToolUse (parallel), nested wire format. Source: wiki/sources/commandcode-hooks-configuration
-- 2026-06-08 [claude-sonnet-4-6]: Added full CommandCode I/O schema (control fields, exit codes), security/performance section (best practices), and table of common usage patterns portable across agents. Sources: commandcode-hooks-reference, commandcode-hooks-examples, commandcode-hooks-best-practices
-- 2026-06-08 [claude-sonnet-4-6]: Claude Code SessionStart — `source` field documented (startup|resume|clear|compact), `asyncRewake` added, `PreCompact` with exit 2 confirmed. CommandCode — plan mode gotcha documented. Source: handoff from second-brain
-- 2026-06-08 [Claude Code]: Translated to English
-- 2026-06-11 [Claude Code]: Agent detection signals section added — confirmed Claude Code env vars; other CLIs marked unconfirmed pending live validation
-- 2026-06-13 [CommandCode]: CommandCode crystallize upgraded with `cmd -p` IA synthesis
-- 2026-06-26 [Claude Code]: Antigravity section expanded with full hook event table (PreInvocation/PostInvocation confirmed from official docs); SuperContext injection table added; wire format incompatibility with Claude Code documented. Source: wiki/sources/antigravity-hooks-reference.md — now produces structured `#### What was done / Discarded / Fragile context` entries instead of minimal "Session closed via Stop hook."
-- 2026-06-27 [Claude Code]: Antigravity Stop hook marked unusable — no /exit trigger + deadlock when launching agy -p in background confirmed in live testing. cortex-crystallize-antigravity.sh removed from protocol; crystallize is manual-only for Antigravity. Source: moon-multivac/wiki/sources/antigravity-hooks.md
-- 2026-06-28 [CommandCode / MiniMax-M3]: CommandCode `Stop` hook retired for crystallize — same root cause as Antigravity (no `/exit` hook, `Stop` fires on every invocation). Observed failures: `cmd -p` background synth leaves `__PENDING_SYNTHESIS_*__` placeholders and orphan `.synthesize-*.sh` helpers when the sub-process dies before reaching its `rm -f` cleanup. The hook cannot reliably distinguish "session end" from "agent idle between turns". Decision: `cortex-crystallize-commandcode.sh` retired (`.retired`), CommandCode crystallize is now manual-only via `/cortex-crystallize`. Empty `"hooks": {}` registered in `.commandcode/settings.local.json` as a no-op placeholder so the file structure remains stable for any future hook.
-- 2026-06-28 [Claude Code]: Codex sandbox network restriction documented — `allow_local_binding = false` by default blocks localhost:11434 even when Ollama is running; confirmed via live testing in Codex + OpenAI docs. Fix: `network_access = true` + `network_proxy.allow_local_binding = true` in `~/.codex/config.toml`. Added to Codex section and propagated to `cortex-forge-setup/SKILL.md` step 6 (Codex) and `embeddings.py` error message.
+- 2026-06-07 [claude-sonnet-4-6]: Page created — initial matrix based on official documentation of each agent
+- 2026-06-08 to 2026-06-28: Iteratively expanded with live-testing findings per agent (wire formats, trust models, sandbox constraints, plan-mode gotchas, Antigravity deadlock, CommandCode Stop retirement, Codex sandbox network restriction) — see prior versions in git history for the full incremental record
+- 2026-07-02 [Claude Code]: Full rewrite — condensed from an operational hook-configuration reference (wire formats, JSON configs, per-agent setup instructions) into a decision record: what was tried, what broke, why hooks were removed entirely rather than patched further. Merged in `crystallize-automation-architecture.md` (deleted as a separate page — same ground, crystallize-specific angle). Kept the causal findings (Antigravity deadlock, CommandCode Stop turn-scoping, Codex transcript/format incompatibility) since those are the actual evidence for the decision; dropped the JSON hook-config snippets and setup instructions since nothing consumes them anymore.

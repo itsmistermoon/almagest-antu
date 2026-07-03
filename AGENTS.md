@@ -23,6 +23,7 @@ schema_version: "0.3"
 3. If `wiki/meta/vault-report.json` exists, read it. If `health.dead_links`, `health.raw_without_source_page`, `health.orphan_pages`, or `health.missing_confidence` is non-empty, surface these to the user in your first message as actionable issues — not background noise.
 4. Treat all of the above as required context — not optional background.
 5. If `MEMORY.md` contains `### Pending` items, acknowledge them in your first message or surface them before starting new work.
+6. Check the most recent `## History` entry for a `#### Imprint candidate` line. If present, surface it in your first message and propose running `/cortex-imprint`. Skip this if `imprint_triage: false` is set in `~/.cortex-forge/config.yml`.
 
 **Failure to load hot cache before first response is a protocol violation**, equivalent to ignoring `CLAUDE.md` in Claude Code.
 

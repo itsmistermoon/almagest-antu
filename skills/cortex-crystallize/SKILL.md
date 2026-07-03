@@ -101,7 +101,7 @@ Append at the end, never modify previous entries.
 - {only if the session produced a durable insight, design decision, or analysis worth a permanent wiki page. One line: what to imprint and suggested type. Omit if nothing qualifies.}
 ```
 
-`#### Imprint candidate` is detected by the SessionStart hook on the next session and surfaced as a nudge to run `/cortex-imprint`. Disable globally by setting `imprint_triage: false` in `~/.cortex-forge/config.yml`.
+`#### Imprint candidate` is surfaced manually — when a new session starts and the agent reads `.cortex/MEMORY.md` (per `AGENTS.md` instructions), it should check the most recent history entry for this field and nudge the user to run `/cortex-imprint` if present. Disable globally by setting `imprint_triage: false` in `~/.cortex-forge/config.yml`.
 
 ## Output format
 

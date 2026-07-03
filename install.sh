@@ -1,7 +1,14 @@
 #!/usr/bin/env bash
 # Cortex Forge installer
 # Usage: curl -fsSL https://raw.githubusercontent.com/itsmistermoon/cortex-forge/main/install.sh | bash
-# Or:    bash install.sh [--vault /path/to/vault] [--no-hooks] [--no-skills] [--quiet]
+# Or:    bash install.sh [--vault /path/to/vault] [--no-skills] [--quiet]
+#
+# Cortex Forge does not use agent lifecycle hooks (SessionStart/PreCompact/
+# SessionEnd/PreToolUse) — support for those is too uneven across agents.
+# All memory operations are manual, via skills (/cortex-crystallize,
+# /cortex-recall), per AGENTS.md instructions. The only hooks this installer
+# offers are plain git post-commit hooks (Step 5 below), which behave
+# identically regardless of which agent is in use.
 set -euo pipefail
 
 # ── Constants ─────────────────────────────────────────────────────────────────
@@ -29,14 +36,12 @@ dim()  { printf "${DIM}%s${RESET}\n" "$*"; }
 
 # ── Flags ─────────────────────────────────────────────────────────────────────
 VAULT_PATH=""
-INSTALL_HOOKS=true
 INSTALL_SKILLS=true
 QUIET=false
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --vault)    VAULT_PATH="$2"; shift 2 ;;
-    --no-hooks) INSTALL_HOOKS=false; shift ;;
     --no-skills) INSTALL_SKILLS=false; shift ;;
     --quiet)    QUIET=true; shift ;;
     *) err "Unknown option: $1"; exit 1 ;;
@@ -206,81 +211,7 @@ PYEOF
   fi
 fi
 
-# ── Step 4: Install runtime hooks ─────────────────────────────────────────────
-if $INSTALL_HOOKS; then
-  HOOKS_SRC="${FORGE_DIR}/bin/hooks"
-  HOOKS_RT="${FORGE_DIR}/bin/hooks"  # source IS runtime for self-install
-
-  # Claude Code
-  if [ -d "${HOME}/.claude" ]; then
-    mkdir -p "${HOME}/.claude/hooks"
-    for f in "$HOOKS_SRC"/*.sh; do
-      [ -f "$f" ] || continue
-      name=$(basename "$f")
-      target="${HOME}/.claude/hooks/${name}"
-      ln -sf "$f" "$target"
-    done
-    ok "Claude Code hooks linked"
-
-    # Merge into settings.json
-    SETTINGS="${HOME}/.claude/settings.json"
-    [ -f "$SETTINGS" ] || echo '{}' > "$SETTINGS"
-    python3 - <<PYEOF
-import json, os
-p = "${SETTINGS}"
-with open(p) as f:
-    s = json.load(f)
-hooks_dir = os.path.expanduser("~/.claude/hooks")
-def add_hook(s, event, cmd, timeout=None):
-    s.setdefault("hooks", {}).setdefault(event, [])
-    cmds = [h.get("command","") for h in s["hooks"][event]]
-    if cmd not in cmds:
-        entry = {"type": "command", "command": cmd}
-        if timeout:
-            entry["timeout"] = timeout
-        s["hooks"][event].append(entry)
-add_hook(s, "SessionStart", f"{hooks_dir}/cortex-reactivate.sh")
-add_hook(s, "PreCompact",   f"{hooks_dir}/cortex-crystallize-claude.sh")
-add_hook(s, "SessionEnd",   f"{hooks_dir}/cortex-crystallize-claude.sh", timeout=60)
-with open(p, "w") as f:
-    json.dump(s, f, indent=2)
-PYEOF
-    ok "Claude Code settings.json updated"
-  fi
-
-  # Antigravity
-  if [ -d "${HOME}/.gemini/config" ]; then
-    mkdir -p "${HOME}/.gemini/config/hooks"
-    ln -sf "${HOOKS_SRC}/cortex-reactivate-antigravity.sh" \
-           "${HOME}/.gemini/config/hooks/cortex-reactivate-antigravity.sh"
-    ok "Antigravity hook linked"
-    warn "Antigravity: add to ~/.gemini/config/hooks.json manually:"
-    printf '      "PreInvocation": { "condition": "invocationNum == 0", "command": "bash ~/.gemini/config/hooks/cortex-reactivate-antigravity.sh" }\n'
-  fi
-
-  # Codex
-  if [ -d "${HOME}/.codex" ]; then
-    mkdir -p "${HOME}/.codex/hooks"
-    for name in cortex-reactivate-codex.sh cortex-crystallize-codex.sh; do
-      [ -f "${HOOKS_SRC}/${name}" ] && \
-        ln -sf "${HOOKS_SRC}/${name}" "${HOME}/.codex/hooks/${name}"
-    done
-    ok "Codex hooks linked"
-    warn "Codex: add to ~/.codex/hooks.json and ~/.codex/config.toml — see README for exact blocks"
-  fi
-
-  # CommandCode
-  if [ -d "${HOME}/.commandcode" ]; then
-    mkdir -p "${HOME}/.commandcode/hooks"
-    name="cortex-crystallize-commandcode.sh"
-    [ -f "${HOOKS_SRC}/${name}" ] && \
-      ln -sf "${HOOKS_SRC}/${name}" "${HOME}/.commandcode/hooks/${name}"
-    ok "CommandCode hook linked"
-    warn "CommandCode: add Stop hook to ~/.commandcode/settings.json — see README"
-  fi
-fi
-
-# ── Step 5: Install skills ────────────────────────────────────────────────────
+# ── Step 4: Install skills ────────────────────────────────────────────────────
 if $INSTALL_SKILLS; then
   mkdir -p "$SKILLS_DIR"
   for skill in "${SKILL_NAMES[@]}"; do
@@ -309,7 +240,7 @@ if $INSTALL_SKILLS; then
   fi
 fi
 
-# ── Step 6: Post-commit hooks (opt-in) ───────────────────────────────────────
+# ── Step 5: Post-commit git hooks (opt-in) ───────────────────────────────────
 if $VAULT_VALID && $INTERACTIVE; then
   printf "\n"
   if ask "Install post-commit prune hook (refreshes vault-report.json)?" "y"; then
@@ -352,7 +283,7 @@ dim   "  Config           : ${CONFIG}"
 $INSTALL_SKILLS && dim "  Skills           : ${SKILLS_DIR}"
 printf "\n"
 dim   "  Next steps:"
-dim   "  1. Open a new Claude Code session inside your vault"
-dim   "  2. The SessionStart hook will inject your hot cache automatically"
+dim   "  1. Open a new session inside your vault (any agent)"
+dim   "  2. AGENTS.md instructs the agent to read .cortex/MEMORY.md before its first response"
 dim   "  3. Run /cortex-forge-setup if you need to adjust anything"
 printf "\n"

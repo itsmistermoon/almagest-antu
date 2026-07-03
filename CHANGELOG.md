@@ -18,6 +18,9 @@ Format: `[semver] — título — YYYY-MM-DD`
 
 ## [Unreleased]
 
+- `protocol:` Agent lifecycle hooks (`SessionStart`, `PreCompact`, `SessionEnd`, `Stop`, `PreToolUse`) removed entirely — support was too uneven across Claude Code, Codex, Antigravity, and CommandCode to build the suite on top of it. `AGENTS.md` now mandates reading `.cortex/MEMORY.md` before the first response and invoking `/cortex-crystallize` manually, identically on every agent. `cortex-forge-setup` and `install.sh` no longer install any hook symlinks or merge `settings.json`/`hooks.json`. `bin/hooks/` reduced to the one script that remains — `cortex-reindex-post-commit.sh`, a git hook, not an agent lifecycle hook. See `wiki/concepts/agent-hook-compatibility.md` for the per-agent findings that drove the decision.
+- `protocol:` `cortex-crystallize` — imprint-candidate detection moved from the (now-removed) SessionStart hook chain to a manual check: `AGENTS.md` step 6 instructs the agent to inspect the latest `## History` entry for `#### Imprint candidate` when reading `.cortex/MEMORY.md`.
+
 ## [0.5.0] — Backward Enrichment, Drift Detection & Skill Quality Hardening — 2026-07-01
 
 - `fix:` `27d1164` `cortex-prune` Layer 2: hard cap (20 pairs, 20 sources); replace "spawn subagents" language with always-inline evaluation.

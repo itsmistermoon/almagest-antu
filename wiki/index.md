@@ -17,7 +17,7 @@
 - [[wiki/concepts/handoff-artifact]] — Document written by one session to be read by another; .hot/MEMORY.md is an instance
 - [[wiki/concepts/smart-zone]] — Session degradation pattern: agents drift from sharp (smart zone) to sloppy (dumb zone) as context fills
 - [[wiki/concepts/commandcode-taste]] — CommandCode continuous personalization system: per-project paths (.commandcode/taste/) and global (~/.commandcode/taste/), implicit learning loop, CLI push/pull
-- [[wiki/concepts/agent-hook-compatibility]] — Lifecycle hook matrix per agent (Claude Code, Codex, Antigravity, CommandCode)
+- [[wiki/concepts/agent-hook-compatibility]] — Decision record: why cortex-forge removed agent lifecycle hooks entirely (per-agent findings that drove the call, absorbs former crystallize-automation-architecture page)
 - [[wiki/concepts/antigravity-hooks]] — Hook configuration and execution in Google Antigravity / Gemini CLI
 - [[wiki/concepts/progressive-disclosure-hooks]] — Just-in-time context loading pattern via hooks and skills; avoids token bloat at session start
 - [[wiki/concepts/karpathy-wiki-pattern]] — Wiki design pattern optimized for LLM consumption (deterministic parser + semantic layer)
@@ -113,7 +113,7 @@
 - [[wiki/sources/openwiki]] — OpenWiki README + architecture + agent workflow + GitHub Actions pattern (ingested 2026-07-01) — OpenHuman SuperContext feature article (featured): harness-level deterministic context injection, read-only scout, tag-delimited bundle (ingested 2026-06-26)
 
 ## Reference
-- [[wiki/reference/workflow-architecture]] — Three-phase session flow: hooks, skills, scripts, degraded modes, config files per agent
+- [[wiki/reference/workflow-architecture]] — Session flow (start/during/end), skills, and scripts — manual `AGENTS.md`-driven protocol, no agent lifecycle hooks
 - [[wiki/reference/commandcode-models]] — Model ids for `cmd -m` / `cmd --model`, grouped by provider
 - [[wiki/reference/pi-cli-flags]] — Every `pi` CLI flag by category: modes, model/session/tool/resource/other options, env vars (PI_CODING_AGENT_DIR, PI_OFFLINE, etc.)
 - [[wiki/reference/pi-slash-commands]] — All built-in Pi slash commands with one-line descriptions
@@ -133,5 +133,3 @@
 - `bin/setup-vault.sh` — setup script
 - `skills/` — agent skills (cortex-assimilate, cortex-recall, cortex-prune, cortex-imprint, cortex-crystallize, cortex-forge-setup)
 
-## uconcepts
-- [[wiki/concepts/crystallize-automation-architecture.md]] — Crystallize Automation Architecture

@@ -31,9 +31,9 @@ Cortex Forge is a memory system. Its components map directly to the pattern:
 
 | Component | Role |
 |-----------|------|
-| `.hot/MEMORY.md` | Persistence artifact — written at session end, read at session start |
-| `cortex-crystallize` | The persist step |
-| `cortex-reactivate` (hook) | The reload step |
+| `.cortex/MEMORY.md` | Persistence artifact — written at session end, read at session start |
+| `cortex-crystallize` | The persist step (invoked manually — no lifecycle hook, see [[wiki/concepts/agent-hook-compatibility]]) |
+| `AGENTS.md` instruction | The reload step — mandates the agent read `.cortex/MEMORY.md` before its first response |
 | `wiki/` | Long-term synthesized memory — persisted across all sessions |
 | `cortex-recall` | Selective reload — loads only relevant vault pages into context |
 
@@ -48,3 +48,4 @@ Cortex Forge is a memory system. Its components map directly to the pattern:
 ---
 
 - 2026-06-08 [Claude Code]: Page created from AI Coding Dictionary ingestion
+- 2026-07-02 [Claude Code]: Corrected component table — `.hot/` → `.cortex/`; `cortex-reactivate` hook (removed) → `AGENTS.md`-mandated manual read

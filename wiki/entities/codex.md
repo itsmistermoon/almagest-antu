@@ -13,7 +13,7 @@ schema_version: "0.3"
 
 # Codex CLI
 
-Codex CLI is OpenAI's terminal-first AI coding agent. Cortex Forge treats Codex as manual-only for hot-cache persistence, with installed hooks acting as no-op JSON guards instead of automatic memory injection or crystallization.
+Codex CLI is OpenAI's terminal-first AI coding agent. Cortex Forge treats Codex as manual-only for session memory — no hooks are installed at all (as of 2026-07-02, cortex-forge removed agent lifecycle hooks across every agent; see [[wiki/concepts/agent-hook-compatibility]]).
 
 ## Hook system
 
@@ -26,10 +26,8 @@ Codex CLI is OpenAI's terminal-first AI coding agent. Cortex Forge treats Codex 
 
 ## Cortex Forge integration
 
-- **Skills:** global install via `cortex-forge-setup` to `~/.codex/` (AGENTS.md instructions)
-- **Hooks:** `SessionStart` → `cortex-reactivate-codex.sh` no-op; `Stop` → `cortex-crystallize-codex.sh` no-op
-- **Note:** hook scripts must live in a stable global path (`~/.codex/hooks/`) and resolve the active vault at runtime — vault-local paths break multi-vault setups
-- **Validation status:** automatic Codex crystallize is retired; use `/cortex-crystallize` after milestones
+- **Skills:** global install via `cortex-forge-setup` to `~/.agents/skills/` (Codex reads them per its own skill-resolution convention)
+- **Hooks:** none — `AGENTS.md` mandates reading `.cortex/MEMORY.md` before the first response; `/cortex-crystallize` is invoked manually after milestones and at session close, the same as every other agent
 
 ## Relationships
 - Comparable agents: [[wiki/entities/commandcode]], [[wiki/entities/antigravity-cli]], [[wiki/entities/pi-cli]]
@@ -38,3 +36,4 @@ Codex CLI is OpenAI's terminal-first AI coding agent. Cortex Forge treats Codex 
 ---
 
 - 2026-06-16 [Claude Code]: Page created from cortex-prune check 2c — codex-hooks.md had no covering entity page
+- 2026-07-02 [Claude Code]: Cortex Forge integration section updated — no-op hook guards removed, replaced by the manual `AGENTS.md`-mandated protocol used by every agent

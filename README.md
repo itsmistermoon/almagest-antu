@@ -11,7 +11,7 @@ A protocol for agent-operated knowledge vaults — six skills, one session layer
 Cortex Forge is a structured system for turning raw sources into synthesized, queryable knowledge. Agents operate the vault: they ingest, recall, and maintain. You define what matters and when to persist it.
 
 The system separates **two kinds of memory** that most tools conflate:
-- **Operational memory** — what's happening now and what was decided. Lives in `.hot/MEMORY.md` (session cache), injected at every session start. Small, fast, always loaded.
+- **Operational memory** — what's happening now and what was decided. Lives in `.cortex/MEMORY.md` (session cache), read by the agent at every session start per `AGENTS.md` instructions. Small, fast, always loaded.
 - **Knowledge base** — what the vault knows about the world. Lives in `wiki/` (synthesized pages). Large, deep, consulted on demand.
 
 Session memory keeps context across conversations. The wiki keeps knowledge across projects. They serve different purposes, use different retrieval patterns, and neither can replace the other.
@@ -41,8 +41,8 @@ Six layers, each with a distinct role:
 |-------|------|---------|------|
 | **Raw** | `.raw/` | Primary sources — immutable originals | Never modify |
 | **Wiki** | `wiki/` | Secondary sources — synthesized knowledge | Agent writes and maintains |
-| **Hot** | `.hot/` | Per-project session cache | Read on session start |
-| **Codex** | `CODEX.md` | Vault identity: mission, owner, domains, vocabulary | Read on session start |
+| **Hot** | `.cortex/` | Per-project session cache | Read on session start |
+| **Identity** | `AGENTS.md` | Vault identity: mission, owner, domains, vocabulary | Read on session start |
 | **Meta** | `wiki/meta/` | Vault metadata and guides | Agent maintains |
 | **Skills** | `skills/` | Invocable agent skills | Extend, don't modify |
 
@@ -64,9 +64,9 @@ Sources land in `.raw/`: articles, PDFs, transcripts, URLs. The agent processes 
 
 ### `/cortex-crystallize` — Session context
 
-Working memory lasts seconds. `.hot/MEMORY.md` extends it indefinitely: current state, active decisions, open threads. The agent reads it on session start; you invoke it at milestones. Without it, every conversation starts from zero. Works from any repo, not just the vault.
+Working memory lasts seconds. `.cortex/MEMORY.md` extends it indefinitely: current state, active decisions, open threads. The agent reads it on session start per `AGENTS.md` instructions; you invoke `/cortex-crystallize` at milestones and before closing a session. Without it, every conversation starts from zero. Works from any repo, not just the vault.
 
-The file has two zones: a mutable `Current state` (max 5 pending items, max 3 active decisions) and an append-only `History`. Two triggers are supported — `PreCompact` (mid-session checkpoint, session continues) and `SessionEnd` (true handoff, no return path) — each producing an appropriately scoped summary via `claude -p`.
+The file has two zones: a mutable `Current state` (max 5 pending items, max 3 active decisions) and an append-only `History`. Crystallize is invoked manually — the same way on every agent (Claude Code, Codex, Antigravity, CommandCode) — so there's no dependency on lifecycle hook support, which varies too much across agents to build on top of.
 
 ### `/cortex-imprint` — Permanent archive
 
@@ -82,7 +82,7 @@ Detects orphan pages, dead links, contradictory claims, stale information. Forge
 
 ### `/cortex-forge-setup` — Setup and configuration
 
-Registers the vault, installs global skills, and configures lifecycle hooks. Run from inside a vault directory. Run again from the same vault to deregister.
+Registers the vault and installs global skills. Run from inside a vault directory. Run again from the same vault to deregister.
 
 ## Wiki Taxonomy
 
@@ -102,7 +102,7 @@ Each page follows: YAML frontmatter + compiled truth + chronological changelog.
 
 Three behaviors are mandatory for any agent operating the vault, defined in `AGENTS.md`:
 
-**Crystallize** — before responding to the user, read `.hot/MEMORY.md` and `CODEX.md`. After milestones, invoke `/cortex-crystallize` to snapshot current state and append a history entry. Three automation levels: manual invocation, `AGENTS.md` instructions, or lifecycle hooks configured via `/cortex-forge-setup`.
+**Crystallize** — before responding to the user, read `.cortex/MEMORY.md` and `AGENTS.md`. After milestones, invoke `/cortex-crystallize` to snapshot current state and append a history entry. This is mandated directly by `AGENTS.md` instructions — the same on every agent, with no dependency on lifecycle hooks.
 
 **Assimilate** — when the user provides a URL, file, or uses words like "ingest" or "process", invoke `/cortex-assimilate` as the first action, no confirmation needed.
 
@@ -112,9 +112,9 @@ Three behaviors are mandatory for any agent operating the vault, defined in `AGE
 
 Most agent-memory systems fail in the same places. These are the failure modes we found studying comparable projects, and the design decisions that answer them.
 
-**There is only one reliable consumption channel.** Instructions in `AGENTS.md`, skill descriptions, and "the agent will remember to check" are all best-effort: agents ignore them often enough that anything critical cannot depend on them. The only channel an agent cannot ignore is unconditional injection at session start — and it's expensive in tokens, so it only scales for small content. Cortex Forge is built around this asymmetry: anything that must survive is distilled into the injected hot cache (`.hot/MEMORY.md`, hard size caps); everything else — wiki, skills — is consultable best-effort backup. The guarantee comes from the channel, not from the wording.
+**There is only one reliable consumption channel, and it's not a hook.** Instructions in `AGENTS.md`, skill descriptions, and "the agent will remember to check" are best-effort — but so is lifecycle hook support: it varies too much across Claude Code, Codex, Antigravity, and CommandCode to be a foundation. Cortex Forge doesn't try to guarantee delivery via automatic injection; instead it makes the read/write contract explicit and identical everywhere — `AGENTS.md` mandates reading `.cortex/MEMORY.md` (hard size caps) before the first response, on every agent, with no hook wiring required. The guarantee comes from the protocol being unconditional and simple to follow, not from a mechanism only some agents support.
 
-**State and lessons are different artifacts.** Session-end snapshots capture *state* (pending work, decisions, fragile context). Lessons — the workaround you'd otherwise re-explain next week — get lost because nobody archives them at the moment of fatigue. Cortex Forge splits the work across the session boundary *(landing in v0.4)*: at session end, crystallize (which already runs enforced, with full context) only *flags* imprint candidates with a pointer to the transcript. At the next session start, a cheap background subagent triages the flags with fresh eyes and proposes the archive. Detection happens where context is richest; the decision happens where judgment is freshest. No flags, zero overhead.
+**State and lessons are different artifacts.** Session-end snapshots capture *state* (pending work, decisions, fragile context). Lessons — the workaround you'd otherwise re-explain next week — get lost because nobody archives them at the moment of fatigue. Cortex Forge splits the work across the session boundary: at session end, `/cortex-crystallize` (invoked manually, with full context) *flags* imprint candidates in the history entry. At the next session start, reading `.cortex/MEMORY.md` surfaces that flag and the agent proposes `/cortex-imprint` with fresh eyes. Detection happens where context is richest; the decision happens where judgment is freshest — no separate automation needed.
 
 **Memory is attack surface.** A vault that auto-loads files nobody re-reads is exactly where injection payloads persist (see Microsoft's AI Recommendation Poisoning report, Feb 2026). Cortex Forge treats this structurally: `.raw/` is immutable so provenance is always auditable; ingestion scans foreign content for hidden Unicode, embedded payloads, and egress commands before it enters the vault *(sanitization landing in v0.4)*; and automated archiving defaults to *suggest* *(imprint pipeline landing in v0.4)* — a human approves before anything becomes ground truth. Convenience never outruns the isolation layer.
 
@@ -122,16 +122,16 @@ Most agent-memory systems fail in the same places. These are the failure modes w
 
 ## Agent compatibility
 
-Tested agents and their hook support:
+Cortex Forge doesn't rely on agent lifecycle hooks (`SessionStart`, `PreCompact`, `SessionEnd`, `Stop`) — support for those events is too uneven across agents to build the suite on top of them. Instead, every agent works the same way, mandated by `AGENTS.md`:
 
-| Agent | Session start | Session end | Status |
-|-------|--------------|-------------|--------|
-| Claude Code | `SessionStart` hook | `SessionEnd` + `PreCompact` (both synthesized via `claude -p`) | ✅ automatic |
-| Codex | `SessionStart` no-op guard | `Stop` no-op guard | manual-only |
-| Antigravity CLI | `PreInvocation` (first only) | `Stop` (fullyIdle) | documented, untested |
-| CommandCode | none — via `AGENTS.md` | `Stop` hook | partial (close only) |
+| Agent | Session start | Session end |
+|-------|--------------|-------------|
+| Claude Code | Read `.cortex/MEMORY.md` per `AGENTS.md` | `/cortex-crystallize` invoked manually |
+| Codex | Read `.cortex/MEMORY.md` per `AGENTS.md` | `/cortex-crystallize` invoked manually |
+| Antigravity CLI | Read `.cortex/MEMORY.md` per `AGENTS.md` | `/cortex-crystallize` invoked manually |
+| CommandCode | Read `.cortex/MEMORY.md` per `AGENTS.md` | `/cortex-crystallize` invoked manually |
 
-See `wiki/concepts/agent-hook-compatibility.md` for wire formats, configuration examples, and known issues per agent.
+No per-agent wire formats, no hook configuration, nothing to keep in sync across `settings.json`/`hooks.json` variants.
 
 ## Multi-vault
 
@@ -175,8 +175,7 @@ The skill will:
 1. Validate the vault structure
 2. Register it in `~/.cortex-forge/config.yml`
 3. Install all six skills globally (`~/.agents/skills/` + `~/.claude/skills/` symlinks for Claude Code)
-4. Optionally configure lifecycle hooks for automatic session memory
-5. Ask which vault to set as default if more than one is registered
+4. Ask which vault to set as default if more than one is registered
 
 After setup, all skills are available as `/cortex-assimilate`, `/cortex-crystallize`, `/cortex-imprint`, `/cortex-recall`, `/cortex-prune`, and `/cortex-forge-setup`.
 
@@ -184,26 +183,25 @@ After setup, all skills are available as `/cortex-assimilate`, `/cortex-crystall
 
 `/cortex-forge-setup` installs skills to `~/.agents/skills/` — the cross-platform convention adopted by most AI coding agents — and creates agent-specific symlinks where detected.
 
-| Agent | Skills path (global) | Hook support | Notes |
-|---|---|---|---|
-| Claude Code | `~/.agents/skills/` + `~/.claude/skills/` (symlinks) | Auto (SessionStart, PreCompact, SessionEnd) | Full support |
-| Codex | `~/.agents/skills/` | Manual — see setup step 6 | Hooks in `~/.codex/hooks.json` |
-| Antigravity (Gemini CLI) | `~/.agents/skills/` | Manual — see setup step 6 | Hooks in `~/.gemini/config/hooks.json` |
-| CommandCode | `~/.agents/skills/` | Manual (Stop hook) | TASTE rule available via setup step 7 |
-| Cursor | `.cursor/rules/` (project-local) | Not tested | Copy `AGENTS.md` content to `.cursor/rules/cortex-forge.mdc` |
-| Other agents | `~/.agents/skills/` | Varies | Check agent docs for skill resolution path |
+| Agent | Skills path (global) | Notes |
+|---|---|---|
+| Claude Code | `~/.agents/skills/` + `~/.claude/skills/` (symlinks) | Full support |
+| Codex | `~/.agents/skills/` | — |
+| Antigravity (Gemini CLI) | `~/.agents/skills/` | — |
+| CommandCode | `~/.agents/skills/` | TASTE rule available via setup step 7 |
+| Cursor | `.cursor/rules/` (project-local) | Not tested — copy `AGENTS.md` content to `.cursor/rules/cortex-forge.mdc` |
+| Other agents | `~/.agents/skills/` | Check agent docs for skill resolution path |
 
 **If your agent does not read `~/.agents/skills/` automatically:**
-Copy `skills/cortex-*.md` (or the full skill folder, if your agent requires it) to your agent's configured skills path. `AGENTS.md` must always be present at the vault root regardless of agent.
+Copy `skills/cortex-*.md` (or the full skill folder, if your agent requires it) to your agent's configured skills path. `AGENTS.md` must always be present at the vault root regardless of agent — it's what makes session memory work the same way on every agent, without any hook configuration.
 
-Run `/cortex-forge-setup hooks` to reinstall hooks only.
 Run `/cortex-forge-setup skills` to reinstall skills only.
 
 ## Usage
 
 Fork this repo and adapt it to your knowledge domain. The `skills/`, `templates/`, and `wiki/` structure is designed to be domain-agnostic — swap out the content, keep the architecture.
 
-Fill in `CODEX.md` with your vault's mission, domains, vocabulary, and out-of-scope rules. Agents read this at session start to ground relevance and taxonomy decisions.
+Fill in the `## Vault identity` section of `AGENTS.md` with your vault's mission, domains, vocabulary, and out-of-scope rules. Agents read this at session start to ground relevance and taxonomy decisions.
 
 See `AGENTS.md` for the full operating protocol.
 
