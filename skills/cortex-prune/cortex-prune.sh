@@ -14,11 +14,11 @@ if [ ! -d "$WIKI" ]; then
   exit 2
 fi
 
-FINDINGS=$(mktemp)
-DEAD_LINKS=$(mktemp)
-RAW_NOSRC=$(mktemp)
-NO_CONF=$(mktemp)
-ORPHANS=$(mktemp)
+FINDINGS=$(mktemp) || { echo "ERROR: mktemp failed — cannot allocate temp file for findings" >&2; exit 2; }
+DEAD_LINKS=$(mktemp) || { echo "ERROR: mktemp failed — cannot allocate temp file for dead links" >&2; exit 2; }
+RAW_NOSRC=$(mktemp) || { echo "ERROR: mktemp failed — cannot allocate temp file for raw_without_source" >&2; exit 2; }
+NO_CONF=$(mktemp) || { echo "ERROR: mktemp failed — cannot allocate temp file for missing_confidence" >&2; exit 2; }
+ORPHANS=$(mktemp) || { echo "ERROR: mktemp failed — cannot allocate temp file for orphans" >&2; exit 2; }
 trap 'rm -f "$FINDINGS" "$DEAD_LINKS" "$RAW_NOSRC" "$NO_CONF" "$ORPHANS"' EXIT
 
 f() { echo "[$1] $2" >> "$FINDINGS"; }
@@ -130,12 +130,23 @@ done
 
 # ── Schema validation (delegated) ────────────────────────────────────────────
 VALIDATE_SCRIPT="$(dirname "$0")/cortex-validate-schema.sh"
-[ -x "$VALIDATE_SCRIPT" ] && "$VALIDATE_SCRIPT" "$VAULT" "$FINDINGS"
+if [ -x "$VALIDATE_SCRIPT" ]; then
+  "$VALIDATE_SCRIPT" "$VAULT" "$FINDINGS"
+else
+  echo "WARNING: cortex-validate-schema.sh not found next to cortex-prune.sh ($VALIDATE_SCRIPT) — schema drift checks skipped. Reinstall the cortex-prune skill to restore it." >&2
+fi
 
 # ── Output ────────────────────────────────────────────────────────────────────
+if [ ! -f "$FINDINGS" ]; then
+  echo "ERROR: findings file disappeared mid-run ($FINDINGS) — cannot report results" >&2
+  exit 2
+fi
 HIGH=$(grep -c '^\[HIGH\]'   "$FINDINGS" 2>/dev/null || true)
 MED=$(grep  -c '^\[MEDIUM\]' "$FINDINGS" 2>/dev/null || true)
 LOW=$(grep  -c '^\[LOW\]'    "$FINDINGS" 2>/dev/null || true)
+case "$HIGH$MED$LOW" in
+  *[!0-9]*|"") echo "ERROR: could not compute finding counts (HIGH='$HIGH' MEDIUM='$MED' LOW='$LOW') — treating as failure, not silent success" >&2; exit 2 ;;
+esac
 
 for sev in HIGH MEDIUM LOW; do
   lines=$(grep "^\[${sev}\]" "$FINDINGS" 2>/dev/null || true)

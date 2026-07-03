@@ -17,7 +17,7 @@ if [ ! -d "$WIKI" ]; then
   exit 1
 fi
 
-_tmpfile=$(mktemp)
+_tmpfile=$(mktemp) || { echo "ERROR: mktemp failed — cannot allocate temp file for schema findings" >&2; exit 1; }
 trap 'rm -f "$_tmpfile"' EXIT
 
 f() { echo "[$1] $2" >> "$_tmpfile"; }

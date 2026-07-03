@@ -18,6 +18,14 @@ Format: `[semver] — título — YYYY-MM-DD`
 
 ## [Unreleased]
 
+- `fix:` Fail-loud audit across every script (`cortex-prune.sh`, `cortex-validate-schema.sh`, `cortex-sanitize.sh`, `embeddings.py`, `cortex-reindex-post-commit.sh`, `install.sh`, `cortex-embed.sh`, `check-skill-sync.sh`) — closes silent-failure paths found by reviewing each for unbounded waits, unchecked `mktemp`, and broken path references:
+  - **Regression from the 2026-07-03 script relocation:** `cortex-validate-schema.sh` was left behind in `bin/` when `cortex-prune.sh` moved to `skills/cortex-prune/`, silently disabling schema-drift checks for every install since. Co-located now; `check-skill-sync.sh` gained a new invariant (`colocated-script-exists`) that fails CI if any skill claims a co-located script that isn't actually present, specifically to catch this class of bug before it ships again.
+  - `embeddings.py`: the real Ollama embed call had no timeout (only the 3s backend-detection ping did) — a stalled Ollama server could hang indexing/search indefinitely with no error. Added a 30s timeout with a clear message.
+  - `cortex-reindex-post-commit.sh`: wrapped the backgrounded reindex in `timeout 300` (falls back to `gtimeout`, or runs unwrapped if neither exists — macOS ships no `timeout` by default) so a hang doesn't accumulate orphan processes across commits; timeouts are now distinguished from other errors in the log.
+  - `cortex-prune.sh`: `mktemp` failures now abort loudly instead of writing to an empty path; the final exit-code computation no longer silently reports "no findings" (exit 0) if the findings file becomes unreadable mid-run.
+  - `cortex-sanitize.sh`: added a `jq` availability check alongside the existing `rg` check — previously, a missing `jq` produced empty/invalid JSON output that `cortex-assimilate` could misread as "no findings."
+  - `install.sh`: added `--max-time` to all `curl` calls (previously unbounded); `git pull --ff-only` against a local dev forge checkout now checks for uncommitted changes first and fails with an actionable message instead of a cryptic git error.
+
 ## [0.6.0] — Hookless Protocol & skills.sh Compatibility — 2026-07-03
 
 Removes agent lifecycle hooks entirely and makes cortex-forge installable via [skills.sh](https://www.skills.sh/) (`npx skills add itsmistermoon/cortex-forge`), independent of the tarball/curl installer. Support for lifecycle hooks was too uneven across Claude Code, Codex, Antigravity, and CommandCode to build the suite on top of them; `AGENTS.md` now mandates one identical manual protocol on every agent instead.

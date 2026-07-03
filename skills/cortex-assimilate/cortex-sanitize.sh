@@ -16,6 +16,10 @@ command -v rg >/dev/null 2>&1 || {
   echo '{"file":"'"$FILE"'","findings":[],"note":"rg not available — scan skipped"}'
   exit 0
 }
+command -v jq >/dev/null 2>&1 || {
+  echo '{"file":"'"$FILE"'","findings":[],"note":"jq not available — scan skipped"}'
+  exit 0
+}
 
 FINDINGS="[]"
 

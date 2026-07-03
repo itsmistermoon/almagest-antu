@@ -7,6 +7,7 @@
 set -euo pipefail
 
 CONFIG="$HOME/.cortex-forge/config.yml"
+[ -f "$CONFIG" ] || { echo "ERROR: $CONFIG not found — run /cortex-forge-setup first." >&2; exit 1; }
 
 # embeddings.py/cortex-index.py are co-located with the cortex-forge-setup skill,
 # not in bin/ — resolve the skill dir: sibling of this script's repo (dev checkout),

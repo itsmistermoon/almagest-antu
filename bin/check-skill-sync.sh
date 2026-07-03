@@ -125,6 +125,33 @@ else
 fi
 
 # ---------------------------------------------------------------------------
+# 7. Every co-located script a SKILL.md references actually exists (same dir)
+# ---------------------------------------------------------------------------
+# Catches exactly the 2026-07-03 regression: cortex-prune.sh was relocated but
+# cortex-validate-schema.sh (which it calls as a sibling) was left in bin/,
+# silently disabling schema-drift checks for every install.
+check "colocated-script-exists"
+for skill_dir in "$SKILLS_DIR"/*/; do
+  name=$(basename "$skill_dir")
+  file="$skill_dir/SKILL.md"
+  [[ -f "$file" ]] || continue
+  # Only check scripts named on a line that itself claims co-location — avoids
+  # false positives from mentioning another skill's or a vault-local runtime
+  # copy's script name (e.g. "{vault}/.cortex/db/cortex-index.py") elsewhere.
+  refs=$(grep -i 'co-located' "$file" | grep -oE '[A-Za-z0-9_-]+\.(sh|py)' | sort -u || true)
+  missing=""
+  while IFS= read -r script; do
+    [[ -z "$script" ]] && continue
+    [[ -f "$skill_dir/$script" ]] || missing="$missing $script"
+  done <<< "$refs"
+  if [[ -n "$missing" ]]; then
+    fail "$name: script(s) claimed co-located but not found in $skill_dir:$missing"
+  else
+    ok "$name: all co-located scripts present"
+  fi
+done
+
+# ---------------------------------------------------------------------------
 # Summary
 # ---------------------------------------------------------------------------
 echo ""

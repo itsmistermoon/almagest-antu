@@ -10,6 +10,7 @@ import urllib.request
 MODEL_NAME = "nomic-embed-text-v1.5"
 OLLAMA_URL = "http://localhost:11434/api/embeddings"
 DIMENSIONS = 768
+OLLAMA_EMBED_TIMEOUT = 30  # seconds — real embed calls take longer than the 3s detection ping
 
 _backend: str | None = None
 _st_model = None
@@ -92,8 +93,16 @@ def embed(text: str, prefix: str = "") -> list[float]:
         payload = json.dumps({"model": "nomic-embed-text", "prompt": full_text}).encode()
         req = urllib.request.Request(OLLAMA_URL, data=payload, method="POST",
                                      headers={"Content-Type": "application/json"})
-        with urllib.request.urlopen(req) as r:
-            data = json.loads(r.read())
+        try:
+            with urllib.request.urlopen(req, timeout=OLLAMA_EMBED_TIMEOUT) as r:
+                data = json.loads(r.read())
+        except (TimeoutError, OSError) as e:
+            print(
+                f"ERROR: Ollama did not respond within {OLLAMA_EMBED_TIMEOUT}s while embedding "
+                f"({e}). Check `ollama ps` / restart the Ollama server.",
+                file=sys.stderr,
+            )
+            sys.exit(1)
         return data["embedding"]
 
     if backend == "mlx":

@@ -16,8 +16,22 @@ LOG="$VAULT_ROOT/.git/cortex-reindex.log"
 CHANGED=$(git diff-tree --no-commit-id -r --name-only HEAD | grep -c '^wiki/' || true)
 [[ "$CHANGED" -gt 0 ]] || exit 0
 
+# macOS ships no `timeout` by default (GNU coreutils only); use it if present
+# (Linux, or `brew install coreutils` → gtimeout on macOS), else run unwrapped —
+# the real timeout protection lives in embeddings.py's Ollama call.
+TIMEOUT_BIN=""
+command -v timeout >/dev/null 2>&1 && TIMEOUT_BIN="timeout 300"
+[ -z "$TIMEOUT_BIN" ] && command -v gtimeout >/dev/null 2>&1 && TIMEOUT_BIN="gtimeout 300"
+
 (
-  python3 "$INDEXER" "$VAULT_ROOT" \
+  $TIMEOUT_BIN python3 "$INDEXER" "$VAULT_ROOT" \
     && echo "$(date '+%F %T') cortex-reindex: ok, wiki_files=$CHANGED" >> "$LOG" \
-    || echo "$(date '+%F %T') cortex-reindex: error (exit $?), wiki_files=$CHANGED" >> "$LOG"
+    || {
+      code=$?
+      if [ -n "$TIMEOUT_BIN" ] && [ "$code" -eq 124 ]; then
+        echo "$(date '+%F %T') cortex-reindex: TIMED OUT after 300s, wiki_files=$CHANGED" >> "$LOG"
+      else
+        echo "$(date '+%F %T') cortex-reindex: error (exit $code), wiki_files=$CHANGED" >> "$LOG"
+      fi
+    }
 ) &

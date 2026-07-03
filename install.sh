@@ -95,14 +95,14 @@ log "Installing forge to ${FORGE_DIR}"
 
 _install_from_tarball() {
   local tarball_url
-  tarball_url=$(curl -fsSL "https://api.github.com/repos/${REPO}/releases/latest" \
+  tarball_url=$(curl -fsSL --max-time 20 "https://api.github.com/repos/${REPO}/releases/latest" \
     | grep '"browser_download_url"' \
     | grep 'cortex-forge\.tar\.gz' \
     | head -1 \
     | sed 's/.*"browser_download_url": "\(.*\)"/\1/')
   [ -z "$tarball_url" ] && return 1
-  local tmp; tmp=$(mktemp -d)
-  curl -fsSL "$tarball_url" | tar -xz -C "$tmp"
+  local tmp; tmp=$(mktemp -d) || { err "mktemp failed"; return 1; }
+  curl -fsSL --max-time 120 "$tarball_url" | tar -xz -C "$tmp" || { err "tarball download/extract failed"; rm -rf "$tmp"; return 1; }
   rm -rf "$FORGE_DIR"
   mv "$tmp/cortex-forge" "$FORGE_DIR"
   rm -rf "$tmp"
@@ -110,14 +110,14 @@ _install_from_tarball() {
 
 _update_from_tarball() {
   local tarball_url
-  tarball_url=$(curl -fsSL "https://api.github.com/repos/${REPO}/releases/latest" \
+  tarball_url=$(curl -fsSL --max-time 20 "https://api.github.com/repos/${REPO}/releases/latest" \
     | grep '"browser_download_url"' \
     | grep 'cortex-forge\.tar\.gz' \
     | head -1 \
     | sed 's/.*"browser_download_url": "\(.*\)"/\1/')
   [ -z "$tarball_url" ] && return 1
-  local tmp; tmp=$(mktemp -d)
-  curl -fsSL "$tarball_url" | tar -xz -C "$tmp"
+  local tmp; tmp=$(mktemp -d) || { err "mktemp failed"; return 1; }
+  curl -fsSL --max-time 120 "$tarball_url" | tar -xz -C "$tmp" || { err "tarball download/extract failed"; rm -rf "$tmp"; return 1; }
   # Preserve user config, replace everything else
   [ -f "${FORGE_DIR}/config.yml" ] && cp "${FORGE_DIR}/config.yml" "$tmp/cortex-forge/"
   rm -rf "$FORGE_DIR"
@@ -127,7 +127,16 @@ _update_from_tarball() {
 
 if [ -d "${FORGE_DIR}/.git" ]; then
   # Dev/contributor install — update via git
-  git -C "$FORGE_DIR" pull --ff-only --quiet
+  if [ -n "$(git -C "$FORGE_DIR" status --porcelain 2>/dev/null)" ]; then
+    err "${FORGE_DIR} has uncommitted local changes — refusing to 'git pull' over them."
+    err "Resolve manually: cd ${FORGE_DIR} && git status"
+    exit 1
+  fi
+  if ! git -C "$FORGE_DIR" pull --ff-only --quiet; then
+    err "git pull --ff-only failed in ${FORGE_DIR} (diverged history or network issue)."
+    err "Resolve manually: cd ${FORGE_DIR} && git status"
+    exit 1
+  fi
   ok "Forge updated (git)"
 elif [ -d "$FORGE_DIR" ] && [ -f "${FORGE_DIR}/AGENTS.md" ]; then
   # Tarball install — update via tarball, preserving config.yml
