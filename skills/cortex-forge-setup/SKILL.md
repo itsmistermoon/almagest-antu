@@ -121,6 +121,18 @@ Always end with the relevant subset of step 9 (confirmation).
    ```
 
 4. **Install global skills** — create `~/.agents/skills/{skill}/` dirs and symlink each `SKILL.md` to `~/.cortex-forge/skills/`:
+
+   **4-pre. Check the tarball runtime is complete before relying on it.** For each of the 6 skills (`cortex-crystallize`, `cortex-forge-setup`, `cortex-recall`, `cortex-assimilate`, `cortex-imprint`, `cortex-prune`), check whether `~/.cortex-forge/skills/{skill}/SKILL.md` exists.
+   - **All 6 present** → proceed with the symlink steps below as normal.
+   - **`~/.cortex-forge/skills/` missing entirely, or one or more skills missing from it** → do not silently skip them. Tell the user:
+     > `~/.cortex-forge/skills/` is missing or incomplete (missing: {list}). The recommended fix is installing directly via [skills.sh](https://www.skills.sh/), which doesn't depend on `~/.cortex-forge/` at all — every skill ships with its own scripts co-located:
+     > ```
+     > npx skills add itsmistermoon/cortex-forge --all -g -y
+     > ```
+     > Alternatively, re-run the curl installer to repair `~/.cortex-forge/`: `curl -fsSL https://raw.githubusercontent.com/itsmistermoon/cortex-forge/main/install.sh | bash`
+   - Ask which the user wants: run `npx skills add` now (if the environment allows running shell commands), re-run the curl installer, or skip and continue with only the skills that ARE present in `~/.cortex-forge/skills/`.
+   - If proceeding with partial symlinks (some skills missing), skip the missing ones in the steps below — do not create a broken symlink to a nonexistent source.
+
    - `~/.agents/skills/cortex-crystallize/SKILL.md` → `~/.cortex-forge/skills/cortex-crystallize/SKILL.md`
    - `~/.agents/skills/cortex-forge-setup/SKILL.md` → `~/.cortex-forge/skills/cortex-forge-setup/SKILL.md`
    - `~/.agents/skills/cortex-recall/SKILL.md` → `~/.cortex-forge/skills/cortex-recall/SKILL.md`
@@ -129,7 +141,7 @@ Always end with the relevant subset of step 9 (confirmation).
    - `~/.agents/skills/cortex-prune/SKILL.md` → `~/.cortex-forge/skills/cortex-prune/SKILL.md`
    - If a symlink already exists and points to the right target, skip silently. If it points elsewhere or is a plain file, overwrite with `ln -sf`.
    - Create `~/.agents/skills/` and each subdirectory if they don't exist.
-   - Single source of truth: `~/.cortex-forge/skills/` (the runtime populated by the tarball installer). Updating forge = re-running the curl installer; all skill symlinks update automatically.
+   - Single source of truth: `~/.cortex-forge/skills/` (the runtime populated by the tarball installer). Updating forge = re-running the curl installer; all skill symlinks update automatically. **Note:** this symlink-from-tarball approach and `npx skills add` are two independent installers — `npx skills add` writes directly to `~/.agents/skills/{skill}/` (real files, not symlinks to `~/.cortex-forge/`) and doesn't need this step at all. If the user already installed via `npx skills add`, step 4-pre's check will find `~/.cortex-forge/skills/` missing/incomplete — that's expected, not an error; just point them at `npx skills add` again for updates instead of re-running this step.
 
 5. **Claude Code symlinks** — if `~/.claude/` exists:
    - Create `~/.claude/skills/` if it doesn't exist.

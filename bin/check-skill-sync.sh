@@ -138,7 +138,9 @@ for skill_dir in "$SKILLS_DIR"/*/; do
   # Only check scripts named on a line that itself claims co-location — avoids
   # false positives from mentioning another skill's or a vault-local runtime
   # copy's script name (e.g. "{vault}/.cortex/db/cortex-index.py") elsewhere.
-  refs=$(grep -i 'co-located' "$file" | grep -oE '[A-Za-z0-9_-]+\.(sh|py)' | sort -u || true)
+  # Only match backtick-quoted filenames (how real script refs are always
+  # written) — avoids false positives like prose links (e.g. "skills.sh").
+  refs=$(grep -i 'co-located' "$file" | grep -oE '`[A-Za-z0-9_-]+\.(sh|py)`' | tr -d '`' | sort -u || true)
   missing=""
   while IFS= read -r script; do
     [[ -z "$script" ]] && continue
