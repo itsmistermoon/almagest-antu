@@ -13,26 +13,12 @@ from pathlib import Path
 
 
 def _resolve_embeddings_dir() -> Path:
-    """Find the directory containing embeddings.py.
-
-    Search order:
-    1. Sibling of this script (canonical — embeddings.py always ships alongside
-       cortex-index.py, whether installed in a vault's .cortex/db/ or still
-       inside the cortex-forge-setup skill directory)
-    2. Legacy fallback: forge path registered in ~/.cortex-forge/config.yml
-       (pre-2026-07-03 tarball installs)
-    """
+    """Find the directory containing embeddings.py — always a sibling of this
+    script (co-located with the skill, or copied alongside it into a vault's
+    .cortex/db/ or ~/.cortex-forge/bin/ — either way, always a sibling)."""
     here = Path(__file__).parent
     if (here / "embeddings.py").exists():
         return here
-    config = Path.home() / ".cortex-forge" / "config.yml"
-    if config.exists():
-        for line in config.read_text().splitlines():
-            line = line.strip()
-            if line.startswith("cortex-forge:") or line.startswith("forge:"):
-                candidate = Path(line.split(":", 1)[1].strip()) / "bin"
-                if (candidate / "embeddings.py").exists():
-                    return candidate
     print("ERROR: Cannot locate embeddings.py (expected as a sibling of this script).", file=sys.stderr)
     sys.exit(1)
 

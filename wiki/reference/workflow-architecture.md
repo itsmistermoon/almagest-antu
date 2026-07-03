@@ -77,9 +77,9 @@ Al cerrar la sesión, el agente necesita escribir qué se hizo, qué se descart�
 
 ## Scripts: referencia completa
 
-### Co-located con su skill (viajan con `npx skills add` o el tarball)
+### Co-located con su skill (viajan con `npx skills add`)
 
-Desde 2026-07-03, los scripts que invocan las skills viven **dentro del directorio de la skill que los usa**, no en un `bin/` separado — así `npx skills add itsmistermoon/cortex-forge --skill X` instala un skill completo y funcional, sin depender de que exista `~/.cortex-forge/` (el runtime del tarball).
+Los scripts que invocan las skills viven **dentro del directorio de la skill que los usa**, no en un `bin/` separado — así `npx skills add itsmistermoon/cortex-forge --skill X` instala un skill completo y funcional. `npx skills add` es el único instalador de skills que existe — no hay tarball ni curl installer (eliminados 2026-07-03, ver changelog).
 
 | Script | Vive en | Quién lo invoca | Cómo se resuelve |
 |--------|---------|------------------|-------------------|
@@ -93,7 +93,7 @@ Desde 2026-07-03, los scripts que invocan las skills viven **dentro del director
 
 ### El único hook que sigue en pie: post-commit git hook
 
-`~/.cortex-forge/bin/` y `~/.cortex-forge/bin/hooks/` ya no son la fuente de estos scripts — son una **caché de runtime** que `/cortex-forge-setup` (pasos 6b/6c) o `install.sh` (Step 5) pueblan copiando desde los directorios co-located de arriba, solo para los dos casos que lo necesitan: los git hooks. La razón es que un git hook corre fuera de cualquier sesión de agente — no hay quien "resuelva la ruta relativa a la skill" en ese contexto, así que necesita una ruta absoluta fija, sin importar desde dónde se instaló la skill (`~/.claude/skills/`, `.claude/skills/`, `~/.agents/skills/`, etc.).
+`~/.cortex-forge/bin/` y `~/.cortex-forge/bin/hooks/` no son la fuente de estos scripts — son una **caché de runtime** que `/cortex-forge-setup` (pasos 6b/6c) puebla copiando desde los directorios co-located de arriba, solo para los dos casos que lo necesitan: los git hooks. La razón es que un git hook corre fuera de cualquier sesión de agente — no hay quien "resuelva la ruta relativa a la skill" en ese contexto, así que necesita una ruta absoluta fija, sin importar desde dónde se instaló la skill (`~/.claude/skills/`, `.claude/skills/`, `~/.agents/skills/`, etc.).
 
 | Bloque instalado en `<vault>/.git/hooks/post-commit` | Script invocado | Copiado desde | Qué hace | Condición |
 |--------|----------------|----------------|----------|-----------|
@@ -102,7 +102,7 @@ Desde 2026-07-03, los scripts que invocan las skills viven **dentro del director
 
 **Flujo del reindex:** el script detecta cuántos archivos `wiki/` cambiaron en el commit (`git diff-tree`), y solo entonces invoca `~/.cortex-forge/bin/cortex-index.py` (la caché de runtime, copiada ahí por `cortex-forge-setup` — nunca un script que viva dentro del vault) sobre la raíz del vault. Si la DB no existe o no hay archivos wiki modificados, sale silenciosamente (`exit 0`). El bloque usa `|| true` para ser fail-open — nunca bloquea un commit.
 
-**Instalación:** ambos bloques se instalan opcionalmente en `<vault>/.git/hooks/post-commit` durante `/cortex-forge-setup` (pasos 6b/6c) o `install.sh`.
+**Instalación:** ambos bloques se instalan opcionalmente en `<vault>/.git/hooks/post-commit` durante `/cortex-forge-setup` (pasos 6b/6c).
 
 **Nota de rendimiento:** el reindex es full (no incremental) — recorre todos los archivos wiki/ en cada commit que los toque. Aceptable con < 200 páginas; en vaults grandes puede requerir estrategia incremental (indexar solo los paths del diff).
 
@@ -114,3 +114,4 @@ Desde 2026-07-03, los scripts que invocan las skills viven **dentro del director
 - 2026-07-02 [Claude Code]: Full rewrite — agent lifecycle hooks (SessionStart, PreCompact, SessionEnd, Stop, PreToolUse) were removed from cortex-forge entirely; replaced the 3-phase hook/no-hook table and per-agent hook wiring reference with the manual, `AGENTS.md`-mandated protocol used identically on every agent. Only the post-commit git hooks (prune, reindex) remain — kept and documented unchanged, since they're git-triggered, not agent-triggered. See [[wiki/concepts/agent-hook-compatibility]] for why hooks were dropped.
 - 2026-07-03 [Claude Code]: Scripts relocated to be co-located with the skill that uses them (`skills/cortex-prune/cortex-prune.sh`, `skills/cortex-assimilate/cortex-sanitize.sh`, `skills/cortex-forge-setup/{cortex-index.py,cortex-search.py,embeddings.py,cortex-reindex-post-commit.sh}`) — so `npx skills add itsmistermoon/cortex-forge --skill X` installs a fully functional skill without depending on `~/.cortex-forge/` (the tarball runtime). `~/.cortex-forge/bin/` is now only a runtime cache populated at setup time, used exclusively by the two git hooks (which need a fixed absolute path outside any agent session). Fixed two latent path bugs found in the process: the reindex post-commit script pointed at a nonexistent `{vault}/bin/cortex-index.py`, and `cortex-assimilate` step 7 pointed at `.cortex/cortex-index.py` instead of `.cortex/db/cortex-index.py`.
 - 2026-07-03 [Claude Code]: Second pass — eliminated the remaining vault-local code execution flagged by a Snyk security audit (E006 CRITICAL for `cortex-recall`, same category unreported for `cortex-assimilate`). `cortex-search.py`+`embeddings.py` moved to `skills/cortex-recall/`; `cortex-index.py`+`embeddings.py` duplicated into `skills/cortex-assimilate/` (kept in sync via a new CI check, `duplicated-script-sync`). `cortex-forge-setup` no longer copies these scripts into `{vault}/.cortex/db/` at all — it runs its own co-located `cortex-index.py` directly, and copies `cortex-index.py`+`embeddings.py` to `~/.cortex-forge/bin/` only for the git hook's use. `{vault}/.cortex/db/` now holds only `vault.db` and `config.json` — no executable code, ever.
+- 2026-07-03 [Claude Code]: `install.sh` and the tarball GitHub Release asset removed entirely — `npx skills add` (skills.sh) is now the sole installer, superior in every way that mattered (agent-agnostic across 40+ agents vs. `install.sh`'s hardcoded Claude Code + Antigravity, no separate CI workflow to keep in sync, no `~/.cortex-forge/` runtime to maintain). `cortex-forge-setup` steps 4-pre/4/5/5a (tarball-completeness check + hand-rolled per-agent symlinks) collapsed into a single step 4 that only verifies skills are present and points to `npx skills add` if not — never re-implements what the installer already does. Removed the now-dead legacy config.yml fallback from `_resolve_embeddings_dir()` in all 3 copies of the embedding-resolution scripts (was only reachable from tarball installs). `.github/workflows/release.yml` still creates the GitHub Release object on tag push (for changelog/version tracking) but no longer builds or attaches a tarball.

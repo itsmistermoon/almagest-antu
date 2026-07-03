@@ -1,11 +1,11 @@
 ---
 name: cortex-forge-setup
 behavior: ["configure"]
-description: Register or deregister the current vault in Cortex Forge and install global skills. Run from inside a vault directory.
-argument-hint: "Optional sub-task: skills | sync | vaults"
+description: Register or deregister the current vault in Cortex Forge and verify global skills are installed. Run from inside a vault directory.
+argument-hint: "Optional sub-task: embeddings | skills | sync | vaults"
 ---
 
-Setup for Cortex Forge. Run from inside a vault directory (one containing `wiki/`, `AGENTS.md`, and `.git/`). Registers the vault in the global config and installs global skills. Cortex Forge does not rely on agent lifecycle hooks (SessionStart/PreCompact/SessionEnd/PreToolUse) — support for those is too uneven across agents (Claude Code, Codex, Antigravity, CommandCode). All memory operations (loading `.cortex/MEMORY.md`, crystallizing, recalling) are invoked manually via skills (`/cortex-crystallize`, `/cortex-recall`) so behavior is identical everywhere.
+Setup for Cortex Forge. Run from inside a vault directory (one containing `wiki/`, `AGENTS.md`, and `.git/`). Registers the vault in the global config. Cortex Forge does not rely on agent lifecycle hooks (SessionStart/PreCompact/SessionEnd/PreToolUse) — support for those is too uneven across agents (Claude Code, Codex, Antigravity, CommandCode). All memory operations (loading `.cortex/MEMORY.md`, crystallizing, recalling) are invoked manually via skills (`/cortex-crystallize`, `/cortex-recall`) so behavior is identical everywhere. This skill does not install skill files itself — [skills.sh](https://www.skills.sh/) (`npx skills add`) is the sole installer, for every agent it supports, not a hardcoded pair.
 
 ## Sub-tasks
 
@@ -14,7 +14,7 @@ When an argument is provided, always run step 1 (vault detection) first, then ju
 | Argument | Runs |
 |---|---|
 | `embeddings` | Step 6 — dependency check + tailored offer for semantic search |
-| `skills` | Steps 4–5 — install skills + create symlinks |
+| `skills` | Step 4 — verify skills are installed, point to `npx skills add` if not |
 | `sync` | Step 3b — sync infrastructure files from upstream repo |
 | `taste` | Step 7 — install TASTE rule |
 | `vaults` | Steps 2–3 — register/update vault in config |
@@ -40,7 +40,7 @@ Always end with the relevant subset of step 9 (confirmation).
    ```
    Vault "{name}" is already registered. What would you like to do?
 
-     1. Update skills       — reinstall/update all cortex-forge skills in ~/.agents/skills/
+     1. Check skills        — verify all 6 are installed; points to `npx skills add` if not (that's the only installer now)
      2. Sync from upstream  — pull updated templates and bin scripts from the upstream repo
      3. Initialize semantic search — build .cortex/vault.db for the first time (checks what's available, then offers accordingly)
      4. Add post-commit prune    — install the vault-report refresh git hook
@@ -51,7 +51,7 @@ Always end with the relevant subset of step 9 (confirmation).
    ```
 
    For each selected operation, run the corresponding step in sequence:
-   - 1 → steps 4–5
+   - 1 → step 4
    - 2 → step 3b
    - 3 → step 6 (same tailored dependency-check-then-offer procedure as the new-vault wizard). Skip indexing if `.cortex/db/vault.db` already exists (ask user if they want to re-index instead).
    - 4 → step 6b
@@ -122,52 +122,15 @@ Always end with the relevant subset of step 9 (confirmation).
    upstream_ref: main                      # optional; branch or tag to sync from
    ```
 
-4. **Install global skills** — create `~/.agents/skills/{skill}/` dirs and symlink each `SKILL.md` to `~/.cortex-forge/skills/`:
-
-   **4-pre. Check the tarball runtime is complete before relying on it.** For each of the 6 skills (`cortex-crystallize`, `cortex-forge-setup`, `cortex-recall`, `cortex-assimilate`, `cortex-imprint`, `cortex-prune`), check whether `~/.cortex-forge/skills/{skill}/SKILL.md` exists.
-   - **All 6 present** → proceed with the symlink steps below as normal.
-   - **`~/.cortex-forge/skills/` missing entirely, or one or more skills missing from it** → do not silently skip them. Tell the user:
-     > `~/.cortex-forge/skills/` is missing or incomplete (missing: {list}). The recommended fix is installing directly via [skills.sh](https://www.skills.sh/), which doesn't depend on `~/.cortex-forge/` at all — every skill ships with its own scripts co-located:
+4. **Verify global skills are installed** — cortex-forge has no installer of its own; the sole distribution channel is [skills.sh](https://www.skills.sh/) (`npx skills add`), which is agent-agnostic by design (installs to whichever of the 40+ agents it recognizes, not a hardcoded pair). Check whether the 6 skills (`cortex-crystallize`, `cortex-forge-setup`, `cortex-recall`, `cortex-assimilate`, `cortex-imprint`, `cortex-prune`) are present under `~/.agents/skills/`.
+   - **All present** → this step is done implicitly (running this skill at all means it was already installed by something). Report which skills are present and move on.
+   - **Some missing** — do not attempt to install them yourself. Tell the user:
+     > Missing skills: {list}. Install them with:
      > ```
      > npx skills add itsmistermoon/cortex-forge --all -g -y
      > ```
-     > Alternatively, re-run the curl installer to repair `~/.cortex-forge/`: `curl -fsSL https://raw.githubusercontent.com/itsmistermoon/cortex-forge/main/install.sh | bash`
-   - Ask which the user wants: run `npx skills add` now (if the environment allows running shell commands), re-run the curl installer, or skip and continue with only the skills that ARE present in `~/.cortex-forge/skills/`.
-   - If proceeding with partial symlinks (some skills missing), skip the missing ones in the steps below — do not create a broken symlink to a nonexistent source.
-
-   - `~/.agents/skills/cortex-crystallize/SKILL.md` → `~/.cortex-forge/skills/cortex-crystallize/SKILL.md`
-   - `~/.agents/skills/cortex-forge-setup/SKILL.md` → `~/.cortex-forge/skills/cortex-forge-setup/SKILL.md`
-   - `~/.agents/skills/cortex-recall/SKILL.md` → `~/.cortex-forge/skills/cortex-recall/SKILL.md`
-   - `~/.agents/skills/cortex-assimilate/SKILL.md` → `~/.cortex-forge/skills/cortex-assimilate/SKILL.md`
-   - `~/.agents/skills/cortex-imprint/SKILL.md` → `~/.cortex-forge/skills/cortex-imprint/SKILL.md`
-   - `~/.agents/skills/cortex-prune/SKILL.md` → `~/.cortex-forge/skills/cortex-prune/SKILL.md`
-   - If a symlink already exists and points to the right target, skip silently. If it points elsewhere or is a plain file, overwrite with `ln -sf`.
-   - Create `~/.agents/skills/` and each subdirectory if they don't exist.
-   - Single source of truth: `~/.cortex-forge/skills/` (the runtime populated by the tarball installer). Updating forge = re-running the curl installer; all skill symlinks update automatically. **Note:** this symlink-from-tarball approach and `npx skills add` are two independent installers — `npx skills add` writes directly to `~/.agents/skills/{skill}/` (real files, not symlinks to `~/.cortex-forge/`) and doesn't need this step at all. If the user already installed via `npx skills add`, step 4-pre's check will find `~/.cortex-forge/skills/` missing/incomplete — that's expected, not an error; just point them at `npx skills add` again for updates instead of re-running this step.
-
-5. **Claude Code symlinks** — if `~/.claude/` exists:
-   - Create `~/.claude/skills/` if it doesn't exist.
-   - Create symlinks pointing to the installed skills:
-     - `~/.claude/skills/cortex-crystallize` → `~/.agents/skills/cortex-crystallize`
-     - `~/.claude/skills/cortex-forge-setup` → `~/.agents/skills/cortex-forge-setup`
-     - `~/.claude/skills/cortex-recall` → `~/.agents/skills/cortex-recall`
-     - `~/.claude/skills/cortex-assimilate` → `~/.agents/skills/cortex-assimilate`
-     - `~/.claude/skills/cortex-imprint` → `~/.agents/skills/cortex-imprint`
-     - `~/.claude/skills/cortex-prune` → `~/.agents/skills/cortex-prune`
-   - If a symlink already exists and points to the right target, skip silently.
-   - If a symlink exists but points elsewhere, overwrite it.
-
-5a. **Antigravity symlinks** — if `~/.gemini/config/` exists:
-    - Create `~/.gemini/config/skills/` if it doesn't exist.
-    - Create symlinks pointing to the installed skills:
-      - `~/.gemini/config/skills/cortex-crystallize` → `~/.agents/skills/cortex-crystallize`
-      - `~/.gemini/config/skills/cortex-forge-setup` → `~/.agents/skills/cortex-forge-setup`
-      - `~/.gemini/config/skills/cortex-recall` → `~/.agents/skills/cortex-recall`
-      - `~/.gemini/config/skills/cortex-assimilate` → `~/.agents/skills/cortex-assimilate`
-      - `~/.gemini/config/skills/cortex-imprint` → `~/.agents/skills/cortex-imprint`
-      - `~/.gemini/config/skills/cortex-prune` → `~/.agents/skills/cortex-prune`
-    - If a symlink already exists and points to the right target, skip silently.
-    - If a symlink exists but points elsewhere, overwrite it.
+     > To limit which agents get symlinks (the default installs to every agent skills.sh recognizes), pass `-a <agent>` instead of `--all` — see the [Supported Agents table](https://github.com/vercel-labs/skills#supported-agents) for the exact flag per agent.
+   - Never hand-roll agent-specific symlink logic here — that duplicates what `npx skills add` already does correctly for every agent it supports, not just whichever ones this skill happened to hardcode.
 
 6. **Offer semantic search (new vault only — for an already-registered vault, use maintenance menu option 3 instead)** — check dependencies *before* asking, so the offer itself is tailored to what's actually available. Run the detection procedure in `EMBEDDING-SETUP.md` (co-located with this skill), then ask using the tailored wording it returns (ready-to-go confirm, one-step-away confirm, or the full backend menu) — never ask a generic "enable semantic search?" without having checked first. If the user accepts, install anything needed and run `cortex-index.py` (co-located with this skill) with `{vault}` as its argument; report chunks indexed. If declined or skipped, note in the final summary that semantic search is not active and can be enabled later via `/cortex-forge-setup` (maintenance menu, option 3).
 
@@ -244,9 +207,8 @@ Always end with the relevant subset of step 9 (confirmation).
 
 10. **Confirm result**:
    - Registered vaults: list all entries in `vaults:` with their paths, marking the default
-   - Skills installed: `cortex-crystallize`, `cortex-forge-setup`, `cortex-recall`, `cortex-assimilate`, `cortex-imprint`, `cortex-prune`
+   - Skills: all 6 present / missing {list} (with the `npx skills add` command to fix it)
    - Semantic search: active (backend: Ollama/mlx-embeddings/sentence-transformers, N chunks indexed) / not active (declined or skipped — how to enable later)
-   - Claude Code symlinks: created / up to date / skipped
    - TASTE rule: installed per-project / global / skipped — show exact path
    - AGENTS.md vault identity: added / already present / skipped
    - Sync (if run): upstream used, files updated (list), files skipped (count), deletions pending user confirmation, AGENTS.md divergence noted if any
@@ -266,6 +228,6 @@ This is deliberately identical across agents — no per-agent hook wiring, no sy
 - Always run from inside the vault directory — never ask for a path manually
 - Do not modify any vault files during setup — read only for validation
 - Preserve all existing vault entries when writing config
-- Symlinks in `~/.claude/skills/`, not copies — updates propagate automatically
+- Never hand-roll skill installation or agent-specific symlinks — `npx skills add` is the sole installer, for every agent it supports
 - Post-commit git hooks (prune, reindex — steps 6b/6c) are the only hooks this skill installs; they are plain git hooks, not agent lifecycle hooks, so they behave identically regardless of which agent is in use
 - Always ask for default when there are multiple vaults — never assume

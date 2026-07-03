@@ -162,24 +162,7 @@ Skills resolve the vault automatically: if you're inside a registered vault → 
 
 ## Setup
 
-Clone the repo, then run `/cortex-forge-setup` from inside it:
-
-```bash
-git clone https://github.com/itsmistermoon/cortex-forge ~/my-vault
-cd ~/my-vault
-# open a session with your agent and run:
-/cortex-forge-setup
-```
-
-The skill will:
-1. Validate the vault structure
-2. Register it in `~/.cortex-forge/config.yml`
-3. Install all six skills globally (`~/.agents/skills/` + `~/.claude/skills/` symlinks for Claude Code)
-4. Ask which vault to set as default if more than one is registered
-
-After setup, all skills are available as `/cortex-assimilate`, `/cortex-crystallize`, `/cortex-imprint`, `/cortex-recall`, `/cortex-prune`, and `/cortex-forge-setup`.
-
-**Alternative: install via [skills.sh](https://www.skills.sh/)** — every script a skill needs is co-located inside its own `skills/<name>/` directory, so each skill is fully self-contained and installable independently:
+Install the skills via [skills.sh](https://www.skills.sh/) — the only installer; every script a skill needs is co-located inside its own `skills/<name>/` directory, so each skill is fully self-contained and installable independently of the others:
 
 ```bash
 npx skills add itsmistermoon/cortex-forge --all
@@ -189,25 +172,31 @@ npx skills add itsmistermoon/cortex-forge --skill cortex-prune
 
 `--all` installs to every agent skills.sh recognizes — more than you probably use. To target only the agents you actually have, pass `-a <agent>` (repeatable) instead of `--all`; see the [Supported Agents table](https://github.com/vercel-labs/skills#supported-agents) in skills.sh's own docs for the exact flag value per agent (kept there, not duplicated here, since cortex-forge is agent-agnostic and that list is skills.sh's to maintain).
 
-`/cortex-forge-setup` still works exactly the same afterward — it's a prompt-driven skill (no external script dependency), so it registers the vault in `~/.cortex-forge/config.yml` regardless of which installer brought it in.
+Then fork or clone this repo as your vault (or create a new one from scratch — see `bin/setup-vault.sh`), and from inside it run `/cortex-forge-setup`:
+
+```bash
+git clone https://github.com/itsmistermoon/cortex-forge ~/my-vault
+cd ~/my-vault
+# open a session with your agent and run:
+/cortex-forge-setup
+```
+
+`/cortex-forge-setup` is a prompt-driven skill with no external script dependency — it never installs skill files itself (that's `npx skills add`'s job, done above). It:
+1. Validates the vault structure
+2. Registers it in `~/.cortex-forge/config.yml`
+3. Verifies all six skills are actually installed, and tells you to re-run `npx skills add` if any are missing
+4. Offers to set up semantic search, with a dependency check that runs before asking
+5. Asks which vault to set as default if more than one is registered
+
+After setup, all skills are available as `/cortex-assimilate`, `/cortex-crystallize`, `/cortex-imprint`, `/cortex-recall`, `/cortex-prune`, and `/cortex-forge-setup`.
 
 ## Platform compatibility
 
-`/cortex-forge-setup` installs skills to `~/.agents/skills/` — the cross-platform convention adopted by most AI coding agents — and creates agent-specific symlinks where detected.
+`npx skills add` installs to `~/.agents/skills/` — the cross-platform convention adopted by most AI coding agents — plus agent-specific symlinks for whichever agents you target with `-a`. See the [Supported Agents table](https://github.com/vercel-labs/skills#supported-agents) for the full list and exact paths per agent; that list is skills.sh's to maintain, not duplicated here.
 
-| Agent | Skills path (global) | Notes |
-|---|---|---|
-| Claude Code | `~/.agents/skills/` + `~/.claude/skills/` (symlinks) | Full support |
-| Codex | `~/.agents/skills/` | — |
-| Antigravity (Gemini CLI) | `~/.agents/skills/` | — |
-| CommandCode | `~/.agents/skills/` | TASTE rule available via setup step 7 |
-| Cursor | `.cursor/rules/` (project-local) | Not tested — copy `AGENTS.md` content to `.cursor/rules/cortex-forge.mdc` |
-| Other agents | `~/.agents/skills/` | Check agent docs for skill resolution path |
+`AGENTS.md` must always be present at the vault root regardless of agent — it's what makes session memory work the same way on every agent, without any hook configuration.
 
-**If your agent does not read `~/.agents/skills/` automatically:**
-Copy `skills/cortex-*.md` (or the full skill folder, if your agent requires it) to your agent's configured skills path. `AGENTS.md` must always be present at the vault root regardless of agent — it's what makes session memory work the same way on every agent, without any hook configuration.
-
-Run `/cortex-forge-setup skills` to reinstall skills only.
+Run `/cortex-forge-setup skills` to verify all six skills are installed (it won't install anything itself — that's always `npx skills add`).
 
 ## Usage
 

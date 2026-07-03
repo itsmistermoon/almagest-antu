@@ -5,6 +5,11 @@ on:
     tags:
       - 'v*'
 
+# No tarball artifact — cortex-forge is distributed exclusively via
+# `npx skills add itsmistermoon/cortex-forge` (skills.sh). This workflow only
+# creates the GitHub Release object on tag push so release notes have
+# somewhere to live; notes are always hand-written afterward via `gh release
+# edit`, never the auto-generated ones.
 jobs:
   release:
     runs-on: ubuntu-latest
@@ -13,14 +18,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Build runtime tarball
-        run: |
-          mkdir -p dist/cortex-forge
-          cp -r bin skills templates bases AGENTS.md LICENSE dist/cortex-forge/
-          tar -czf dist/cortex-forge.tar.gz -C dist cortex-forge
-
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          files: dist/cortex-forge.tar.gz
           generate_release_notes: true
