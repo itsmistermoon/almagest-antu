@@ -87,13 +87,14 @@ Always end with the relevant subset of step 9 (confirmation).
    ```
    Extract all `blob` entries whose `path` matches the sync scope (see below). This avoids per-file HEAD requests.
 
-   **Sync scope** — files to download and overwrite locally if content differs:
+   **Sync scope** — files eligible for update from upstream (confirmation required before any write — see below):
    - `templates/*.md`
 
-   For each file in scope:
-   1. Fetch raw content: `https://raw.githubusercontent.com/{upstream}/main/{path}`
-   2. Compare with local file (if it exists).
-   3. If different (or missing locally): overwrite. If identical: skip silently.
+   For each file in scope, fetch raw content (`https://raw.githubusercontent.com/{upstream}/main/{path}`) and compare with the local file (if it exists). Files identical to upstream are skipped silently — no report, no confirmation needed for those.
+
+   **Confirm before writing.** Do not overwrite as each diff is found. Collect every file that differs (or is missing locally) into one list first. **Done when:** every file in sync scope has been fetched and compared — zero skipped without a compare.
+   - If the list is empty: report "templates up to date" and stop — nothing to confirm.
+   - If the list is non-empty: show the full list (path + new vs. modified) and ask once: "Update {N} template(s) from {upstream}? (see list above)" Only after confirmation, write the approved files. If declined, write nothing and report which files were left untouched.
 
    **Never touch** (hard exclusions — skip even if present in upstream tree):
    - `wiki/` — personal knowledge
