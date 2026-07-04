@@ -84,29 +84,7 @@ When in doubt: ask "does the next session need to act on this?" If no → Histor
 
 ## Zone 2 — History (APPEND-ONLY)
 
-Append at the end, never modify previous entries. Entries older than 30 days are rotated out to `.cortex/CONSOLIDATED.md` by step 5c — `MEMORY.md`'s History always reflects only the last 30 days. `CONSOLIDATED.md` is never read automatically; consult it directly only when a session needs to reference older history.
-
-```markdown
-## History
-
-### {YYYY-MM-DD HH:MM UTC±N} — {Agent} ({Trigger})
-<!-- Timestamp exacto con offset local. Ejemplo: 2026-06-08 14:30 -04. Nunca omitir hora ni offset. -->
-
-#### What was done
-- {bullet per significant change — file or decision, not narrative}
-
-#### Discarded
-- {options evaluated and rejected, with brief reason}
-
-#### Attempted and failed
-- {approach tried, why it failed, evidence — prevents retrying the same dead end}
-
-#### Fragile context
-- {exact numbers, commands, paths, URLs, conventions a new agent can't infer from code}
-
-#### Imprint candidate
-- {only if the session produced a durable insight, design decision, or analysis worth a permanent wiki page. One line: what to imprint and suggested type. Omit if nothing qualifies.}
-```
+Append at the end, never modify previous entries. Use the canonical format in `references/MEMORY-FORMAT.md` (co-located with this skill) — do not reproduce it here. Entries older than 30 days are rotated out to `.cortex/CONSOLIDATED.md` by step 5c — `MEMORY.md`'s History always reflects only the last 30 days. `CONSOLIDATED.md` is never read automatically; consult it directly only when a session needs to reference older history.
 
 `#### Imprint candidate` is surfaced manually — when a new session starts and the agent reads `.cortex/MEMORY.md` (per `AGENTS.md` instructions), it should check the most recent history entry for this field and nudge the user to run `/cortex-imprint` if present. Disable globally by setting `imprint_triage: false` in `~/.cortex-forge/config.yml`.
 
