@@ -9,6 +9,11 @@ Begin your response by outputting exactly: `Pruning vault...`
 
 Health check the active vault in three layers: structural (script), semantic (agents), and drift (metadata comparison).
 
+## Available scripts
+
+- **`scripts/cortex-prune.sh`** — Layer 1 structural check; single writer of `wiki/meta/vault-report.json` (step 2)
+- **`scripts/cortex-validate-schema.sh`** — Validates `vault-report.json` schema drift, called by `cortex-prune.sh` as a sibling
+
 ## Steps
 
 1. **Resolve vault** — read `~/.cortex-forge/config.yml`:
@@ -26,7 +31,7 @@ Health check the active vault in three layers: structural (script), semantic (ag
    Read **Domains** and **Out of scope** from `AGENTS.md` (`## Vault identity`) — use them to flag pages whose topics fall outside the vault's defined scope.
    Read `locale:` — see `LOCALE-RESOLUTION.md` (co-located with the skills) for the fallback chain.
 
-2. **Layer 1 — Structural check**: Run `bash cortex-prune.sh {vault}`, where `cortex-prune.sh` is the script co-located with this skill (same directory as this SKILL.md — resolve its path from wherever this file was read from). If the script is missing, the skill installation is incomplete — reinstall with `npx skills add itsmistermoon/cortex-forge --skill cortex-prune` (or `/cortex-forge-setup`, sub-task `skills`).
+2. **Layer 1 — Structural check**: Run `bash scripts/cortex-prune.sh {vault}`, where `cortex-prune.sh` is the script co-located with this skill (`scripts/` subdirectory — resolve its path from wherever this file was read from). If the script is missing, the skill installation is incomplete — reinstall with `npx skills add itsmistermoon/cortex-forge --skill cortex-prune` (or `/cortex-forge-setup`, sub-task `skills`).
 
 3. **Layer 2 — Semantic analysis**: Run the four semantic checks below. For each check, spawn subagents as described — do not attempt to reason about the wiki pages from memory alone.
 

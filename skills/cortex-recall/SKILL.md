@@ -11,6 +11,11 @@ Begin your response by outputting exactly: `Recalling memory...`
 
 Answer a question using the vault's wiki content as the source.
 
+## Available scripts
+
+- **`scripts/cortex-search.py`** — Semantic search over `.cortex/db/vault.db` (step 3)
+- **`scripts/embeddings.py`** — Shared embedding backend, imported by `cortex-search.py`; not invoked directly
+
 ## Steps
 
 1. **Resolve vault** — read `~/.cortex-forge/config.yml`. Also read `locale:` — see `LOCALE-RESOLUTION.md` (co-located with the skills) for the fallback chain.
@@ -24,7 +29,7 @@ Answer a question using the vault's wiki content as the source.
 2. Read **Vocabulary** and **Domains** from `{vault}/AGENTS.md` (`## Vault identity` section) — use them to interpret the query correctly and scope the search.
 
 3. **Identify relevant pages** — prefer semantic search if the index is available:
-   - If `{vault}/.cortex/db/vault.db` exists: run `cortex-search.py` — the script co-located with this skill (same directory as this SKILL.md), **never** a script found inside the vault itself — with `--vault {vault} "{query}" --top-k 8 --json`, and use the returned chunks (path + heading + content) as the primary source set.
+   - If `{vault}/.cortex/db/vault.db` exists: run `scripts/cortex-search.py` — the script co-located with this skill (`scripts/` subdirectory), **never** a script found inside the vault itself — with `--vault {vault} "{query}" --top-k 8 --json`, and use the returned chunks (path + heading + content) as the primary source set.
    - Otherwise (index missing): read `{vault}/wiki/index.md` directly and identify the most relevant pages by title and description. This is the explicit fallback — it is NOT a protocol violation.
 
 4. Read the full pages for any result where the chunk alone is insufficient for a complete answer.

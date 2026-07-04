@@ -118,10 +118,10 @@ done
 # ---------------------------------------------------------------------------
 check "prune-script-colocated"
 PRUNE_SKILL="$SKILLS_DIR/cortex-prune/SKILL.md"
-if [[ -f "$SKILLS_DIR/cortex-prune/cortex-prune.sh" ]] && grep -q 'co-located with this skill' "$PRUNE_SKILL"; then
+if [[ -f "$SKILLS_DIR/cortex-prune/scripts/cortex-prune.sh" ]] && grep -q 'co-located with this skill' "$PRUNE_SKILL"; then
   ok "cortex-prune: script co-located and SKILL.md references it as such"
 else
-  fail "cortex-prune: cortex-prune.sh must be co-located in skills/cortex-prune/ and referenced as such"
+  fail "cortex-prune: cortex-prune.sh must be co-located in skills/cortex-prune/scripts/ and referenced as such"
 fi
 
 # ---------------------------------------------------------------------------
@@ -140,11 +140,11 @@ for skill_dir in "$SKILLS_DIR"/*/; do
   # copy's script name (e.g. "{vault}/.cortex/db/cortex-index.py") elsewhere.
   # Only match backtick-quoted filenames (how real script refs are always
   # written) — avoids false positives like prose links (e.g. "skills.sh").
-  refs=$(grep -i 'co-located' "$file" | grep -oE '`[A-Za-z0-9_-]+\.(sh|py)`' | tr -d '`' | sort -u || true)
+  refs=$(grep -i 'co-located' "$file" | grep -oE '`(scripts/)?[A-Za-z0-9_-]+\.(sh|py)`' | tr -d '`' | sed 's#^scripts/##' | sort -u || true)
   missing=""
   while IFS= read -r script; do
     [[ -z "$script" ]] && continue
-    [[ -f "$skill_dir/$script" ]] || missing="$missing $script"
+    [[ -f "$skill_dir/$script" || -f "$skill_dir/scripts/$script" ]] || missing="$missing $script"
   done <<< "$refs"
   if [[ -n "$missing" ]]; then
     fail "$name: script(s) claimed co-located but not found in $skill_dir:$missing"
@@ -167,7 +167,7 @@ _check_synced() {  # $1: script filename, $2..$N: skill names that must match
   local script="$1"; shift
   local first="" first_skill=""
   for name in "$@"; do
-    local f="$SKILLS_DIR/$name/$script"
+    local f="$SKILLS_DIR/$name/scripts/$script"
     [[ -f "$f" ]] || { fail "$name/$script: expected but not found"; continue; }
     if [[ -z "$first" ]]; then
       first="$f"; first_skill="$name"

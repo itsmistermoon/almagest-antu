@@ -7,6 +7,12 @@ argument-hint: "Optional sub-task: embeddings | skills | sync | vaults"
 
 Setup for Cortex Forge. Run from inside a vault directory (one containing `wiki/`, `AGENTS.md`, and `.git/`). Registers the vault in the global config. Cortex Forge does not rely on agent lifecycle hooks (SessionStart/PreCompact/SessionEnd/PreToolUse) — support for those is too uneven across agents. All memory operations (loading `.cortex/MEMORY.md`, crystallizing, recalling) are invoked manually via skills (`/cortex-crystallize`, `/cortex-recall`) so behavior is identical everywhere. This skill does not install skill files itself — [skills.sh](https://www.skills.sh/) (`npx skills add`) is the sole installer, for every agent it supports, not a hardcoded pair.
 
+## Available scripts
+
+- **`scripts/cortex-index.py`** — Builds/refreshes `.cortex/db/vault.db` when semantic search is enabled (step 6); also copied to `~/.cortex-forge/bin/` for the post-commit reindex hook (step 6c)
+- **`scripts/embeddings.py`** — Shared embedding backend, imported by `cortex-index.py`; not invoked directly
+- **`scripts/cortex-reindex-post-commit.sh`** — Copied to `~/.cortex-forge/bin/hooks/` and wired into `{vault}/.git/hooks/post-commit` (step 6c)
+
 ## Sub-tasks
 
 When an argument is provided, always run step 1 (vault detection) first, then jump directly to the relevant step(s) — skip everything else:
@@ -129,11 +135,11 @@ Always end with the relevant subset of step 9 (confirmation).
      > To limit which agents get symlinks (the default installs to every agent skills.sh recognizes), pass `-a <agent>` instead of `--all` — see the [Supported Agents table](https://github.com/vercel-labs/skills#supported-agents) for the exact flag per agent.
    - Never hand-roll agent-specific symlink logic here — that duplicates what `npx skills add` already does correctly for every agent it supports, not just whichever ones this skill happened to hardcode.
 
-6. **Offer semantic search (new vault only — for an already-registered vault, use maintenance menu option 3 instead)** — check dependencies *before* asking, so the offer itself is tailored to what's actually available. Run the detection procedure in `EMBEDDING-SETUP.md` (co-located with this skill), then ask using the tailored wording it returns (ready-to-go confirm, one-step-away confirm, or the full backend menu) — never ask a generic "enable semantic search?" without having checked first. If the user accepts, install anything needed and run `cortex-index.py` (co-located with this skill) with `{vault}` as its argument; report chunks indexed. If declined or skipped, note in the final summary that semantic search is not active and can be enabled later via `/cortex-forge-setup` (maintenance menu, option 3).
+6. **Offer semantic search (new vault only — for an already-registered vault, use maintenance menu option 3 instead)** — check dependencies *before* asking, so the offer itself is tailored to what's actually available. Run the detection procedure in `EMBEDDING-SETUP.md` (co-located with this skill), then ask using the tailored wording it returns (ready-to-go confirm, one-step-away confirm, or the full backend menu) — never ask a generic "enable semantic search?" without having checked first. If the user accepts, install anything needed and run `scripts/cortex-index.py` (co-located with this skill) with `{vault}` as its argument; report chunks indexed. If declined or skipped, note in the final summary that semantic search is not active and can be enabled later via `/cortex-forge-setup` (maintenance menu, option 3).
 
 6b. **Post-commit prune (opt-in, separate question)** — ask: "Refresh vault-report.json automatically after each commit? (optional)"
    If yes:
-   - **Resolve the `cortex-prune` skill's script:** git hooks run outside any agent session, so they need a fixed absolute path — the same-directory resolution the agent uses when invoking `/cortex-prune` directly doesn't apply here. Locate the `cortex-prune` skill's own directory (typically a sibling of this skill's directory — e.g. `../cortex-prune/cortex-prune.sh` relative to where this SKILL.md was read from) and copy that file to `~/.cortex-forge/bin/cortex-prune.sh` (create dir if needed; skip copy if already identical). If the file cannot be found anywhere, tell the user the `cortex-prune` skill isn't installed and skip this option.
+   - **Resolve the `cortex-prune` skill's script:** git hooks run outside any agent session, so they need a fixed absolute path — the same-directory resolution the agent uses when invoking `/cortex-prune` directly doesn't apply here. Locate the `cortex-prune` skill's own directory (typically a sibling of this skill's directory — e.g. `../cortex-prune/scripts/cortex-prune.sh` relative to where this SKILL.md was read from) and copy that file to `~/.cortex-forge/bin/cortex-prune.sh` (create dir if needed; skip copy if already identical). If the file cannot be found anywhere, tell the user the `cortex-prune` skill isn't installed and skip this option.
    - Check `git config core.hooksPath` first — if set (husky-style), install into that directory instead of `.git/hooks/`, or warn and skip.
    - Append the marked block to `{vault}/.git/hooks/post-commit` (create with shebang if missing; never clobber existing content — only add/remove the `>>> cortex-forge prune >>>` … `<<< cortex-forge prune <<<` block) and make it executable:
      ```bash
@@ -159,8 +165,8 @@ Always end with the relevant subset of step 9 (confirmation).
      - **Exists** → proceed normally.
      - **Does not exist** → do NOT skip silently. Run step 6's tailored dependency-check-then-offer procedure now (this happens if the user is reaching this point without having gone through step 6 first — e.g. via maintenance menu option 5 directly). If the user declines there, skip the hook installation and note in the summary that semantic search was not initialized.
    - Check `git config core.hooksPath` first — if set (husky-style), install into that directory instead of `.git/hooks/`, or warn and skip.
-   - Copy `cortex-reindex-post-commit.sh` (co-located with this skill) to `~/.cortex-forge/bin/hooks/` if not already there — same reasoning as 6b: the git hook needs a fixed absolute path outside any agent session, so it can't use "co-located with this skill" resolution.
-   - **Copy `cortex-index.py` and `embeddings.py`** (both co-located with this skill) to `~/.cortex-forge/bin/` if not already there or if different — same reasoning: the git hook needs to run these from a fixed absolute path, never from inside the vault.
+   - Copy `scripts/cortex-reindex-post-commit.sh` (co-located with this skill) to `~/.cortex-forge/bin/hooks/` if not already there — same reasoning as 6b: the git hook needs a fixed absolute path outside any agent session, so it can't use "co-located with this skill" resolution.
+   - **Copy `scripts/cortex-index.py` and `scripts/embeddings.py`** (both co-located with this skill) to `~/.cortex-forge/bin/` if not already there or if different — same reasoning: the git hook needs to run these from a fixed absolute path, never from inside the vault.
    - Append the marked block to `{vault}/.git/hooks/post-commit` (create with shebang if missing; never clobber existing content — only add/remove the `>>> cortex-forge reindex >>>` … `<<< cortex-forge reindex <<<` block) and make it executable:
      ```bash
      # >>> cortex-forge reindex >>>
