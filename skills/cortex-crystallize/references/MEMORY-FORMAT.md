@@ -53,7 +53,7 @@ updated: {YYYY-MM-DD}
 
 ## Zone 2 — History (APPEND-ONLY)
 
-Never modify previous entries. Append at the end.
+Never modify previous entries. Append at the end. Entries older than 30 days are rotated to `.cortex/CONSOLIDATED.md` — MEMORY.md's History always reflects only the last 30 days (see SKILL.md step 5c).
 
 ```markdown
 ## History

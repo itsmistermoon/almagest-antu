@@ -71,7 +71,11 @@ Skills se invocan manualmente durante la sesión. No tienen hooks — el agente 
 
 Al cerrar la sesión, el agente necesita escribir qué se hizo, qué se descartó, y qué contexto es frágil. No hay hook que capture esto automáticamente en ningún agente — `/cortex-crystallize` se invoca manualmente, siempre, del mismo modo en todo agente.
 
-`AGENTS.md` instruye invocar `/cortex-crystallize` "después de hitos" y antes de cerrar la sesión. El skill detecta el agente invocador (`env` — `CLAUDECODE=1`, `AI_AGENT`, etc., ver `cortex-crystallize/SKILL.md` paso 1a) para completar el campo `agent:` del snapshot, pero la invocación siempre es manual.
+`AGENTS.md` instruye invocar `/cortex-crystallize` "después de hitos" y antes de cerrar la sesión. El skill detecta el agente invocador vía self-knowledge, corroborado opcionalmente con `env` (sin lista fija de agentes — corregido 2026-07-04, ver `cortex-crystallize/SKILL.md` paso 1a) para completar el campo `agent:` del snapshot, pero la invocación siempre es manual.
+
+**Ciclo de vida de `## History` (2026-07-04):** cada invocación de `/cortex-crystallize` primero rota (paso 5c) las entradas de `## History` en `MEMORY.md` con más de 30 días hacia `.cortex/CONSOLIDATED.md` (verbatim, orden cronológico preservado) — `MEMORY.md` nunca acumula más de 30 días de historial. `CONSOLIDATED.md` nunca se lee automáticamente al inicio de sesión; solo se consulta bajo demanda. Este ciclo estaba en el plan original (28 de junio) pero nunca se implementó — confirmado revisando el transcript de esa sesión, el `Edit` real solo agregó el paso de poda de PRAXIS, nunca la rotación de History.
+
+**Ciclo de vida de `PRAXIS.md` (2026-07-04):** el paso 6a evalúa, tras cada sesión, si surgió conocimiento operativo durable (workaround de entorno, preferencia del operador, convención del vault, patrón de fallo recurrente, u otro de forma similar) que el próximo agente no debería tener que re-descubrir. El gate entre zonas es de **confianza, no de categoría**: confirmado explícitamente por el usuario o repetido en una sesión posterior → `## Permanent` (con promoción explícita, nunca duplicado); observación de una sola sesión → `## Working context` (podado a los 30 días por el paso 5b si no se reconfirma). Mismo gap que el de History: estaba especificado en el plan original pero nunca implementado hasta ahora.
 
 ---
 
