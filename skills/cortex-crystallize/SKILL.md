@@ -5,7 +5,7 @@ description: Snapshot session context into .cortex/MEMORY.md — preserves pendi
 argument-hint: "[vault-name] [project-name] [next: <focus>]"
 ---
 
-Begin your response by outputting exactly: `Crystallizing memory...`
+Begin your response with a short flavor line announcing the skill started, translated to the language of the user's current message (anchor: `Crystallizing memory...`; Spanish: `Cristalizando memoria...`; translate analogously for other languages). Output this literally as the first thing in your response.
 
 Save a session snapshot to `.cortex/MEMORY.md` in the active repo (the nearest `.git`), so any agent can resume without losing context.
 
