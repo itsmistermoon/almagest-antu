@@ -23,9 +23,10 @@ npx skills add itsmistermoon/cortex-forge
 2. See the [Supported Agents table](https://github.com/vercel-labs/skills#supported-agents) to pick the exact flag value per agent.
 
 3. Run `/cortex-forge-setup` in your agent. This skill will:
-- Validate the vault structure and register it in `~/.cortex-forge/config.yml`
-- Verify all six skills are actually installed (recommended), and tells you to re-run `npx skills add` if any are missing
+- Validate the vault structure, detect your locale, and register the vault in `~/.cortex-forge/config.yml`
+- Verify all six skills are actually installed, and tell you to re-run `npx skills add` if any are missing
 - Offer to set up semantic search, with a dependency check that runs before asking
+- Offer optional extras: syncing infrastructure from upstream, a stale-cache warning threshold, and post-commit git hooks for prune/reindex
 - Ask which vault to set as default if more than one is registered
 
 After setup, all skills are available as `/cortex-assimilate`, `/cortex-crystallize`, `/cortex-imprint`, `/cortex-recall`, `/cortex-prune`, and `/cortex-forge-setup`.
