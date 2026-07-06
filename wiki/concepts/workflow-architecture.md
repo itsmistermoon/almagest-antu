@@ -2,7 +2,7 @@
 title: Workflow Architecture
 type: concept
 created: 2026-06-13
-updated: 2026-07-02
+updated: 2026-07-06
 tags: [cortex-forge, architecture, workflow, skills, scripts, agents]
 sources:
   - wiki/concepts/agent-hook-compatibility.md
@@ -39,13 +39,13 @@ End ────── /cortex-crystallize invocado manualmente
 
 ## Fase 1: Session Start — Cargar contexto
 
-El agente necesita saber qué pasó antes. `AGENTS.md` (sección "Crystallize protocol — MANDATORY") lo obliga a leer `.cortex/MEMORY.md` completo antes de su primera respuesta, en cualquier agente:
+El agente necesita saber qué pasó antes. `AGENTS.md` (sección "Session start") lo obliga a leer `.cortex/MEMORY.md` completo antes de su primera respuesta, en cualquier agente:
 
-1. Leer `.cortex/MEMORY.md` en full.
+1. Leer `.cortex/MEMORY.md` en full — incluye `### Pending` (donde ya vive, entre otras cosas, cualquier hallazgo de salud del vault que `cortex-crystallize` haya escrito ahí en su última corrida).
 2. Si existe, leer `.cortex/PRAXIS.md`.
-3. Si existe, leer `wiki/meta/vault-report.json` y surfacear issues.
-4. Si `MEMORY.md` tiene `### Pending` items, reconocerlos.
-5. Revisar la última entrada de `## History` por un `#### Imprint candidate` y proponer `/cortex-imprint` si está presente.
+3. Revisar la última entrada de `## History` por un `#### Imprint candidate` y proponer `/cortex-imprint` si está presente.
+
+Reducido el 2026-07-06: `AGENTS.md` ya no instruye leer `wiki/meta/vault-report.json` directamente ni tiene un chequeo de stale-cache aparte — ambos eran redundantes con lo que `cortex-crystallize` ya escribe en `### Pending` al correr. Las secciones "Assimilate protocol"/"Recall protocol" también se eliminaron: cada skill dispara sola vía su propio `description:`, sin necesidad de que `AGENTS.md` lo repita.
 
 Este mecanismo es idéntico en Claude Code, Codex, Antigravity y CommandCode — no hay tabla de "qué hook usa cada agente" porque ningún agente usa hooks para esto. La confiabilidad depende de que el agente respete `AGENTS.md`, no de un evento del harness.
 
@@ -57,13 +57,13 @@ Skills se invocan manualmente durante la sesión. No tienen hooks — el agente 
 
 | Skill | Cuándo invocar | Qué hace | Dónde vive |
 |-------|---------------|----------|-----------|
-| `/cortex-recall` | Cuando el usuario pregunta sobre algo que el vault pueda cubrir | Busca en `wiki/` y responde con citas + confidence. **Protocolo obligatorio** — no usar grep/find como reemplazo | `skills/cortex-recall/SKILL.md` |
-| `/cortex-assimilate` | Cuando llega una URL o archivo nuevo para ingerir | Descarga → SPA detection → guarda en `.raw/` → sintetiza páginas wiki → actualiza índice. **Protocolo obligatorio** | `skills/cortex-assimilate/SKILL.md` |
+| `/cortex-recall` | Cuando el usuario pregunta sobre algo que el vault pueda cubrir (dispara sola vía su propio `description:`) | Busca en `wiki/` y responde con citas + confidence — no usar grep/find como reemplazo | `skills/cortex-recall/SKILL.md` |
+| `/cortex-assimilate` | Cuando llega una URL o archivo nuevo para ingerir (dispara sola vía su propio `description:`) | Descarga → SPA detection → guarda en `.raw/` → sintetiza páginas wiki → actualiza índice | `skills/cortex-assimilate/SKILL.md` |
 | `/cortex-crystallize` | Al cerrar un hito, o cuando el usuario pide "guardar contexto", o antes de cerrar la sesión | Snapshot del estado actual de la sesión en `.cortex/MEMORY.md` | `skills/cortex-crystallize/SKILL.md` |
 | `/cortex-prune` | Periódicamente, o cuando el vault-report muestra issues | Health check: detecta dead links, raw huérfanos, páginas sin frontmatter, confidence faltante | `skills/cortex-prune/SKILL.md` |
 | `/cortex-imprint` | Cuando la sesión produjo análisis o síntesis que vale la pena persistir | Archiva el hallazgo como página permanente en `wiki/` | `skills/cortex-imprint/SKILL.md` |
 
-`AGENTS.md` recuerda al agente qué skills usar y cuándo — el mismo mecanismo en todos los agentes soportados. (Antes existía un step opcional en `cortex-forge-setup` que instalaba una [[wiki/concepts/commandcode-taste|TASTE]] rule específica de CommandCode en `.commandcode/taste/taste.md`; se eliminó el 2026-07-03 por contradecir el principio agent-agnostic del setup.)
+Cada skill dispara sola vía su propio `description:` — `AGENTS.md` no duplica esa lógica de invocación (eliminada el 2026-07-06 de las secciones que antes existían como "Assimilate protocol"/"Recall protocol"). (Antes existía un step opcional en `cortex-forge-setup` que instalaba una [[wiki/concepts/commandcode-taste|TASTE]] rule específica de CommandCode en `.commandcode/taste/taste.md`; se eliminó el 2026-07-03 por contradecir el principio agent-agnostic del setup.)
 
 ---
 
@@ -123,3 +123,4 @@ Documentación que el agente lee bajo demanda, distinta de un script ejecutable 
 - 2026-07-03 [Claude Code]: Scripts relocated to be co-located with the skill that uses them (`skills/cortex-prune/cortex-prune.sh`, `skills/cortex-assimilate/cortex-sanitize.sh`, `skills/cortex-forge-setup/{cortex-index.py,cortex-search.py,embeddings.py,cortex-reindex-post-commit.sh}`) — so `npx skills add itsmistermoon/cortex-forge --skill X` installs a fully functional skill without depending on `~/.cortex-forge/` (the tarball runtime). `~/.cortex-forge/bin/` is now only a runtime cache populated at setup time, used exclusively by the two git hooks (which need a fixed absolute path outside any agent session). Fixed two latent path bugs found in the process: the reindex post-commit script pointed at a nonexistent `{vault}/bin/cortex-index.py`, and `cortex-assimilate` step 7 pointed at `.cortex/cortex-index.py` instead of `.cortex/db/cortex-index.py`.
 - 2026-07-03 [Claude Code]: Second pass — eliminated the remaining vault-local code execution flagged by a Snyk security audit (E006 CRITICAL for `cortex-recall`, same category unreported for `cortex-assimilate`). `cortex-search.py`+`embeddings.py` moved to `skills/cortex-recall/`; `cortex-index.py`+`embeddings.py` duplicated into `skills/cortex-assimilate/` (kept in sync via a new CI check, `duplicated-script-sync`). `cortex-forge-setup` no longer copies these scripts into `{vault}/.cortex/db/` at all — it runs its own co-located `cortex-index.py` directly, and copies `cortex-index.py`+`embeddings.py` to `~/.cortex-forge/bin/` only for the git hook's use. `{vault}/.cortex/db/` now holds only `vault.db` and `config.json` — no executable code, ever.
 - 2026-07-03 [Claude Code]: `install.sh` and the tarball GitHub Release asset removed entirely — `npx skills add` (skills.sh) is now the sole installer, superior in every way that mattered (agent-agnostic across 40+ agents vs. `install.sh`'s hardcoded Claude Code + Antigravity, no separate CI workflow to keep in sync, no `~/.cortex-forge/` runtime to maintain). `cortex-forge-setup` steps 4-pre/4/5/5a (tarball-completeness check + hand-rolled per-agent symlinks) collapsed into a single step 4 that only verifies skills are present and points to `npx skills add` if not — never re-implements what the installer already does. Removed the now-dead legacy config.yml fallback from `_resolve_embeddings_dir()` in all 3 copies of the embedding-resolution scripts (was only reachable from tarball installs). `.github/workflows/release.yml` still creates the GitHub Release object on tag push (for changelog/version tracking) but no longer builds or attaches a tarball.
+- 2026-07-06 [Claude Code]: `AGENTS.md` trimmed to match its "skills should stand on their own" principle. The "Crystallize protocol — MANDATORY" section (7 numbered steps) shrank to a 3-line "Session start": read `MEMORY.md` (+ `PRAXIS.md` if present), propose `/cortex-imprint` if the History flag is set. Dropped: the stale-cache warning and the direct `wiki/meta/vault-report.json` read — both redundant with the `### Pending` item `cortex-crystallize` already writes on every run. The "Assimilate protocol" and "Recall protocol" sections were removed outright — each skill's own `description:` already states when to trigger it, so `AGENTS.md` no longer duplicates that. Updated this page's Fase 1/Fase 2 sections and `bin/check-skill-sync.sh`'s `vault-report-schema` check (now verifies against `cortex-crystallize/SKILL.md`, the real consumer, not `AGENTS.md`) to match.
