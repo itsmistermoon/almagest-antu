@@ -16,7 +16,7 @@ Ingest a new source and synthesize wiki pages from it.
 Paths are relative to this skill's directory.
 
 - **`scripts/cortex-sanitize.sh`** — Detects and auto-redacts credentials in a temp file before ingestion (step 2)
-- **`scripts/cortex-index.py`** — Re-indexes vault embeddings after a new source is ingested (step 5)
+- **`scripts/cortex-index.py`** — Re-indexes vault embeddings after a new source is ingested (step 7)
 - **`scripts/embeddings.py`** — Shared embedding backend, imported by `cortex-index.py`; not invoked directly
 
 ## Steps
@@ -33,20 +33,18 @@ Paths are relative to this skill's directory.
 
    **Sanitization check** — before saving to `.raw/`, run `bash scripts/cortex-sanitize.sh <temp-file>` (detects injection, exfiltration, and credential vectors) and inspect the JSON output:
 
-   - **If `redacted: true`** — the script already replaced every matched credential (API keys, bearer tokens, AWS keys, basic-auth `user:pass`) with `<REDACTED>` in `<temp-file>`. Tell the user how many credentials were redacted and proceed with the redacted content. Never reconstruct or reinsert the original secret anywhere — not even on explicit user request.
-   - **Any other finding type** (`invisible_unicode`, `html_comment`, `base64`, `egress_command`, `anthropic_base_url`) is informational, not blocking: list each finding (type, label, count) and ask "This content has [N] findings (see above). Proceed with ingestion?" — default is **yes**. If the user declines, stop without saving; if they accept, save to `.raw/` and note the findings in the source page's changelog.
+   - **If `redacted: true`** — tell the user how many credentials were redacted in `<temp-file>` and proceed with the redacted content. Never reconstruct or reinsert the original secret anywhere — not even on explicit user request.
+   - **Any other finding type** is informational, not blocking: list each finding (type, label, count) and ask "This content has [N] findings (see above). Proceed with ingestion?" — default is **yes**. If the user declines, stop without saving; if they accept, save to `.raw/` and note the findings in the source page's changelog.
 
    If `rg` or `jq` is not available, or the script errors: skip the check (fail-open), but tell the user explicitly that credential redaction did not run for this source — do not proceed silently.
 
-3. **Synthesize** — evaluate the source against the criteria below and create pages for every qualifying type. **Done when:** every content type (concept, entity, project) that meets its creation criteria has a page — zero qualifying types skipped. If a topic is borderline, evaluate it rather than skipping.
+3. **Synthesize** — evaluate the source against the type criteria in `## Page types` below and create pages for every qualifying type. **Done when:** every content type (concept, entity, project) that meets its creation criteria has a page — zero qualifying types skipped. If a topic is borderline, evaluate it rather than skipping.
 
 4. Update `{vault}/wiki/index.md` with new pages.
 
-5. **Re-index embeddings** — if `{vault}/.cortex/db/vault.db` exists, run `python3 -B scripts/cortex-index.py {vault}` and report the result inline: "Indexed N new chunk(s)." If the db does not exist, skip silently — the vault may not have semantic search enabled.
+5. **Project linking** — check `{vault}/wiki/projects/` for active projects whose `domains:` match the source; propose the update before writing.
 
-6. **Project linking** — check `{vault}/wiki/projects/` for active projects whose `domains:` match the source; propose the update before writing.
-
-7. **Backward enrichment** — scan existing wiki pages for candidates that should now reference the new source.
+6. **Backward enrichment** — scan existing wiki pages for candidates that should now reference the new source.
 
    Skip this step if the new source page has no `tags:` or if fewer than 5 wiki pages exist total.
 
@@ -56,23 +54,11 @@ Paths are relative to this skill's directory.
    4. For each ENRICHABLE candidate, state exactly what to add and where — e.g., "Add OpenWiki to the comparison table in §Key mechanisms."
    5. Report all ENRICHABLE candidates to the user. Do not apply any changes without explicit confirmation per candidate.
 
+7. **Re-index embeddings** — runs last so it captures every page this run touched, including step 5/6 updates to existing pages — if `{vault}/.cortex/db/vault.db` exists, run `python3 -B scripts/cortex-index.py {vault}` and report the result inline: "Indexed N new chunk(s)." If the db does not exist, skip silently — the vault may not have semantic search enabled.
+
 ## --research mode
 
-If the argument starts with `--research`, discover sources on the web and run each one through the normal pipeline:
-
-```
-/cortex-assimilate --research "embeddings for second brains" [--rounds N]
-```
-
-1. **Search in rounds** — round 1: broad search on the query. Round 2: search the 2–3 sub-topics that surfaced in round 1 but weren't in the query. Round 3 only if `--rounds 3` was given or round 2 revealed a significant knowledge gap. Tell the user what each round found.
-
-2. **Fetch and save each URL** — prefer Firecrawl if `firecrawl --status` shows it available and authenticated (`firecrawl search "<query>"`, `firecrawl scrape <url>`); otherwise fall back to `WebSearch` + `WebFetch` — never block on Firecrawl absence. For each URL, run it through step 2 of the normal pipeline (SPA check, sanitization check, save to `{vault}/.raw/{slug}.md`) — a scraped source is not exempt from either check. Skip URLs that fail or return empty content.
-
-3. **Cross-reference** — where scraped sources directly conflict, prepare a `[!contradiction]` callout (**Claim** / **Source A** / **Source B** / **Notes**, with linked titles) to embed in the relevant page.
-
-4. **Synthesize and report** — run steps 3–7 of the normal pipeline for each `.raw/` file saved above; each gets its own `wiki/sources/` entry. Report sources ingested, pages created/updated, and contradictions found.
-
-**Budget:** 2 rounds, max 12 URLs. Override rounds with `--rounds N`.
+If the first argument starts with `--research`, discover sources on the web instead of processing a single given URL or file — see `references/RESEARCH-MODE.md`.
 
 ## Page types
 
