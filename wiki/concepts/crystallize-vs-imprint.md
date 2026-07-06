@@ -4,6 +4,7 @@ type: concept
 created: 2026-06-30
 updated: 2026-06-30
 tags: [cortex-forge/protocol, skills, memory, knowledge-management, design-decision]
+aliases: [crystallize vs imprint, memory vs wiki, hot cache vs knowledge graph]
 sources:
   - conversation 2026-06-30
 confidence: high
