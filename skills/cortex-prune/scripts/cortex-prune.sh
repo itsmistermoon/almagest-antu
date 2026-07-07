@@ -202,7 +202,7 @@ fi
 if [ -d "$TEMPLATES" ]; then
   EXPECTED_DIRS=$(find "$TEMPLATES" -maxdepth 1 -name "*.md" -exec basename {} .md \; \
     | awk '{ if ($0 ~ /y$/) { sub(/y$/,"ies"); print } else print $0 "s" }')
-  find "$WIKI" -mindepth 1 -maxdepth 1 -type d | while read -r d; do
+  find "$WIKI" -mindepth 1 -maxdepth 1 -type d ! -name ".*" | while read -r d; do
     dname=$(basename "$d")
     [ "$dname" = "meta" ] && continue
     echo "$EXPECTED_DIRS" | grep -qx "$dname" \
