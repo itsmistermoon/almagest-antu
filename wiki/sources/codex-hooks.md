@@ -1,18 +1,14 @@
 ---
 title: Hooks - Codex
 type: source
-resource: 
+resource: https://developers.openai.com/codex/hooks
 created: 2026-06-08
 updated: 2026-06-10
 tags: [codex, hooks, lifecycle, configuration]
-source_url: https://developers.openai.com/codex/hooks
-source_date:
 source_author: OpenAI
-sources:
-  - .raw/codex-hooks.md
 confidence: high
 schema_version: "0.3"
-raw: 
+raw: .raw/codex-hooks.md
 ---
 
 # Hooks - Codex

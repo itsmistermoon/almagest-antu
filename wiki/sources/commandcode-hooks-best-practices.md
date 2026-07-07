@@ -1,18 +1,14 @@
 ---
 title: Hooks Best Practices - Command Code
 type: source
-resource: 
+resource: https://commandcode.ai/docs/hooks/best-practices
 created: 2026-06-08
 updated: 2026-06-08
 tags: [commandcode, hooks, best-practices, security, debugging]
-source_url: https://commandcode.ai/docs/hooks/best-practices
-source_date:
 source_author: CommandCode
-sources:
-  - .raw/commandcode-hooks-best-practices.md
 confidence: high
 schema_version: "0.3"
-raw: 
+raw: .raw/commandcode-hooks-best-practices.md
 ---
 
 # Hooks Best Practices - Command Code

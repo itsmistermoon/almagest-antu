@@ -1,23 +1,20 @@
 ---
 title: Headless Mode - Command Code
 type: source
-resource: 
+resource: https://commandcode.ai/docs/core-concepts/headless
 created: 2026-06-12
 updated: 2026-06-12
 tags: [commandcode, headless, sessions, transcripts, resume]
-source_url: https://commandcode.ai/docs/core-concepts/headless
-source_date: 2026-06-12
 source_author: CommandCode
-sources:
-  - .raw/commandcode-headless.md
 confidence: high
 schema_version: "0.3"
-raw: 
+raw: .raw/commandcode-headless.md
 ---
 
 # Headless Mode - Command Code
 
 **URL:** https://commandcode.ai/docs/core-concepts/headless
+**Original date:** 2026-06-12
 **Author:** CommandCode
 
 ## Summary

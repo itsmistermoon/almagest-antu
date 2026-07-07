@@ -1,15 +1,11 @@
 ---
 title: Antigravity CLI - Tutorial
 type: source
-resource: 
+resource: https://antigravity.google/docs/cli-tutorial
 created: 2026-06-08
 updated: 2026-06-08
 tags: [antigravity, cli, tutorial, onboarding]
-source_url: https://antigravity.google/docs/cli-tutorial
-source_date: 2026-06-08
 source_author: Google Antigravity Team
-sources:
-  - wiki/sources/antigravity-cli-tutorial.md
 confidence: high
 schema_version: "0.3"
 raw: 

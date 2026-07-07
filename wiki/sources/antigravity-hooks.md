@@ -1,18 +1,14 @@
 ---
 title: Google Antigravity Hooks
 type: source
-resource: 
+resource: https://antigravity.google/docs/hooks
 created: 2026-06-07
 updated: 2026-06-07
 tags: [antigravity, hooks, session-management, configuration]
-source_url: https://antigravity.google/docs/hooks
-source_date: 2026-06-07
 source_author: Google Antigravity Team
-sources:
-  - .raw/antigravity-hooks.md
 confidence: high
 schema_version: "0.3"
-raw: 
+raw: .raw/antigravity-hooks.md
 ---
 
 # Google Antigravity Hooks

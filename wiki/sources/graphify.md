@@ -1,12 +1,10 @@
 ---
 title: Graphify
 type: source
-resource: 
+resource: https://github.com/safishamsi/graphify
 created: 2026-06-12
 updated: 2026-06-12
 tags: [graphify, knowledge-graph, multi-agent, yc-s26, comparable]
-source_url: https://github.com/safishamsi/graphify
-source_date: 2026-06-12
 source_author: Safi Shamsi / Graphify Labs
 sources:
   - wiki/sources/graphify-readme.md
@@ -21,6 +19,7 @@ raw:
 # Graphify
 
 **URL:** https://github.com/safishamsi/graphify
+**Original date:** 2026-06-12
 **Author:** Safi Shamsi / Graphify Labs (YC S26)
 **Stars:** 66.3k
 

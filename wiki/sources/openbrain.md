@@ -1,17 +1,14 @@
 ---
 title: "OpenBrain — Personal Semantic Memory with MCP"
 type: source
-resource: 
+resource: https://github.com/RadixSeven/OpenBrain
 created: 2026-06-15
 updated: 2026-06-15
 tags: [memory-systems, mcp, pgvector, embeddings, semantic-search, supabase]
-source_url: https://github.com/RadixSeven/OpenBrain
 source_author: Nate B. Jones (original); RadixSeven (fork with privacy improvements)
-sources:
-  - .raw/openbrain-guide.md
 confidence: high
 schema_version: "0.3"
-raw: 
+raw: .raw/openbrain-guide.md
 ---
 
 # OpenBrain — Personal Semantic Memory with MCP

@@ -1,18 +1,14 @@
 ---
 title: Hooks Examples - Command Code
 type: source
-resource: 
+resource: https://commandcode.ai/docs/hooks/examples
 created: 2026-06-08
 updated: 2026-06-08
 tags: [commandcode, hooks, examples, enforcement, quality-gate]
-source_url: https://commandcode.ai/docs/hooks/examples
-source_date:
 source_author: CommandCode
-sources:
-  - .raw/commandcode-hooks-examples.md
 confidence: high
 schema_version: "0.3"
-raw: 
+raw: .raw/commandcode-hooks-examples.md
 ---
 
 # Hooks Examples - Command Code

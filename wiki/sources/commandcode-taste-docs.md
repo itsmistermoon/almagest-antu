@@ -1,14 +1,11 @@
 ---
 title: "TASTE — Official CommandCode Documentation"
 type: source
-resource: 
+resource: https://commandcode.ai/docs/taste
 created: 2026-06-08
 updated: 2026-06-08
 tags: [commandcode, taste, documentation]
-source_url: https://commandcode.ai/docs/taste
-source_date: 2026
 source_author: CommandCode
-sources: []
 confidence: high
 schema_version: "0.3"
 raw: 

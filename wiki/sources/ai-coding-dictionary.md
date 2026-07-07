@@ -1,14 +1,11 @@
 ---
 title: "AI Coding Dictionary"
 type: source
-resource: 
+resource: https://www.aihero.dev/ai-coding-dictionary
 created: 2026-06-08
 updated: 2026-06-10
 tags: [ai-agents, vocabulary, reference]
-source_url: https://www.aihero.dev/ai-coding-dictionary
-source_date: 2026
 source_author: Matt Pocock
-sources: []
 confidence: high
 schema_version: "0.3"
 raw: 

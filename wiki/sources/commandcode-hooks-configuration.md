@@ -1,18 +1,14 @@
 ---
 title: Hooks Configuration - Command Code
 type: source
-resource: 
+resource: https://commandcode.ai/docs/hooks/configuration
 created: 2026-06-08
 updated: 2026-06-08
 tags: [commandcode, hooks, configuration, settings.json]
-source_url: https://commandcode.ai/docs/hooks/configuration
-source_date:
 source_author: CommandCode
-sources:
-  - .raw/commandcode-hooks-configuration.md
 confidence: high
 schema_version: "0.3"
-raw: 
+raw: .raw/commandcode-hooks-configuration.md
 ---
 
 # Hooks Configuration - Command Code

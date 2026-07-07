@@ -1,23 +1,20 @@
 ---
 title: Hooks Reference - Command Code
 type: source
-resource: 
+resource: https://commandcode.ai/docs/hooks/reference
 created: 2026-06-12
 updated: 2026-06-12
 tags: [commandcode, hooks, reference, wire-format, transcript-path]
-source_url: https://commandcode.ai/docs/hooks/reference
-source_date: 2026-06-12
 source_author: CommandCode
-sources:
-  - .raw/commandcode-hooks-reference.md
 confidence: high
 schema_version: "0.3"
-raw: 
+raw: .raw/commandcode-hooks-reference.md
 ---
 
 # Hooks Reference - Command Code
 
 **URL:** https://commandcode.ai/docs/hooks/reference
+**Original date:** 2026-06-12
 **Author:** CommandCode
 
 ## Summary
