@@ -4,9 +4,9 @@ Reference for `cortex-forge-setup` step 1. Read only when the vault-candidate ch
 
 ## When this applies
 
-Step 1 normally requires `.git/`, `wiki/`, `AGENTS.md` to already exist. A missing `wiki/`/`AGENTS.md` is ambiguous — it could mean a genuinely new, empty directory, or a vault that's broken/incomplete. Disambiguate before writing anything:
+Step 1 requires `.git/`. A missing `wiki/`/`AGENTS.md` is ambiguous — it could mean a genuinely new, empty directory, or a vault that's broken/incomplete. Disambiguate before writing anything:
 
-```
+```text
 This directory doesn't have {wiki/ and/or AGENTS.md}. Is this a new vault?
 I'll create the empty wiki/ structure and a starter AGENTS.md, then continue setup.
 

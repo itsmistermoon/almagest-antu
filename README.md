@@ -22,7 +22,7 @@ npx skills add itsmistermoon/cortex-forge
 
 2. See the [Supported Agents table](https://github.com/vercel-labs/skills#supported-agents) to pick the exact flag value per agent.
 
-3. Run `/cortex-forge-setup` in your agent — from a fresh, empty directory or an existing one, both work. This skill will:
+3. Run `/cortex-forge-setup` in your agent — from a fresh git repo or an existing vault. This skill will:
 - Scaffold `wiki/` and a starter `AGENTS.md` if they don't exist yet (asks first — never overwrites an existing vault), detect your locale, and register the vault in `~/.cortex-forge/config.yml`
 - Verify all six skills are actually installed, and tell you to re-run `npx skills add` if any are missing
 - Offer to set up semantic search, with a dependency check that runs before asking
