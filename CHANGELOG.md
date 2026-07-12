@@ -29,6 +29,8 @@ Protocol-significant changes to cortex-forge are documented here.
 
 Format: `[semver] — title — YYYY-MM-DD`
 
+**If an `[Unreleased]` section exists, it must always be the first section in this file, above every `[semver]` header** — Changesets prepends each new version block at the very top of the file (right after the `# Changelog` title) with no awareness of anything hand-written below it. An `[Unreleased]` section left under the latest version gets buried deeper on every subsequent release instead of being picked up, exactly what happened to the `AGENTS.md` protocol-trim entry that sat orphaned until it was folded into 0.8.0. When cutting a release, either move `[Unreleased]` back to the top first, or fold its content into the new version entry if it already shipped.
+
 ---
 
 ## [0.7.0] — npx-only Distribution, Security Hardening & Suite Compaction — 2026-07-06
