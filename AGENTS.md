@@ -17,7 +17,7 @@ This repo is the source of truth for the Cortex Forge skill suite (`skills/`, `t
 
 If the latest `## History` entry in `MEMORY.md` has a `#### Imprint candidate` line, propose imprinting it into a target vault, e.g. via `/cortex-imprint {vault}`.
 
-Beyond this, skills trigger themselves — each one's own `description:` states when to invoke it, and that's the single place to look.
+Beyond this, skills trigger themselves — each one's own `description:` states when to invoke it, and that's the single place to look, except where an Agent rule below explicitly calls one out (e.g. the skill-design-principles check).
 
 ## Agent skills
 
