@@ -21,6 +21,10 @@ Beyond this, skills trigger themselves — each one's own `description:` states 
 
 ## Agent skills
 
+### Development methodology
+
+Sigue `METHODOLOGY.md` en la raíz de este repo. Si no existe en este entorno, avisar al usuario y usar el flujo nativo del repo en su lugar.
+
 ### Issue tracker
 
 GitHub Issues in `itsmistermoon/cortex-forge`. PRs are not a triage surface. See `docs/agents/issue-tracker.md`.
