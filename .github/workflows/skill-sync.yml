@@ -4,11 +4,15 @@ on:
   push:
     paths:
       - "skills/**/SKILL.md"
+      - "skills/**/references/**"
+      - "skills/**/scripts/**"
       - "AGENTS.md"
       - "scripts/check-skill-sync.sh"
   pull_request:
     paths:
       - "skills/**/SKILL.md"
+      - "skills/**/references/**"
+      - "skills/**/scripts/**"
       - "AGENTS.md"
       - "scripts/check-skill-sync.sh"
 
