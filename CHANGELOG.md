@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.9.0
+
+### Minor Changes
+
+- fd53fbb: Add `antu-triage`, a 7th Antu skill for on-demand `.hot/` hygiene: retrospective `PLAYBOOK.md` pruning across past sessions, recovering pending/fragile-context items buried in `HISTORY.md` after a foreign-suite (Kuyen) write, and validity re-checks on existing `### Pending`/`### Active decisions` entries. Mirrors `antu-prune`'s pattern — separate, on-demand skill rather than folded into `antu-handoff`. As part of the responsibility split, `PLAYBOOK.md`'s 15-day Working-context pruning moves out of `antu-handoff` into `antu-triage`, and `antu-handoff` now nudges toward `antu-triage` via a `### Pending` suggestion when it archives a whole foreign-suite `HANDOFF.md` block, or when PLAYBOOK pruning is more than 30 days overdue.
+
+### Patch Changes
+
+- f6b34da: Almagest rebrand (ADR 0004): repo renamed `cortex-forge` → `almagest-antu` under the new Almagest umbrella; `wiki-recall` → `wiki-query` and `wiki-prune` → `wiki-lint` (converging on the Karpathy-lineage verbs shared with Kuyen); `~/.cortex-forge/` → `~/.almagest/`; zero-legacy policy — the `hot_cache_stale_days` migration step and the legacy `.hot/vault.db` fallback are removed. `docs/family-conventions.md` moved to the umbrella repo.
+- 19c5f56: Move shared skill-internal reference docs (`VAULT-RESOLUTION.md`, `LOCALE-RESOLUTION.md`, `HANDOFF-FORMAT.md`, `PLAYBOOK-FORMAT.md`) from per-skill duplicates to one canonical copy each at repo-root `references/`, synced by `/antu-setup` into `~/.cortex-forge/references/`. Existing vaults need one manual sync (`/antu-setup` maintenance menu, option 2) to pick this up.
+- b1d952e: Record the unified `.hot/`/`HANDOFF.md`/`HISTORY.md`/`PLAYBOOK.md` convention in `docs/family-conventions.md` (ADR 0001), now that its implementation has landed.
+- dcfed9f: Rename all 7 skills from the suite-brand prefix to a memory-domain prefix (ADR 0003): `antu-handoff` → `hot-handoff`, `antu-triage` → `hot-triage`, `antu-ingest` → `wiki-ingest`, `antu-recall` → `wiki-recall`, `antu-imprint` → `wiki-imprint`, `antu-prune` → `wiki-prune`, `antu-setup` → `wiki-setup`. Hard cut, no aliases. `~/.cortex-forge/config.yml`'s `hot_cache_stale_days` key renamed to `playbook_stale_days`, migrated in place by `wiki-setup` on next run.
+- af10495: Rename `PRAXIS.md` to `PLAYBOOK.md` (ADR 0001, decision 10).
+
 Protocol-significant changes to Antu are documented here.
 
 **What counts as protocol-significant:**
