@@ -323,7 +323,7 @@ find "$WIKI" -name "*.md" \
         incite && /^---$/ { incite=0 }
         incite && NF {
           n++
-          pat = "^\\[" n "\\] \\[[^]]+\\]\\(/wiki/[^)]+\\.md\\)[ \t]*$"
+          pat = "^\\[" n "\\] \\[[^]]+\\]\\(/wiki/.*\\.md\\)[ \t]*$"
           if ($0 !~ pat) {
             printf "%s\t%s\n", rel, $0
           }
