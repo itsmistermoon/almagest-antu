@@ -18,7 +18,7 @@ Paths are relative to this skill's directory.
 - **`scripts/index.py`** — Builds/refreshes `.hot/db/vault.db` when semantic search is enabled (step 5); also copied to `~/.almagest/bin/` for the post-commit reindex hook (step 5a)
 - **`scripts/embeddings.py`** — Shared embedding backend, imported by `index.py`; not invoked directly
 - **`scripts/reindex-post-commit.sh`** — Copied to `~/.almagest/bin/hooks/` and wired into `{vault}/.git/hooks/post-commit` (step 5a)
-- **`scripts/tags-audit.py`** — Runs a tags audit on a vault (maintenance menu option 10); optionally writes a dated snapshot under `wiki/meta/`
+- **`scripts/tags-audit.py`** — Runs a tags audit on a vault (maintenance menu option 10); optionally writes a dated snapshot under `meta/`
 
 ## Sub-tasks
 
@@ -109,7 +109,7 @@ Always end with the relevant subset of ## Output format.
 ## Output format
 
 Confirm:
-- Scaffold (if run): what was created (`wiki/` structure, `AGENTS.md` stub, `wiki/meta/tags.md`) — remind the user to fill in `AGENTS.md`'s "Vault identity" section themselves
+- Scaffold (if run): what was created (`wiki/` structure, `AGENTS.md` stub, `meta/tags.md`) — remind the user to fill in `AGENTS.md`'s "Vault identity" section themselves
 - Registered vaults: list all entries in `vaults:` with their paths and locales, marking the default
 - Skills: all 7 present / missing {list} (with the `npx skills add` command to fix it)
 - Semantic search: active (backend: Ollama/mlx-embeddings/sentence-transformers, N chunks indexed) / not active (declined or skipped — how to enable later)
@@ -123,5 +123,6 @@ For a maintenance-menu run, confirm only the items for operations that actually 
 
 - Always run from inside the vault directory — never ask for a path manually
 - Never write to an *existing* `wiki/`, `.raw/`, or `AGENTS.md` — those are vault content, not this skill's to touch once they exist. The one exception is step 1's new-vault scaffold (`references/NEW-VAULT-SCAFFOLD.md`), which creates them from nothing, only on explicit confirmation, and never overwrites either if already present. Everything else this skill writes (global config, `templates/`, `.hot/db/`, git hooks) is infrastructure
+- **`references/OKF-MIGRATION.md`** is a second, narrower exception to the rule above: it rewrites an *existing* vault's `wiki/` content to the OKF format (ADR 0005). Never run it off your own initiative — not from a `wiki-lint` finding, not from noticing stale format, nothing short of the user explicitly authorizing migration of that specific vault right now
 - Never hand-roll skill installation or agent-specific symlinks — `npx skills add` is the sole installer, for every agent it supports
 - Post-commit git hooks (prune, reindex — step 5a) are the only hooks this skill installs
