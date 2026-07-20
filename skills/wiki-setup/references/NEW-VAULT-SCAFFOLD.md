@@ -29,7 +29,7 @@ Only what's missing — never overwrite an existing `wiki/` or `AGENTS.md`.
 
 ## Existing AGENTS.md without the Antu block
 
-Read this section when step 1 finds an existing `AGENTS.md` that lacks the `<!-- antu:session-start -->` marker (and no hand-written equivalent — detection rules in `~/.almagest/references/SESSION-START-BLOCK.md`). Without that instruction, `.hot/HANDOFF.md` is written but never auto-loaded, so handoffs don't work as memory. The file is the user's — never rewrite or reorder it. Offer a single append:
+Read this section when step 1 finds an existing `AGENTS.md` that doesn't tell agents to read `.hot/HANDOFF.md` at session start — i.e. it lacks the `<!-- antu:session-start -->` marker **and** has no equivalent instruction the user wrote in their own words (if either is present, skip silently — never double-append). Without that instruction, `.hot/HANDOFF.md` is written but never auto-loaded, so handoffs don't work as memory. The file is the user's — never rewrite or reorder it. Offer a single append:
 
 ```text
 Your AGENTS.md doesn't tell agents to read .hot/HANDOFF.md at session start,

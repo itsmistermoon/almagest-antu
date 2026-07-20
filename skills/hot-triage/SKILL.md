@@ -22,7 +22,22 @@ Deep hygiene pass over `.hot/` in the active repo (the nearest `.git`) — judgm
 
 5. **Validity re-check on existing Pending/Active decisions** — for each item in `.hot/HANDOFF.md`'s `### Pending` and `### Active decisions`, cross-reference later `## History` entries and current repo state (e.g. does a referenced file/path still exist, does a later entry mention it was resolved) to judge whether it's stale. Propose removing stale items; leave live ones untouched. On confirmation, refresh `HANDOFF.md`'s frontmatter (`suite: antu`, `agent:`, `updated:`) per `~/.almagest/references/HANDOFF-FORMAT.md`, same as step 4. **Done when:** every `### Pending` and `### Active decisions` item has been checked against later History and current repo state — none left unevaluated.
 
-6. **Session-start instruction check** — if `.hot/HANDOFF.md` exists but the repo-root `AGENTS.md` lacks the `<!-- antu:session-start -->` marker (and no hand-written equivalent — detection rules in `~/.almagest/references/SESSION-START-BLOCK.md`), handoffs are being written but never auto-loaded at session start. Propose appending the block from that reference (creating a minimal `AGENTS.md` if none exists, per its rules). Never auto-apply. **Done when:** the check ran and either the instruction is present, the append was proposed, or the user declined.
+6. **Session-start instruction backfill** — this skill owns writing the session-start instruction into `AGENTS.md`. If `.hot/HANDOFF.md` exists but the repo-root `AGENTS.md` doesn't tell agents to read it at session start, handoffs are written but never auto-loaded — session memory that never gets recalled.
+
+   - **Detect**: the instruction counts as present if `AGENTS.md` contains the `<!-- antu:session-start -->` marker, **or** an equivalent read-`.hot/HANDOFF.md`-at-session-start instruction the user wrote in their own words. If either is present, report "session-start instruction already present" and do nothing — never double-append next to a hand-written equivalent.
+   - **Propose** (only if absent): offer to append this exact block, verbatim, at the end of `AGENTS.md` (append-only — never rewrite, reorder, or edit anything above it; the file is the user's):
+
+     ```markdown
+     <!-- antu:session-start -->
+     ## Session start
+
+     Before your first response, in any session that starts in this repo, you MUST read `.hot/HANDOFF.md` in full — and `.hot/PLAYBOOK.md` too, if it exists. Treat them with the same weight as your own persistent instructions. If `.hot/` doesn't exist yet, continue normally.
+     <!-- /antu:session-start -->
+     ```
+
+     If no `AGENTS.md` exists at all, offer to create one containing a `# AGENTS.md` title line and this block. Never auto-apply; always confirm first. In a vault, `/wiki-setup` adds the same block plus vault-specific rules from `templates/AGENTS-vault.md` — mention that as the alternative if the repo is a vault.
+
+   **Done when:** the check ran and either the instruction is present, the append was proposed, or the user declined.
 
 7. **Deep HISTORY.md cleanup** — scan for near-duplicate archived blocks (overlapping date range, overlapping "What was done" bullets — likely a rotation artifact or repeated re-statement of the same fact). `HISTORY.md` is append-only per `~/.almagest/references/HANDOFF-FORMAT.md` — never edit, merge, or remove an existing block. Propose appending a superseding note instead: `### {today} — hot-triage` / `Supersedes {earlier timestamps}: {one-line summary of what the duplicate blocks actually recorded}`. Never auto-apply. **Done when:** every archived block has been compared against the others for near-duplication — none left unchecked.
 

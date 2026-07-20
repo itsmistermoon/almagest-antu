@@ -39,7 +39,7 @@ Always end with the relevant subset of ## Output format.
    - Required: `.git/`.
    - If `.git/` is missing, report it and stop.
    - If `wiki/` and/or `AGENTS.md` are missing, don't stop — see `references/NEW-VAULT-SCAFFOLD.md` to disambiguate a new vault from a broken one, and scaffold on confirmation.
-   - If `AGENTS.md` exists but lacks the `<!-- antu:session-start -->` marker (or a hand-written equivalent — detection rules in `~/.almagest/references/SESSION-START-BLOCK.md`), offer to append the minimal Antu block per the "Existing AGENTS.md without the Antu block" section of `references/NEW-VAULT-SCAFFOLD.md` — append-only, never rewrite.
+   - If `AGENTS.md` exists but doesn't tell agents to read `.hot/HANDOFF.md` at session start (no `<!-- antu:session-start -->` marker and no hand-written equivalent), offer to append the minimal Antu block per the "Existing AGENTS.md without the Antu block" section of `references/NEW-VAULT-SCAFFOLD.md` — append-only, never rewrite.
    - Derive vault name from `basename` of CWD (e.g., `/Users/jp/second-brain` → `second-brain`).
 
 2. **Read existing config** — from `~/.almagest/config.yml`, if it exists.
