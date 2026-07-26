@@ -13,9 +13,9 @@ Health check the active vault in three layers: structural (script), semantic (ag
 
 ## Available scripts
 
-Paths are relative to this skill's directory.
+Scripts live in `scripts/` inside this skill's directory (`<skill-dir>/scripts/`, e.g. `~/.agents/skills/wiki-lint/scripts/` or `~/.claude/skills/wiki-lint/scripts/` when installed globally, or `./skills/wiki-lint/scripts/` in this repo). When running from a vault, resolve `<skill-dir>` to locate co-located scripts.
 
-- **`scripts/lint.sh`** — Layer 1 structural check; single writer of `meta/vault-report.json` (step 2)
+- **`scripts/lint.sh`** — Layer 1 structural check; single writer of `meta/vault-report.json` (step 2; also installed at `~/.almagest/bin/lint.sh`)
 - **`scripts/validate-schema.sh`** — Validates `vault-report.json` schema drift, called by `lint.sh` as a sibling
 
 ## Steps
@@ -24,7 +24,7 @@ Paths are relative to this skill's directory.
 
    **Confirmation gate:** if the vault was resolved from an explicit argument (not from CWD), confirm with the user before proceeding: "About to prune `{vault-name}` at `{path}`. Continue?" — do not proceed until confirmed.
 
-2. **Layer 1 — Structural check**: Run `bash scripts/lint.sh {vault}`. If the script is missing, the skill installation is incomplete — run `/wiki-setup`, sub-task `skills`, to reinstall.
+2. **Layer 1 — Structural check**: Locate `lint.sh` (e.g. `bash ~/.agents/skills/wiki-lint/scripts/lint.sh {vault}` or `bash ~/.almagest/bin/lint.sh {vault}`) and run it. If the script is missing, the skill installation is incomplete — run `/wiki-setup`, sub-task `skills`, to reinstall.
 
 3. **Layer 2 — Semantic analysis**: Run the semantic checks below (L2a–L2e) — read the actual pages, never reason about relationships from memory alone.
 

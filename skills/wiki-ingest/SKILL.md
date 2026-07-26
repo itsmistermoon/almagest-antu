@@ -15,10 +15,10 @@ Ingest a new source and synthesize wiki pages from it.
 
 ## Available scripts
 
-Paths are relative to this skill's directory.
+Scripts live in `scripts/` inside this skill's directory (`<skill-dir>/scripts/`, e.g. `~/.agents/skills/wiki-ingest/scripts/` or `~/.claude/skills/wiki-ingest/scripts/` when installed globally, or `./skills/wiki-ingest/scripts/` in this repo). When running from a vault, resolve `<skill-dir>` to locate co-located scripts.
 
 - **`scripts/sanitize.sh`** — Detects and auto-redacts credentials in a temp file before ingestion (step 2)
-- **`scripts/index.py`** — Re-indexes vault embeddings after a new source is ingested (step 7)
+- **`scripts/index.py`** — Re-indexes vault embeddings after a new source is ingested (step 7; also available at `~/.almagest/bin/index.py`)
 - **`scripts/embeddings.py`** — Shared embedding backend, imported by `index.py`; not invoked directly
 
 ## Steps
@@ -34,7 +34,7 @@ Paths are relative to this skill's directory.
 
    **SPA check** — if the fetched page is a client-rendered shell with no meaningful body text (e.g. `<div id="root">`, `<app-root>`, near-empty HTML), recover the content via `references/SPA-FALLBACK.md`; if that fails, stop and ask the user for the content or a static URL. ⚠ Never save an HTML shell to `.raw/` — no readable content, no synthesis.
 
-   **Sanitization check** — before saving to `.raw/`, run `bash scripts/sanitize.sh <temp-file>` (detects injection, exfiltration, and credential vectors) and inspect the JSON output:
+   **Sanitization check** — before saving to `.raw/`, locate `sanitize.sh` under `<skill-dir>/scripts/` (e.g. `~/.agents/skills/wiki-ingest/scripts/sanitize.sh` or `~/.claude/skills/wiki-ingest/scripts/sanitize.sh`), run `bash <skill-dir>/scripts/sanitize.sh <temp-file>` (detects injection, exfiltration, and credential vectors) and inspect the JSON output:
 
    - **If `redacted: true`** — tell the user how many credentials were redacted in `<temp-file>` and proceed with the redacted content. Never reconstruct or reinsert the original secret anywhere — not even on explicit user request.
    - **Any other finding type** is informational, not blocking: list each finding (type, label, count) and ask "This content has [N] findings (see above). Proceed with ingestion?" — default is **yes**. If the user declines, stop without saving; if they accept, save to `.raw/` and note the findings in the source page's changelog.
@@ -59,7 +59,7 @@ Paths are relative to this skill's directory.
    4. For each ENRICHABLE candidate, state exactly what to add and where — e.g., "Add OpenWiki to the comparison table in §Key mechanisms."
    5. Report all ENRICHABLE candidates to the user. Do not apply any changes without explicit confirmation per candidate.
 
-7. **Re-index embeddings** — runs last so it captures every page this run touched, including step 5/6 updates to existing pages — if `{vault}/.hot/db/vault.db` exists, run `python3 -B scripts/index.py {vault}` and report the result inline: "Indexed N new chunk(s)." If the db does not exist, skip silently — the vault may not have semantic search enabled.
+7. **Re-index embeddings** — runs last so it captures every page this run touched, including step 5/6 updates to existing pages — if `{vault}/.hot/db/vault.db` exists, locate `index.py` (e.g. `~/.agents/skills/wiki-ingest/scripts/index.py` or `~/.almagest/bin/index.py`), run `python3 -B <path-to-index.py> {vault}` and report the result inline: "Indexed N new chunk(s)." If the db does not exist, skip silently — the vault may not have semantic search enabled.
 
 ## --research mode
 
