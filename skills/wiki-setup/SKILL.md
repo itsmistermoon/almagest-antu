@@ -13,7 +13,7 @@ Setup for Antu. Run from inside a vault directory (one containing `.git/`, and e
 
 ## Available scripts
 
-Paths are relative to this skill's directory.
+Scripts live in `scripts/` inside this skill's directory (`<skill-dir>/scripts/`, e.g. `~/.agents/skills/wiki-setup/scripts/` or `~/.claude/skills/wiki-setup/scripts/` when installed globally, or `./skills/wiki-setup/scripts/` in this repo). When running from a vault, resolve `<skill-dir>` to locate co-located scripts.
 
 - **`scripts/index.py`** — Builds/refreshes `.hot/db/vault.db` when semantic search is enabled (step 5); also copied to `~/.almagest/bin/` for the post-commit reindex hook (step 5a)
 - **`scripts/embeddings.py`** — Shared embedding backend, imported by `index.py`; not invoked directly
@@ -96,7 +96,7 @@ Always end with the relevant subset of ## Output format.
      > npx skills add itsmistermoon/almagest-antu --all -g -y
      > ```
 
-5. **Offer semantic search** — check dependencies *before* asking, so the offer itself is tailored to what's actually available. Run the detection procedure in `references/EMBEDDING-SETUP.md`, then ask using the tailored wording it returns (ready-to-go confirm, one-step-away confirm, or the full backend menu) — never ask a generic "enable semantic search?" without having checked first. If the user accepts, install anything needed and run `scripts/index.py` with `{vault}` as its argument; report chunks indexed. If declined or skipped, note in the final summary that semantic search is not active and can be enabled later via `/wiki-setup` (maintenance menu, option 5). Re-run this same detection procedure any time it's needed again — from 5a's reindex-hook fallback, or if `index.py` later fails with an import error after this check already passed (dependency became unavailable mid-session).
+5. **Offer semantic search** — check dependencies *before* asking, so the offer itself is tailored to what's actually available. Run the detection procedure in `references/EMBEDDING-SETUP.md`, then ask using the tailored wording it returns (ready-to-go confirm, one-step-away confirm, or the full backend menu) — never ask a generic "enable semantic search?" without having checked first. If the user accepts, install anything needed and run `index.py` (e.g. `python3 -B ~/.agents/skills/wiki-setup/scripts/index.py {vault}` or `python3 -B ~/.almagest/bin/index.py {vault}`) with `{vault}` as its argument; report chunks indexed. If declined or skipped, note in the final summary that semantic search is not active and can be enabled later via `/wiki-setup` (maintenance menu, option 5). Re-run this same detection procedure any time it's needed again — from 5a's reindex-hook fallback, or if `index.py` later fails with an import error after this check already passed (dependency became unavailable mid-session).
 
 5a. **Post-commit hooks (opt-in, separate questions)** — see `references/POST-COMMIT-HOOKS.md` for the exact install mechanics of both:
    - **Prune** — refresh `vault-report.json` after each commit.

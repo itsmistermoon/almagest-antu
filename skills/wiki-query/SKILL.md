@@ -14,7 +14,7 @@ Answer a question using the vault's wiki content as the source.
 
 ## Available scripts
 
-Paths are relative to this skill's directory.
+Scripts live in `scripts/` inside this skill's directory (`<skill-dir>/scripts/`, e.g. `~/.agents/skills/wiki-query/scripts/` or `~/.claude/skills/wiki-query/scripts/` when installed globally, or `./skills/wiki-query/scripts/` in this repo). When running from a vault, resolve `<skill-dir>` to locate co-located scripts.
 
 - **`scripts/search.py`** — Semantic search over `.hot/db/vault.db` (step 2)
 - **`scripts/embeddings.py`** — Shared embedding backend, imported by `search.py`; not invoked directly
@@ -24,7 +24,7 @@ Paths are relative to this skill's directory.
 1. **Resolve vault** — per `~/.almagest/references/VAULT-RESOLUTION.md` (synced by `/wiki-setup` — if missing, run `/wiki-setup` first). If the first argument matches a registered vault name (e.g., `/wiki-query second-brain <query>`), use that vault; treat the remaining text as the query.
 
 2. **Identify relevant pages** — prefer semantic search if the index is available:
-   - If `{vault}/.hot/db/vault.db` exists: run `scripts/search.py --vault {vault} "{query}" --top-k 8 --json`, and use the returned chunks (path + heading + content) as the primary source set.
+   - If `{vault}/.hot/db/vault.db` exists: locate `search.py` under `<skill-dir>/scripts/` (e.g. `python3 ~/.agents/skills/wiki-query/scripts/search.py`), run `<path-to-search.py> --vault {vault} "{query}" --top-k 8 --json`, and use the returned chunks (path + heading + content) as the primary source set.
    - Otherwise (index missing): read `{vault}/wiki/index.md` directly and identify the most relevant pages by title and description. This is the explicit fallback — it is NOT a protocol violation.
 
 3. **Answer** — read the full page for any result where the chunk alone is insufficient, then synthesize a response with citations to specific pages. If information is missing, point to `/wiki-ingest` for the missing sources, and append one line to `{vault}/wiki/log.md`: `**[YYYY-MM-DD] query-miss** | {query}`. Log misses only — a query that gets a real answer leaves no trace here.
